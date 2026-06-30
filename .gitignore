@@ -1,0 +1,36 @@
+# dependencies
+node_modules/
+
+# Expo
+.expo/
+dist/
+web-build/
+
+# Native
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+
+# Metro
+.metro-health-check*
+
+# macOS
+.DS_Store
+
+# Env — keep secrets out of git; .env.example IS committed as the template
+.env
+.env*.local
+!.env.example
+
+# Logs
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+
+# local dev scratch (screenshots, catalog regen, probes)
+_*.js
+*.png
+!assets/**

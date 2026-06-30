@@ -1,0 +1,29 @@
+{
+  "expo": {
+    "name": "Circular Fash",
+    "slug": "circular-fash",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "circularfash",
+    "userInterfaceStyle": "light",
+    "backgroundColor": "#FFFFFF",
+    "splash": {
+      "backgroundColor": "#FFFFFF",
+      "resizeMode": "contain"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "com.circularfash.app"
+    },
+    "android": {
+      "package": "com.circularfash.app",
+      "adaptiveIcon": {
+        "backgroundColor": "#FFFFFF"
+      }
+    },
+    "web": {
+      "bundler": "metro"
+    }
+  }
+}
