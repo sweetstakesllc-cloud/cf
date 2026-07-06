@@ -85,6 +85,7 @@ export default function HomeScreen() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.chips}
         style={styles.chipScroll}
+        keyboardShouldPersistTaps="handled"
       >
         <Chip label="All" selected={activeBrand === null} onPress={() => setActiveBrand(null)} />
         {brands.map((b) => (
@@ -145,8 +146,11 @@ const styles = StyleSheet.create({
   countNum: { ...type.price, fontSize: 22, lineHeight: 24, color: color.hiVis },
   countLabel: { ...type.eyebrow, color: color.paperDim, marginTop: 2 },
 
-  chipScroll: { flexGrow: 0 },
-  chips: { paddingHorizontal: SIDE, gap: space.sm, paddingBottom: space.md },
+  // Fixed height + no shrink: a horizontal ScrollView can't derive its height
+  // from horizontally-scrolling content on web (react-native-web), so without
+  // this the whole chip row collapses to a sliver. Chip ≈ 32px; 48 leaves air.
+  chipScroll: { flexGrow: 0, flexShrink: 0, height: 48, marginBottom: space.sm },
+  chips: { paddingHorizontal: SIDE, gap: space.sm, alignItems: 'center' },
 
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
