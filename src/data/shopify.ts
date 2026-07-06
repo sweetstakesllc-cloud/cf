@@ -19,6 +19,7 @@ const KNOWN_BRANDS = [
   'Canada Goose', 'Louis Vuitton', 'Balenciaga', 'Burberry', 'Dior',
   'Saint Laurent', 'Bottega Veneta', 'Dsquared2', 'Versace', 'Fendi',
   'Givenchy', 'Palm Angels', 'Amiri', 'Vivienne Westwood',
+  'Balmain', 'Celine', 'Chanel',
 ];
 
 function brandOf(title: string, vendor?: string): string {
@@ -32,17 +33,24 @@ function stripBrand(title: string, brand: string): string {
   return out || title;
 }
 
+// Luxury bags/leather goods are usually titled by model name, not the word "bag"
+// (LV Keepall, Neverfull, Alma, Pochette; Gucci clutch/wallet…). Match those too.
+const BAG_MODELS =
+  /bag|messenger|pouch|pochette|neverfull|keepall|bandouli|backpack|clutch|wallet|handbag|tote|crossbody|satchel|purse|speedy|jolly|jolicoeur|berkeley|\balma\b/;
+
 function categoryOf(title: string, productType?: string): string | undefined {
   if (productType && productType.trim()) return productType;
   const s = title.toLowerCase();
   if (/\bbelt\b/.test(s)) return 'Belts';
-  if (/bag|messenger|pouch/.test(s)) return 'Bags';
-  if (/\bvest\b/.test(s)) return 'Vests';
+  if (/sunglass|eyewear|\bglasses\b/.test(s)) return 'Eyewear';
+  if (BAG_MODELS.test(s)) return 'Bags';
+  if (/\bvest\b|gilet/.test(s)) return 'Vests';
   if (/jacket|parka|coat/.test(s)) return 'Jackets';
-  if (/hoodie|sweatshirt|zip/.test(s)) return 'Hoodies';
+  if (/hoodie|sweatshirt|zip|track ?top|tracksuit/.test(s)) return 'Hoodies';
   if (/polo|shirt/.test(s) && !/t-?shirt/.test(s)) return 'Shirts';
   if (/t-?shirt|tee/.test(s)) return 'T-Shirts';
   if (/jean|trouser|pant/.test(s)) return 'Trousers';
+  if (/\bskirt\b/.test(s)) return 'Skirts';
   if (/beanie|cap|hat/.test(s)) return 'Headwear';
   if (/bracelet|necklace|ring/.test(s)) return 'Jewellery';
   return undefined;
