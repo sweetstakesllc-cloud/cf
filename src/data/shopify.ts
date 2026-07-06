@@ -154,8 +154,9 @@ const PRODUCT_FIELDS = `
 `;
 
 const PRODUCTS_QUERY = `
-  query Products($first: Int!) {
-    products(first: $first, sortKey: CREATED_AT, reverse: true) {
+  query Products($first: Int!, $after: String) {
+    products(first: $first, after: $after, sortKey: CREATED_AT, reverse: true) {
+      pageInfo { hasNextPage endCursor }
       edges { node { ${PRODUCT_FIELDS} } }
     }
   }
@@ -167,11 +168,27 @@ const PRODUCT_QUERY = `
   }
 `;
 
-export async function fetchProducts(first = 100): Promise<Product[]> {
-  const data = await storefront<{ products: { edges: { node: GqlProduct }[] } }>(PRODUCTS_QUERY, {
-    first,
-  });
-  return data.products.edges.map((e) => mapProduct(e.node));
+type ProductsPage = {
+  products: {
+    pageInfo: { hasNextPage: boolean; endCursor: string | null };
+    edges: { node: GqlProduct }[];
+  };
+};
+
+// Pull the whole channel, not just the first page. The Storefront API caps
+// `first` at 250, so we page with the cursor until it's exhausted. The catalog
+// runs a few hundred one-of-one pieces (293 at last count), so this is 1–2
+// round trips; the `page` guard is just a runaway-loop backstop.
+export async function fetchProducts(): Promise<Product[]> {
+  const out: Product[] = [];
+  let after: string | null = null;
+  for (let page = 0; page < 40; page++) {
+    const data: ProductsPage = await storefront<ProductsPage>(PRODUCTS_QUERY, { first: 250, after });
+    out.push(...data.products.edges.map((e) => mapProduct(e.node)));
+    if (!data.products.pageInfo.hasNextPage) break;
+    after = data.products.pageInfo.endCursor;
+  }
+  return out;
 }
 
 export async function fetchProduct(id: string): Promise<Product | null> {
