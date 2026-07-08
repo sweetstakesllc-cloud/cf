@@ -19,6 +19,7 @@ import { color, type, space, border, formatSEK } from '../theme';
 import type { Product } from '../types/product';
 import type { RootStackParamList } from '../navigation/types';
 import { getProduct } from '../data/mockProducts';
+import { buyNow, CheckoutUnavailableError } from '../data/checkout';
 import Tag from '../components/Tag';
 
 type Nav = NativeStackNavigationProp<RootStackParamList, 'Product'>;
@@ -34,6 +35,7 @@ export default function ProductDetailScreen() {
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(0);
   const [saved, setSaved] = useState(false);
+  const [buying, setBuying] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -75,15 +77,24 @@ export default function ProductDetailScreen() {
 
   const imageH = width * (1100 / 900); // mirrors the 900x1100 source ratio
 
-  const onAddToBag = () => {
+  const onBuyNow = async () => {
     // Quantity-one items aren't reserved until checkout completes — two people
-    // can race for one piece. The graceful-loss path lives here. (Cart +
-    // Checkout Sheet Kit handoff arrives in the backend phase.)
-    Alert.alert(
-      'Added to bag',
-      `${product.brand} — ${product.title}\n\nThis is a one-of-one piece. It isn’t reserved until checkout completes, so move quickly.`,
-      [{ text: 'OK' }]
-    );
+    // can race for one piece, so the "just sold" loss is a normal outcome here,
+    // not an edge case. Mint a single-item cart and hand off to Shopify's
+    // hosted checkout.
+    if (buying) return;
+    setBuying(true);
+    try {
+      await buyNow(product);
+    } catch (err) {
+      const msg =
+        err instanceof CheckoutUnavailableError
+          ? err.message
+          : 'Something went wrong starting checkout. Please try again.';
+      Alert.alert('Can’t check out', msg, [{ text: 'OK' }]);
+    } finally {
+      setBuying(false);
+    }
   };
 
   return (
@@ -222,13 +233,25 @@ export default function ProductDetailScreen() {
           </View>
         ) : (
           <Pressable
-            onPress={onAddToBag}
-            style={({ pressed }) => [styles.addBtn, pressed && styles.addBtnPressed]}
+            onPress={onBuyNow}
+            disabled={buying}
+            style={({ pressed }) => [
+              styles.addBtn,
+              pressed && styles.addBtnPressed,
+              buying && styles.addBtnBusy,
+            ]}
             accessibilityRole="button"
-            accessibilityLabel={`Add ${product.brand} ${product.title} to bag`}
+            accessibilityState={{ disabled: buying, busy: buying }}
+            accessibilityLabel={`Buy ${product.brand} ${product.title} now for ${formatSEK(product.price)}`}
           >
-            <Text style={styles.addBtnText}>ADD TO BAG</Text>
-            <Text style={styles.addBtnPrice}>{formatSEK(product.price)}</Text>
+            {buying ? (
+              <ActivityIndicator color={color.onHiVis} />
+            ) : (
+              <>
+                <Text style={styles.addBtnText}>BUY NOW</Text>
+                <Text style={styles.addBtnPrice}>{formatSEK(product.price)}</Text>
+              </>
+            )}
           </Pressable>
         )}
       </View>
@@ -356,6 +379,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: space.lg, paddingVertical: space.lg,
   },
   addBtnPressed: { opacity: 0.85 },
+  addBtnBusy: { justifyContent: 'center', opacity: 0.9 },
   addBtnText: { ...type.title, color: color.onHiVis, letterSpacing: 1 },
   addBtnPrice: { ...type.price, color: color.onHiVis },
   addBtnSold: { backgroundColor: color.surfaceAlt, justifyContent: 'center', borderWidth: border.hairline, borderColor: color.line },
