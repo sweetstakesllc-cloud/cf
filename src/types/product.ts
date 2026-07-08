@@ -30,6 +30,12 @@ export type Authenticity = {
 
 export type Product = {
   id: string;
+  /**
+   * Shopify variant GID of the piece to purchase (the cart's `merchandiseId`).
+   * One-of-one items have a single variant. Optional because the offline
+   * catalog snapshot can't transact; live products always carry it.
+   */
+  variantId?: string;
   brand: string; // Shopify "vendor"
   title: string;
   images: string[]; // first image is the hero; cards use images[0]

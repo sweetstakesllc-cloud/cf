@@ -81,6 +81,7 @@ type GqlProduct = {
   variants: {
     edges: {
       node: {
+        id: string;
         sku?: string | null;
         availableForSale: boolean;
         price: { amount: string };
@@ -112,6 +113,7 @@ function mapProduct(n: GqlProduct): Product {
 
   return {
     id: n.id,
+    variantId: chosen?.id,
     brand,
     title,
     images: n.images.edges.map((e) => e.node.url),
@@ -149,7 +151,7 @@ const PRODUCT_FIELDS = `
   compareAtPriceRange { minVariantPrice { amount } }
   images(first: 6) { edges { node { url } } }
   variants(first: 50) {
-    edges { node { sku availableForSale price { amount } selectedOptions { name value } } }
+    edges { node { id sku availableForSale price { amount } selectedOptions { name value } } }
   }
 `;
 
