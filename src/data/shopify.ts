@@ -19,6 +19,7 @@ const KNOWN_BRANDS = [
   'Canada Goose', 'Louis Vuitton', 'Balenciaga', 'Burberry', 'Dior',
   'Saint Laurent', 'Bottega Veneta', 'Dsquared2', 'Versace', 'Fendi',
   'Givenchy', 'Palm Angels', 'Amiri', 'Vivienne Westwood',
+  'Balmain', 'Celine', 'Chanel',
 ];
 
 function brandOf(title: string, vendor?: string): string {
@@ -32,17 +33,24 @@ function stripBrand(title: string, brand: string): string {
   return out || title;
 }
 
+// Luxury bags/leather goods are usually titled by model name, not the word "bag"
+// (LV Keepall, Neverfull, Alma, Pochette; Gucci clutch/wallet…). Match those too.
+const BAG_MODELS =
+  /bag|messenger|pouch|pochette|neverfull|keepall|bandouli|backpack|clutch|wallet|handbag|tote|crossbody|satchel|purse|speedy|jolly|jolicoeur|berkeley|\balma\b/;
+
 function categoryOf(title: string, productType?: string): string | undefined {
   if (productType && productType.trim()) return productType;
   const s = title.toLowerCase();
   if (/\bbelt\b/.test(s)) return 'Belts';
-  if (/bag|messenger|pouch/.test(s)) return 'Bags';
-  if (/\bvest\b/.test(s)) return 'Vests';
+  if (/sunglass|eyewear|\bglasses\b/.test(s)) return 'Eyewear';
+  if (BAG_MODELS.test(s)) return 'Bags';
+  if (/\bvest\b|gilet/.test(s)) return 'Vests';
   if (/jacket|parka|coat/.test(s)) return 'Jackets';
-  if (/hoodie|sweatshirt|zip/.test(s)) return 'Hoodies';
+  if (/hoodie|sweatshirt|zip|track ?top|tracksuit/.test(s)) return 'Hoodies';
   if (/polo|shirt/.test(s) && !/t-?shirt/.test(s)) return 'Shirts';
   if (/t-?shirt|tee/.test(s)) return 'T-Shirts';
   if (/jean|trouser|pant/.test(s)) return 'Trousers';
+  if (/\bskirt\b/.test(s)) return 'Skirts';
   if (/beanie|cap|hat/.test(s)) return 'Headwear';
   if (/bracelet|necklace|ring/.test(s)) return 'Jewellery';
   return undefined;
@@ -146,8 +154,9 @@ const PRODUCT_FIELDS = `
 `;
 
 const PRODUCTS_QUERY = `
-  query Products($first: Int!) {
-    products(first: $first, sortKey: CREATED_AT, reverse: true) {
+  query Products($first: Int!, $after: String) {
+    products(first: $first, after: $after, sortKey: CREATED_AT, reverse: true) {
+      pageInfo { hasNextPage endCursor }
       edges { node { ${PRODUCT_FIELDS} } }
     }
   }
@@ -159,11 +168,27 @@ const PRODUCT_QUERY = `
   }
 `;
 
-export async function fetchProducts(first = 100): Promise<Product[]> {
-  const data = await storefront<{ products: { edges: { node: GqlProduct }[] } }>(PRODUCTS_QUERY, {
-    first,
-  });
-  return data.products.edges.map((e) => mapProduct(e.node));
+type ProductsPage = {
+  products: {
+    pageInfo: { hasNextPage: boolean; endCursor: string | null };
+    edges: { node: GqlProduct }[];
+  };
+};
+
+// Pull the whole channel, not just the first page. The Storefront API caps
+// `first` at 250, so we page with the cursor until it's exhausted. The catalog
+// runs a few hundred one-of-one pieces (293 at last count), so this is 1–2
+// round trips; the `page` guard is just a runaway-loop backstop.
+export async function fetchProducts(): Promise<Product[]> {
+  const out: Product[] = [];
+  let after: string | null = null;
+  for (let page = 0; page < 40; page++) {
+    const data: ProductsPage = await storefront<ProductsPage>(PRODUCTS_QUERY, { first: 250, after });
+    out.push(...data.products.edges.map((e) => mapProduct(e.node)));
+    if (!data.products.pageInfo.hasNextPage) break;
+    after = data.products.pageInfo.endCursor;
+  }
+  return out;
 }
 
 export async function fetchProduct(id: string): Promise<Product | null> {
