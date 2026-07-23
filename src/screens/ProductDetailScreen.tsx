@@ -316,7 +316,7 @@ const styles = StyleSheet.create({
     letterSpacing: 3,
   },
 
-  dots: { position: 'absolute', bottom: space.lg, right: space.lg, flexDirection: 'row', gap: 5 },
+  dots: { position: 'absolute', bottom: space.lg, left: 0, right: 0, flexDirection: 'row', justifyContent: 'center', gap: 5 },
   dot: { width: 6, height: 6, backgroundColor: color.paperMute, opacity: 0.6 },
   dotOn: { backgroundColor: color.paper, opacity: 1 },
 
