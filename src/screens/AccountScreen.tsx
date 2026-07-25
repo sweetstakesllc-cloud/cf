@@ -1,15 +1,20 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, Pressable, ScrollView, StyleSheet, Linking } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { color, type, space, border } from '../theme';
+import { features, links } from '../features';
 import type { RootStackParamList } from '../navigation/types';
 import { getLoyalty, getLiveShows, type Loyalty } from '../data/mockAccount';
+import app from '../../app.json';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
+
+/** Any engagement feature on? Then the hub keeps its in-app group. */
+const hasEngagement = features.rewards || features.refer || features.live || features.chat;
 
 export default function AccountScreen() {
   const navigation = useNavigation<Nav>();
@@ -19,9 +24,12 @@ export default function AccountScreen() {
 
   useFocusEffect(
     useCallback(() => {
+      if (!hasEngagement) return;
       let alive = true;
-      getLoyalty().then((l) => alive && setLoyalty(l));
-      getLiveShows().then((s) => alive && setLiveNow(s.some((x) => x.status === 'live')));
+      if (features.rewards) getLoyalty().then((l) => alive && setLoyalty(l));
+      if (features.live) {
+        getLiveShows().then((s) => alive && setLiveNow(s.some((x) => x.status === 'live')));
+      }
       return () => {
         alive = false;
       };
@@ -39,57 +47,122 @@ export default function AccountScreen() {
           <Text style={styles.hero}>Account</Text>
         </View>
 
-        {/* Member card → Rewards */}
-        <Pressable
-          onPress={() => navigation.navigate('Rewards')}
-          style={({ pressed }) => [styles.card, pressed && styles.pressed]}
-        >
-          <View style={styles.cardTop}>
-            <View>
-              <Text style={styles.cardName}>Amara L.</Text>
-              <Text style={styles.cardTier}>{loyalty ? `${loyalty.tier} member` : '—'}</Text>
+        {/* Member card → Rewards. Only real once a loyalty vendor is wired. */}
+        {features.rewards && (
+          <Pressable
+            onPress={() => navigation.navigate('Rewards')}
+            style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+          >
+            <View style={styles.cardTop}>
+              <View>
+                <Text style={styles.cardTier}>{loyalty ? `${loyalty.tier} member` : '—'}</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={18} color={color.onHiVis} />
             </View>
-            <Ionicons name="chevron-forward" size={18} color={color.onHiVis} />
-          </View>
-          <View style={styles.cardBottom}>
-            <Text style={styles.cardPoints}>{loyalty ? loyalty.points.toLocaleString('sv-SE') : '—'}</Text>
-            <Text style={styles.cardPointsLabel}>POINTS</Text>
-          </View>
-        </Pressable>
+            <View style={styles.cardBottom}>
+              <Text style={styles.cardPoints}>
+                {loyalty ? loyalty.points.toLocaleString('sv-SE') : '—'}
+              </Text>
+              <Text style={styles.cardPointsLabel}>POINTS</Text>
+            </View>
+          </Pressable>
+        )}
 
-        {/* Feature rows */}
+        {hasEngagement && (
+          <View style={styles.group}>
+            {features.rewards && (
+              <Row
+                icon="ribbon-outline"
+                label="Rewards & Points"
+                sub="Redeem points, track your tier"
+                onPress={() => navigation.navigate('Rewards')}
+              />
+            )}
+            {features.refer && (
+              <Row
+                icon="gift-outline"
+                label="Refer a Friend"
+                sub="Give 150 kr, get 750 pts"
+                onPress={() => navigation.navigate('Refer')}
+              />
+            )}
+            {features.live && (
+              <Row
+                icon="videocam-outline"
+                label="Live Shopping"
+                sub="Shop drops in real time"
+                badge={liveNow ? 'LIVE' : undefined}
+                onPress={() => navigation.navigate('Live')}
+              />
+            )}
+            {features.chat && (
+              <Row
+                icon="chatbubble-ellipses-outline"
+                label="Help & Support"
+                sub="Chat with our team"
+                onPress={() => navigation.navigate('Chat')}
+                last
+              />
+            )}
+          </View>
+        )}
+
+        {/* Real destinations: the storefront handles orders, support and policy. */}
         <View style={styles.group}>
           <Row
-            icon="ribbon-outline"
-            label="Rewards & Points"
-            sub="Redeem points, track your tier"
-            onPress={() => navigation.navigate('Rewards')}
-          />
-          <Row
-            icon="gift-outline"
-            label="Refer a Friend"
-            sub="Give 150 kr, get 750 pts"
-            onPress={() => navigation.navigate('Refer')}
-          />
-          <Row
-            icon="videocam-outline"
-            label="Live Shopping"
-            sub="Shop drops in real time"
-            badge={liveNow ? 'LIVE' : undefined}
-            onPress={() => navigation.navigate('Live')}
+            icon="storefront-outline"
+            label="Shop on circularfash.com"
+            sub="The full archive in your browser"
+            onPress={() => Linking.openURL(links.shop)}
+            external
           />
           <Row
             icon="chatbubble-ellipses-outline"
-            label="Help & Support"
-            sub="Chat with our team"
-            onPress={() => navigation.navigate('Chat')}
+            label="Help & Contact"
+            sub="Questions about an order or an item"
+            onPress={() => Linking.openURL(links.contact)}
+            external
+          />
+          <Row
+            icon="cube-outline"
+            label="Shipping"
+            sub="Delivery times and rates"
+            onPress={() => Linking.openURL(links.shipping)}
+            external
+          />
+          <Row
+            icon="return-down-back-outline"
+            label="Returns"
+            sub="How returns work on one-of-one pieces"
+            onPress={() => Linking.openURL(links.returns)}
+            external
+            last
+          />
+        </View>
+
+        <View style={styles.group}>
+          <Row
+            icon="lock-closed-outline"
+            label="Privacy Policy"
+            sub="How we handle your data"
+            onPress={() => Linking.openURL(links.privacy)}
+            external
+          />
+          <Row
+            icon="document-text-outline"
+            label="Terms of Service"
+            sub="The rules of the marketplace"
+            onPress={() => Linking.openURL(links.terms)}
+            external
             last
           />
         </View>
 
         <Text style={styles.note}>
-          Orders, addresses and sign-in arrive with the accounts phase.
+          Checkout is handled securely by Shopify — you'll enter delivery details there. Orders,
+          addresses and sign-in arrive with the accounts phase.
         </Text>
+        <Text style={styles.version}>VERSION {app.expo.version}</Text>
       </ScrollView>
     </View>
   );
@@ -102,6 +175,7 @@ function Row({
   onPress,
   badge,
   last,
+  external,
 }: {
   icon: keyof typeof Ionicons.glyphMap;
   label: string;
@@ -109,6 +183,8 @@ function Row({
   onPress: () => void;
   badge?: string;
   last?: boolean;
+  /** Leaves the app — signalled with an outbound glyph instead of a chevron. */
+  external?: boolean;
 }) {
   return (
     <Pressable
@@ -126,7 +202,11 @@ function Row({
           <Text style={styles.liveText}>{badge}</Text>
         </View>
       )}
-      <Ionicons name="chevron-forward" size={18} color={color.paperDim} />
+      <Ionicons
+        name={external ? 'open-outline' : 'chevron-forward'}
+        size={external ? 16 : 18}
+        color={color.paperDim}
+      />
     </Pressable>
   );
 }
@@ -141,7 +221,6 @@ const styles = StyleSheet.create({
   // Member card carries the screen's single accent (hi-vis surface).
   card: { marginHorizontal: space.lg, backgroundColor: color.hiVis, padding: space.lg },
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  cardName: { ...type.title, fontSize: 17, color: color.onHiVis },
   cardTier: { ...type.eyebrow, color: color.onHiVis, opacity: 0.7, marginTop: 4 },
   cardBottom: { flexDirection: 'row', alignItems: 'baseline', gap: space.sm, marginTop: space.xl },
   cardPoints: { ...type.price, fontSize: 30, lineHeight: 34, color: color.onHiVis },
@@ -167,4 +246,5 @@ const styles = StyleSheet.create({
   liveText: { ...type.eyebrow, color: color.paper },
 
   note: { ...type.caption, color: color.paperDim, paddingHorizontal: space.lg, marginTop: space.xl },
+  version: { ...type.eyebrow, color: color.paperMute, paddingHorizontal: space.lg, marginTop: space.md },
 });

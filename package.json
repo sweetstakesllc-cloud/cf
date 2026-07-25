@@ -1,13 +1,13 @@
 {
   "name": "circular-fash",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "main": "index.ts",
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "tsc": "tsc --noEmit"
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@expo-google-fonts/archivo": "^0.4.2",

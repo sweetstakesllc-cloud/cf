@@ -8,23 +8,31 @@
       "developmentClient": true,
       "distribution": "internal",
       "ios": { "simulator": true },
-      "channel": "development"
+      "channel": "development",
+      "environment": "development"
     },
     "development-device": {
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "channel": "development",
+      "environment": "development"
     },
     "preview": {
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "environment": "preview"
     },
     "production": {
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "environment": "production"
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "ios": {
+        "appleTeamId": "D733G94FZQ"
+      }
+    }
   }
 }

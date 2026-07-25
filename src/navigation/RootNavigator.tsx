@@ -5,6 +5,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 
 import { color, font, border } from '../theme';
+import { features } from '../features';
 import type { RootStackParamList, TabParamList } from './types';
 
 import HomeScreen from '../screens/HomeScreen';
@@ -61,8 +62,8 @@ function Tabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} />
       <Tab.Screen name="Saved" component={SavedScreen} />
-      <Tab.Screen name="Alerts" component={AlertsScreen} />
-      <Tab.Screen name="Sell" component={SellScreen} />
+      {features.alerts && <Tab.Screen name="Alerts" component={AlertsScreen} />}
+      {features.sell && <Tab.Screen name="Sell" component={SellScreen} />}
       <Tab.Screen name="Account" component={AccountScreen} />
     </Tab.Navigator>
   );
@@ -83,14 +84,16 @@ export default function RootNavigator() {
         component={ProductDetailScreen}
         options={{ animation: 'slide_from_bottom' }}
       />
-      <Stack.Screen name="Rewards" component={RewardsScreen} />
-      <Stack.Screen name="Refer" component={ReferScreen} />
-      <Stack.Screen name="Live" component={LiveScreen} />
-      <Stack.Screen
-        name="Chat"
-        component={ChatScreen}
-        options={{ animation: 'slide_from_bottom' }}
-      />
+      {features.rewards && <Stack.Screen name="Rewards" component={RewardsScreen} />}
+      {features.refer && <Stack.Screen name="Refer" component={ReferScreen} />}
+      {features.live && <Stack.Screen name="Live" component={LiveScreen} />}
+      {features.chat && (
+        <Stack.Screen
+          name="Chat"
+          component={ChatScreen}
+          options={{ animation: 'slide_from_bottom' }}
+        />
+      )}
     </Stack.Navigator>
   );
 }
