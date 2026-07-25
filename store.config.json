@@ -1,0 +1,59 @@
+{
+  "configVersion": 0,
+  "apple": {
+    "version": "1.0.0",
+    "info": {
+      "en-US": {
+        "title": "Circular Fash",
+        "subtitle": "Authenticated pre-owned luxury",
+        "description": "Circular Fash is the home for authenticated pre-owned luxury fashion — a curated archive of one-of-one pieces from the world's most sought-after houses, each verified and condition-graded in-house.\n\nBrowse a live catalog of Moncler, Gucci, Stone Island, C.P. Company, Louis Vuitton, Prada, Burberry and more. Because almost every piece is unique — a single item that never restocks — what you see is what's genuinely available, updated in real time.\n\nWHAT YOU'LL FIND\n• Authenticated luxury — every item verified against brand references, with condition honestly graded.\n• One-of-one inventory — unique pieces, shown against original retail so you see the value at a glance.\n• Real-time availability — sold pieces are marked instantly; new arrivals land continuously.\n• Secure checkout — buy in a few taps through Shopify's trusted, secure checkout.\n\nABOUT CIRCULAR FASH\nCircular Fash is a Sweden-based destination for authentic pre-owned luxury. Every piece passes through our in-house authentication and grading before it reaches you.\n\nQuestions about an order or a specific item? Reach us any time at circularfash.com.",
+        "keywords": [
+          "luxury",
+          "resale",
+          "preowned",
+          "designer",
+          "vintage",
+          "secondhand",
+          "fashion",
+          "archive",
+          "authenticated",
+          "streetwear"
+        ],
+        "marketingUrl": "https://circularfash.com",
+        "supportUrl": "https://circularfash.com/pages/contact",
+        "privacyPolicyUrl": "https://circularfash.com/policies/privacy-policy",
+        "promoText": "Authenticated pre-owned luxury — Moncler, Gucci, Stone Island, Louis Vuitton & more. One-of-one pieces, each verified in-house. New drops land continuously."
+      }
+    },
+    "categories": ["SHOPPING", "LIFESTYLE"],
+    "advisory": {
+      "alcoholTobaccoOrDrugUseOrReferences": "NONE",
+      "contests": "NONE",
+      "gamblingSimulated": "NONE",
+      "horrorOrFearThemes": "NONE",
+      "matureOrSuggestiveThemes": "NONE",
+      "medicalOrTreatmentInformation": "NONE",
+      "profanityOrCrudeHumor": "NONE",
+      "sexualContentGraphicAndNudity": "NONE",
+      "sexualContentOrNudity": "NONE",
+      "violenceCartoonOrFantasy": "NONE",
+      "violenceRealistic": "NONE",
+      "violenceRealisticProlongedGraphicOrSadistic": "NONE",
+      "gambling": false,
+      "unrestrictedWebAccess": false,
+      "kidsAgeBand": null,
+      "seventeenPlus": false
+    },
+    "release": {
+      "automaticRelease": false
+    },
+    "review": {
+      "firstName": "Oliver",
+      "lastName": "Friberg Qvarfordt",
+      "email": "info@circularfash.com",
+      "phone": "+46702185503",
+      "demoAccountRequired": false,
+      "notes": "Circular Fash AB is a Sweden-based registered retailer (org. nr 559449-3966) of authentic pre-owned luxury fashion, operating the storefront at circularfash.com. Every item in the app is a genuine second-hand piece that we authenticate and condition-grade in-house before listing; we are the seller of these physical goods.\n\nThe app is a browse-and-buy catalog of our own inventory. Brand names and logos appear only to accurately describe the authentic pre-owned items we resell; we do not claim affiliation with or endorsement by these brands.\n\nCheckout uses Shopify's secure hosted checkout for physical goods shipped to the customer. There are no digital goods or in-app purchases, and no account/login is required — so no demo credentials are needed."
+    }
+  }
+}
