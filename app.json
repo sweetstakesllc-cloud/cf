@@ -14,7 +14,9 @@
       "backgroundColor": "#FFFFFF",
       "resizeMode": "contain"
     },
-    "assetBundlePatterns": ["**/*"],
+    "assetBundlePatterns": [
+      "**/*"
+    ],
     "ios": {
       "supportsTablet": false,
       "bundleIdentifier": "com.circularfash.app",
@@ -37,6 +39,12 @@
       "eas": {
         "projectId": "1d1916a9-1066-4a91-b472-f639428bb3f1"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/1d1916a9-1066-4a91-b472-f639428bb3f1"
     }
   }
 }
