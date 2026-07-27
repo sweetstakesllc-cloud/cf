@@ -32,6 +32,7 @@ yarn-error.*
 
 # local dev scratch (screenshots, catalog regen, probes)
 _*.js
+_*.json
 *.png
 !assets/**
 store-screenshots/
