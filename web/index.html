@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Circular Fash — Authenticated Pre-Owned Luxury</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Assistant:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="assets/site.css">
+</head>
+<body>
+
+<!-- Nav links point at local mockup files so the prototype is clickable.
+     data-shopify holds the real store route each link returns to in Phase 2. -->
+<div class="util">
+  <div class="wrap util-in">
+    <a href="#newsletter">Join Our Newsletter</a>
+    <div class="util-right">
+      <span class="muted">Live on TikTok daily · 19:00</span>
+      <a href="sell.html" data-shopify="/pages/sell-to-us-1">Sell Now</a>
+      <a href="#">Sign In</a>
+      <span class="muted">Sweden · SEK kr</span>
+    </div>
+  </div>
+</div>
+
+<div class="masthead">
+  <div class="wrap">
+    <div class="mast-top">
+      <div class="mast-left"><a href="#">Search</a></div>
+      <a class="biglogo" href="index.html" data-shopify="/">Circular Fash</a>
+      <div class="mast-right"><a href="cart.html" data-shopify="/cart">Cart (0)</a></div>
+    </div>
+    <nav class="cats" aria-label="Main">
+      <div><a class="top" href="collection.html" data-shopify="/collections/new">New Arrivals</a></div>
+      <div>
+        <a class="top" href="collection.html" data-shopify="/collections/all">Designers</a>
+        <div class="drop">
+          <span class="head">Top Designers</span>
+          <a href="collection.html" data-shopify="/collections/all">Gucci</a><a href="collection.html" data-shopify="/collections/all">Louis Vuitton</a>
+          <a href="collection.html" data-shopify="/collections/all">Moncler</a><a href="collection.html" data-shopify="/collections/all">Burberry</a>
+          <a href="collection.html" data-shopify="/collections/all">Dior</a><a href="collection.html" data-shopify="/collections/all">Celine</a>
+          <a href="collection.html" data-shopify="/collections/all">Fendi</a><a href="collection.html" data-shopify="/collections/all">Prada</a>
+          <a href="collection.html" data-shopify="/collections/all">Canada Goose</a><a href="collection.html" data-shopify="/collections/all">Stone Island</a>
+          <a href="collection.html" data-shopify="/collections/all">Saint Laurent</a><a href="collection.html" data-shopify="/collections/all">Shop All Designers</a>
+        </div>
+      </div>
+      <div><a class="top" href="collection.html" data-shopify="/collections/women">Bags</a></div>
+      <div><a class="top" href="collection.html" data-shopify="/collections/mens">Men</a></div>
+      <div><a class="top" href="collection.html" data-shopify="/collections/women">Women</a></div>
+      <div><a class="top" href="collection.html" data-shopify="/collections/accessories">Accessories</a></div>
+      <div><a class="top" href="live.html" data-shopify="/pages/live">Live</a></div>
+    </nav>
+  </div>
+</div>
+
+<section class="hero" style="padding:0">
+  <div class="bg">
+    <img class="blur" src="https://circularfash.com/cdn/shop/files/F5976BE4-6FF3-4292-8726-79D7454A6B90.jpg?v=1785401188&width=800" alt="" aria-hidden="true" onerror="this.remove()">
+    <img class="sharp" src="https://circularfash.com/cdn/shop/files/F5976BE4-6FF3-4292-8726-79D7454A6B90.jpg?v=1785401188&width=1600" alt="" onerror="this.remove()">
+  </div>
+  <div class="hero-inner">
+    <span class="eyebrow">Pre-Loved Luxury · Authenticated in Sweden</span>
+    <h1>Luxury deserves a second life</h1>
+    <p class="sub">Hand-picked pieces from Gucci, Louis Vuitton, Moncler and more — every item verified by our experts, up to 80% below retail.</p>
+    <div class="cta-row">
+      <a class="btn solid" href="collection.html" data-shopify="/collections/all">Shop All</a>
+      <a class="btn ghost" href="sell.html" data-shopify="/pages/sell-to-us-1">Sell Now</a>
+    </div>
+    <span class="live-line"><span class="live-dot"></span>Live on TikTok every day at 19:00</span>
+  </div>
+</section>
+
+<section>
+  <div class="wrap">
+    <div class="sec-head">
+      <h2>Fresh Finds</h2>
+      <p class="sec-sub">Your daily designer drop. <a href="collection.html" data-shopify="/collections/new">Shop New Arrivals</a></p>
+    </div>
+
+    <div class="filters" aria-label="Filter products">
+      <div class="pill-group" role="group" aria-label="Gender">
+        <button class="pill active" data-gender="all">All</button>
+        <button class="pill" data-gender="men">Men</button>
+        <button class="pill" data-gender="women">Women</button>
+      </div>
+      <select id="filter-brand" aria-label="Filter by brand">
+        <option value="all">Designer: All</option>
+        <option value="burberry">Burberry</option>
+        <option value="celine">Celine</option>
+        <option value="gucci">Gucci</option>
+        <option value="louis-vuitton">Louis Vuitton</option>
+        <option value="moncler">Moncler</option>
+      </select>
+      <select id="filter-size" aria-label="Filter by size">
+        <option value="all">Size: All</option>
+        <option value="s">S</option>
+        <option value="m">M</option>
+        <option value="l">L</option>
+        <option value="w30">W30</option>
+        <option value="onesize">One size</option>
+      </select>
+      <button class="clear" id="filter-clear">Clear</button>
+      <span class="result-count" id="result-count"></span>
+    </div>
+
+    <div class="grid" id="product-grid">
+
+      <a class="card" data-gender="women" data-brand="louis-vuitton" data-size="onesize" href="product.html" data-shopify="/products/louis-vuitton-alma-pm-1">
+        <div class="frame" data-label="Louis Vuitton — Alma PM">
+          <img class="main" src="https://circularfash.com/cdn/shop/files/F5976BE4-6FF3-4292-8726-79D7454A6B90.jpg?v=1785401188&width=800" alt="Louis Vuitton Alma PM" loading="lazy" onerror="this.remove()">
+          <img class="alt" src="https://circularfash.com/cdn/shop/files/97C68F86-6A6C-4448-9768-FA4ACBC37C2B.jpg?v=1785401188&width=800" alt="" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="card-info">
+          <div class="brand">Louis Vuitton</div>
+          <div class="pname">Monogram Alma PM Top Handle Bag</div>
+          <div class="cond">Condition: Excellent</div>
+          <div class="price">4 200 kr</div>
+          <div class="retail-line">Est. retail 20 400 kr · <b>79% below retail</b></div>
+        </div>
+      </a>
+
+      <a class="card" data-gender="women" data-brand="gucci" data-size="onesize" href="product.html" data-shopify="/products/gucci-jackie-gg-canvas-one-shoulder-bag-with-patterned-interior-1">
+        <div class="frame" data-label="Gucci — Jackie GG Canvas">
+          <img class="main" src="https://circularfash.com/cdn/shop/files/EB850BE8-3FBF-4079-B497-DB7156DF5B78.jpg?v=1784890159&width=800" alt="Gucci Jackie GG Canvas shoulder bag" loading="lazy" onerror="this.remove()">
+          <img class="alt" src="https://circularfash.com/cdn/shop/files/0392F965-6E56-4B5A-BDC3-C99D8925AB04.jpg?v=1784890159&width=800" alt="" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="card-info">
+          <div class="brand">Gucci</div>
+          <div class="pname">Jackie GG Canvas One Shoulder Bag</div>
+          <div class="cond">Condition: Very Good</div>
+          <div class="price">3 300 kr</div>
+          <div class="retail-line">Est. retail 19 000 kr · <b>83% below retail</b></div>
+        </div>
+      </a>
+
+      <a class="card" data-gender="women" data-brand="louis-vuitton" data-size="onesize" href="product.html" data-shopify="/products/louis-vuitton-speedy-37">
+        <div class="frame" data-label="Louis Vuitton — Speedy 35">
+          <img class="main" src="https://circularfash.com/cdn/shop/files/CF7A4DE5-EDC9-4988-B79E-8BBA402F7958.jpg?v=1784904085&width=800" alt="Louis Vuitton Speedy 35" loading="lazy" onerror="this.remove()">
+          <img class="alt" src="https://circularfash.com/cdn/shop/files/4A078EA7-0E43-4546-83C7-37C8DC826CBF.jpg?v=1784904085&width=800" alt="" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="card-info">
+          <div class="brand">Louis Vuitton</div>
+          <div class="pname">Monogram Speedy 35 Handbag</div>
+          <div class="cond">Condition: Very Good</div>
+          <div class="price">3 900 kr</div>
+          <div class="retail-line">Est. retail 20 400 kr · <b>81% below retail</b></div>
+        </div>
+      </a>
+
+      <a class="card" data-gender="men" data-brand="gucci" data-size="m" href="product.html" data-shopify="/products/gucci-off-grid-bucket-hat-blue-1">
+        <div class="frame" data-label="Gucci — Bucket Hat">
+          <img class="main" src="https://circularfash.com/cdn/shop/files/78441C1D-FE19-46D5-B7B1-C4310982F7B5.jpg?v=1785424752&width=800" alt="Gucci Off The Grid bucket hat in blue" loading="lazy" onerror="this.remove()">
+          <img class="alt" src="https://circularfash.com/cdn/shop/files/6F59E751-5FA8-462A-BF8B-26B01F44062A.jpg?v=1785424752&width=800" alt="" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="card-info">
+          <div class="brand">Gucci</div>
+          <div class="pname">Off The Grid Bucket Hat Blue · M</div>
+          <div class="cond">Condition: Excellent</div>
+          <div class="price">2 100 kr</div>
+          <div class="retail-line">Est. retail 5 500 kr · <b>62% below retail</b></div>
+        </div>
+      </a>
+
+      <a class="card" data-gender="women" data-brand="celine" data-size="onesize" href="product.html" data-shopify="/products/celine-shoulder-bag">
+        <div class="frame" data-label="Celine — Shoulder Bag">
+          <img class="main" src="https://circularfash.com/cdn/shop/files/3453496F-857D-4EA3-A46B-BB48B5FF7FEC.jpg?v=1785401289&width=800" alt="Celine shoulder bag" loading="lazy" onerror="this.remove()">
+          <img class="alt" src="https://circularfash.com/cdn/shop/files/F0DE7833-8496-4EBD-9B6C-272D59FB0CD2.jpg?v=1785401289&width=800" alt="" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="card-info">
+          <div class="brand">Celine</div>
+          <div class="pname">Vintage Macadam Shoulder Bag</div>
+          <div class="cond">Condition: Good</div>
+          <div class="price">2 800 kr</div>
+          <div class="retail-line">&nbsp;</div>
+        </div>
+      </a>
+
+      <a class="card" data-gender="men" data-brand="gucci" data-size="onesize" href="product.html" data-shopify="/products/gucci-bi-fold-long-wallet">
+        <div class="frame" data-label="Gucci — Long Wallet">
+          <img class="main" src="https://circularfash.com/cdn/shop/files/1231AF37-AECA-4947-9953-DEF3212D7A0E.jpg?v=1785423388&width=800" alt="Gucci bi-fold long wallet" loading="lazy" onerror="this.remove()">
+          <img class="alt" src="https://circularfash.com/cdn/shop/files/807BA47D-4A94-4E41-A74A-393E47FA5954.jpg?v=1785423388&width=800" alt="" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="card-info">
+          <div class="brand">Gucci</div>
+          <div class="pname">GG Bi-Fold Long Wallet</div>
+          <div class="cond">Condition: Very Good</div>
+          <div class="price">1 600 kr</div>
+          <div class="retail-line">Est. retail 5 000 kr · <b>68% below retail</b></div>
+        </div>
+      </a>
+
+      <a class="card" data-gender="men" data-brand="burberry" data-size="l" href="product.html" data-shopify="/products/burberry-check-polo-shirt-8">
+        <div class="frame" data-label="Burberry — Check Polo">
+          <img class="main" src="https://circularfash.com/cdn/shop/files/FF3FBB00-A4EC-4AC3-B226-4043D03F8AB5.jpg?v=1784908563&width=800" alt="Burberry check polo shirt" loading="lazy" onerror="this.remove()">
+          <img class="alt" src="https://circularfash.com/cdn/shop/files/AFAA4282-B519-4AB0-AEB7-63A59FE892FF.jpg?v=1784908563&width=800" alt="" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="card-info">
+          <div class="brand">Burberry</div>
+          <div class="pname">Vintage Check Polo Shirt · L</div>
+          <div class="cond">Condition: Excellent</div>
+          <div class="price">900 kr</div>
+          <div class="retail-line">Est. retail 4 000 kr · <b>78% below retail</b></div>
+        </div>
+      </a>
+
+      <a class="card" data-gender="men" data-brand="moncler" data-size="s" href="product.html" data-shopify="/products/moncler-double-logo-polo-shirt-3">
+        <div class="frame" data-label="Moncler — Double Logo Polo">
+          <img class="main" src="https://circularfash.com/cdn/shop/files/953D659E-6BDA-4B4B-9733-4B2717728EA3.jpg?v=1784908358&width=800" alt="Moncler double logo polo shirt" loading="lazy" onerror="this.remove()">
+          <img class="alt" src="https://circularfash.com/cdn/shop/files/F68889C1-A828-4BFA-92B4-0B5F05718A5E.jpg?v=1784908358&width=800" alt="" loading="lazy" onerror="this.remove()">
+        </div>
+        <div class="card-info">
+          <div class="brand">Moncler</div>
+          <div class="pname">Double Logo Polo Shirt · S</div>
+          <div class="cond">Condition: Excellent</div>
+          <div class="price">1 200 kr</div>
+          <div class="retail-line">Est. retail 3 670 kr · <b>67% below retail</b></div>
+        </div>
+      </a>
+
+    </div>
+    <p class="no-results" id="no-results">No items match these filters. Clear them to see everything again.</p>
+  </div>
+</section>
+
+<section style="padding-top:0">
+  <div class="wrap tiles">
+    <div class="tile" id="live">
+      <div class="media">
+        <video src="media/live-hero.mp4" autoplay muted loop playsinline></video>
+      </div>
+      <div class="tile-inner">
+        <span class="kicker">Circular Fash Live</span>
+        <h3>Shop With Us on TikTok Live</h3>
+        <a class="btn solid" href="live.html" data-shopify="/pages/live">Watch Today · 19:00</a>
+      </div>
+    </div>
+    <div class="tile">
+      <div class="media">
+        <img src="https://circularfash.com/cdn/shop/files/9A1F83C7-4A37-4A40-B3EE-2E7E4867FFD5.jpg?v=1785360865&width=1200" alt="" loading="lazy" onerror="this.remove()">
+      </div>
+      <div class="tile-inner">
+        <span class="kicker">Explore</span>
+        <h3>Ways to Sell</h3>
+        <a class="btn" href="sell.html" data-shopify="/pages/sell-to-us-1">Sell Now</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="features">
+  <div class="wrap feat-grid">
+    <div class="feat">
+      <div class="phone">
+        <div class="frame" data-label="Stream clip">
+          <video src="media/live-replay.mp4" autoplay muted loop playsinline></video>
+          <span class="live-tag">LIVE</span>
+        </div>
+      </div>
+      <h3><span class="live-dot"></span>Circular Fash TV</h3>
+      <p>Shop with us on TikTok LIVE — every day at 19:00. See pieces up close and buy on the spot.</p>
+      <a class="link" href="https://www.tiktok.com/@circularfash">Follow Us</a>
+    </div>
+    <div class="feat">
+      <div class="icon">✓</div>
+      <h3>Authenticated</h3>
+      <p>Every item is inspected and verified by our experts before listing. If it isn't genuine, it isn't here.</p>
+      <a class="link" href="authenticity.html" data-shopify="/pages/authenticity">Our Process</a>
+    </div>
+    <div class="feat">
+      <div class="icon">↺</div>
+      <h3>Circular by Design</h3>
+      <p>Ships from Sweden with 14-day returns. Pre-owned keeps exceptional pieces in circulation.</p>
+      <a class="link" href="#" data-shopify="/pages/return-policy">Shipping &amp; Returns</a>
+    </div>
+  </div>
+</section>
+
+<footer id="newsletter">
+  <div class="wrap">
+    <div class="foot-grid">
+      <div>
+        <span class="flogo">Circular Fash</span>
+        <p style="max-width:30ch">Authenticated pre-owned luxury fashion, shipped from Sweden to the world.</p>
+      </div>
+      <div>
+        <h4>Shop With Us</h4>
+        <ul>
+          <li><a href="collection.html" data-shopify="/collections/new">New Arrivals</a></li>
+          <li><a href="collection.html" data-shopify="/collections/mens">Men</a></li>
+          <li><a href="collection.html" data-shopify="/collections/women">Women</a></li>
+          <li><a href="authenticity.html" data-shopify="/pages/authenticity">Authenticity</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Sell With Us</h4>
+        <ul>
+          <li><a href="sell.html" data-shopify="/pages/sell-to-us-1">Ways to Sell</a></li>
+          <li><a href="sell.html#submit" data-shopify="/pages/sell-to-us-1">Submit an Item</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Customer Service</h4>
+        <ul>
+          <li><a href="about.html" data-shopify="/pages/about">About Us</a></li>
+          <li><a href="#" data-shopify="/pages/contact">Contact Us</a></li>
+          <li><a href="#" data-shopify="/pages/return-policy">Returns</a></li>
+          <li><a href="#" data-shopify="/apps/help-center">FAQ</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4>Join Our Newsletter</h4>
+        <p>New drops and live schedule, straight to your inbox.</p>
+        <div class="newsletter">
+          <input type="email" placeholder="Email address" aria-label="Email address">
+          <button type="button">Sign Up</button>
+        </div>
+      </div>
+    </div>
+    <div class="foot-bottom">
+      <span>© 2026 Circular Fash</span>
+      <span><a href="https://www.tiktok.com/@circularfash">TikTok</a> &nbsp;·&nbsp; <a href="https://www.instagram.com/circularfash_/">Instagram</a> &nbsp;·&nbsp; <a href="https://www.facebook.com/groups/923079832366605">Facebook</a> &nbsp;·&nbsp; <a href="https://www.trustpilot.com/review/circularfash.com">Trustpilot</a></span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var state = {gender:'all', brand:'all', size:'all'};
+  var cards = document.querySelectorAll('#product-grid .card');
+  var count = document.getElementById('result-count');
+  var noRes = document.getElementById('no-results');
+  var pills = document.querySelectorAll('.pill[data-gender]');
+  var brandSel = document.getElementById('filter-brand');
+  var sizeSel = document.getElementById('filter-size');
+  function apply(){
+    var visible = 0;
+    cards.forEach(function(c){
+      var ok = (state.gender==='all' || c.dataset.gender===state.gender)
+            && (state.brand==='all'  || c.dataset.brand===state.brand)
+            && (state.size==='all'   || c.dataset.size===state.size);
+      c.classList.toggle('hidden', !ok);
+      if(ok) visible++;
+    });
+    count.textContent = visible + ' item' + (visible===1?'':'s');
+    noRes.classList.toggle('show', visible===0);
+  }
+  pills.forEach(function(p){
+    p.addEventListener('click', function(){
+      pills.forEach(function(x){x.classList.remove('active')});
+      p.classList.add('active');
+      state.gender = p.dataset.gender;
+      apply();
+    });
+  });
+  brandSel.addEventListener('change', function(){ state.brand = this.value; apply(); });
+  sizeSel.addEventListener('change', function(){ state.size = this.value; apply(); });
+  document.getElementById('filter-clear').addEventListener('click', function(){
+    state = {gender:'all', brand:'all', size:'all'};
+    pills.forEach(function(x){x.classList.toggle('active', x.dataset.gender==='all')});
+    brandSel.value = 'all'; sizeSel.value = 'all';
+    apply();
+  });
+  apply();
+})();
+</script>
+</body>
+</html>

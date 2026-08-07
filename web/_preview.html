@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<!-- DEV ONLY — not part of the deliverable. Delete before zipping for the client.
+     Renders a page inside an iframe of an exact width so media queries evaluate
+     against a true mobile/tablet viewport (headless Chrome enforces a ~500px
+     minimum window width, so --window-size=375 does NOT reflow correctly).
+     Usage: /_preview.html?page=collection.html&w=375&h=3000            -->
+<html><head><meta charset="utf-8"><title>preview</title>
+<style>
+  body{margin:0;background:#DADADA;font:12px/1.4 system-ui,sans-serif}
+  .row{display:flex;align-items:flex-start;gap:24px;padding:24px}
+  figure{margin:0}
+  figcaption{padding:6px 2px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#444}
+  iframe{border:0;background:#fff;display:block;box-shadow:0 2px 14px rgba(0,0,0,.2)}
+</style></head><body>
+<div class="row" id="row"></div>
+<script>
+  var q = new URLSearchParams(location.search);
+  var page = q.get('page') || 'index.html';
+  var h    = parseInt(q.get('h') || '3000', 10);
+  var ws   = (q.get('w') || '375').split(',').map(Number);
+  var row  = document.getElementById('row');
+  ws.forEach(function(w){
+    var fig = document.createElement('figure');
+    var cap = document.createElement('figcaption');
+    cap.textContent = page + ' @ ' + w + 'px';
+    var f = document.createElement('iframe');
+    f.src = '/' + page; f.width = w; f.height = h;
+    fig.appendChild(cap); fig.appendChild(f); row.appendChild(fig);
+  });
+</script>
+</body></html>

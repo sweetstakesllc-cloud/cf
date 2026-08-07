@@ -35,3 +35,6 @@ _*.js
 _*.json
 *.png
 !assets/**
+
+# static web mockups: regenerable catalogue cache
+web/_build/cache/
