@@ -63,9 +63,35 @@ Other data notes:
 
 ## 2. Credentials needed
 
-1. **Admin API token** — Shopify admin → Settings → Apps and sales channels → Develop apps → Create an app → Configure Admin API scopes → `read_products`, `write_products` → Install → reveal token once.
-2. **Search & Discovery** app (free) — install from the Shopify App Store.
-3. **Theme access** — either a Shopify CLI browser login, or the Theme Access app for a scoped password.
+> **Corrected 2026-08-07.** This section previously said to create a custom app in
+> the Shopify admin and copy a static `shpat_…` token. **That route no longer
+> exists** — Shopify withdrew legacy custom apps on 2026-01-01. There is no
+> permanent token to copy any more; you exchange a client ID and secret for a
+> 24-hour one. Existing pre-2026 custom apps still work, so older guides (and
+> other Shopify docs) will disagree with this.
+
+1. **Admin API access** — Dev Dashboard → Create app → **Versions** → new version →
+   Scopes `read_products,write_products` → Release → **Install app** → select the
+   store. Then take the **Client ID** and **Secret** from the app's Settings →
+   Credentials and put them in the repo's gitignored `.env`:
+   ```
+   SHOPIFY_SHOP=<the admin.shopify.com/store/<this> handle>
+   SHOPIFY_CLIENT_ID=...
+   SHOPIFY_CLIENT_SECRET=...
+   ```
+   `_build/cleanup.js` exchanges these for a token itself
+   (`POST /admin/oauth/access_token`, `grant_type=client_credentials`, expires every
+   86399s). The app and the store must be in the same Shopify organization —
+   client credentials does not work across organizations.
+
+   Done for this project: app **Admin API Scopes**, client ID
+   `8938ee2d3c495514a3738dd354f2aa4e`, installed 2026-08-07 with Products
+   view + edit. Only the secret is still needed.
+
+2. **Search & Discovery** app (free) — install from the Shopify App Store. Not
+   urgent: it has nothing to facet on until the §3 cleanup has run.
+3. **Theme access** — either a Shopify CLI browser login, or the Theme Access app
+   for a scoped password.
 
 Never work on the published theme. Duplicate it first and work on the copy.
 
@@ -73,11 +99,30 @@ Never work on the published theme. Duplicate it first and work on the copy.
 
 ## 3. Catalogue cleanup — the first thing that writes to the store
 
-The parsing logic already exists and is proven: `web/_build/generate.js` resolves a
-designer for **208 of 208** in-stock products (0 unmatched) and a category for 184.
-Lift `designerOf()`, `categoryOf()`, `flatten()` and the `DESIGNERS` list from it.
+**Built and run as a dry run on 2026-08-07 — `node _build/cleanup.js`.** Nothing is
+written to the store; it emits `_build/out/vendor-type-dryrun.csv` (`handle, title,
+old_vendor, new_vendor, vendor_changes, old_type, new_type, type_changes, in_stock,
+sold`) for the client to read. Re-run with `--apply` once they have signed it off
+and a products CSV backup has been exported from admin. `--apply` currently exits
+before mutating anything; unblock it deliberately.
 
-Two details that took two passes to get right — keep them:
+Measured over all **524** published products, not just the in-stock 208:
+
+| | Resolved | Rewrites |
+|---|---|---|
+| `vendor` | 524 / 524 | 524 |
+| `product_type` | 524 / 524 | 524 |
+
+The derivation now lives in `web/_build/parse.js`, shared by `generate.js` and
+`cleanup.js` so the signed-off pages and the data written to the store cannot
+disagree. Three details that took several passes — keep them:
+- Category alternatives all carry a trailing `s?`. `\bsneaker\b` does **not** match
+  "Sneakers", and the catalogue pluralises freely — without it "Jeans", "Pants",
+  "Shorts" and "Trainers" silently fell through to `Other` (12% of the catalogue).
+- `"Noé"` ends in a non-word character, so a trailing `\b` can never match it.
+  Anchor the front only.
+- Rule order matters: "Bucket Hat" must reach `Accessories` before `bucket` claims
+  it for `Bags`.
 - `flatten()` strips `.`, `'`, `-` before matching, so `C.P. Company` / `C.P Company` / `CP Company` all resolve to one label. Without it, ~8% of titles fail to match.
 - The same flattened window-match is used to strip the designer back out of the display title, so the card shows `Louis Vuitton` + `Keepall Bandouliere 50` rather than repeating the brand.
 
