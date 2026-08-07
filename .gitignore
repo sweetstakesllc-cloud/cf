@@ -38,3 +38,4 @@ _*.json
 
 # static web mockups: regenerable catalogue cache
 web/_build/cache/
+web/_build/out/

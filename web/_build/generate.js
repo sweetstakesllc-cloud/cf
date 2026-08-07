@@ -44,102 +44,12 @@ async function loadCatalogue({ refresh }) {
 
 /* ---------------------------------------------------------- field derivation */
 
-// Longest first, so "Polo Ralph Lauren" wins over "Ralph Lauren".
-const DESIGNERS = [
-  'Louis Vuitton', 'Christian Louboutin', 'Salvatore Ferragamo', 'Bottega Veneta',
-  'Alexander McQueen', 'Vivienne Westwood', 'Maison Margiela', 'Comme des Garcons',
-  'Polo Ralph Lauren', 'Emporio Armani', 'Stone Island', 'Canada Goose',
-  'Saint Laurent', 'Acne Studios', 'The North Face', 'Tommy Hilfiger',
-  'Axel Arigato', 'Palm Angels', 'Isabel Marant', 'Ralph Lauren', 'Hugo Boss',
-  'Jimmy Choo', 'Parajumpers', 'CP Company', 'Napapijri', 'Off-White',
-  'Balenciaga', 'Dsquared2', 'Longchamp', 'Valentino', 'Givenchy', 'Burberry',
-  'Moncler', 'Woolrich', 'Belstaff', 'Mulberry', 'Michael Kors', 'Filippa K',
-  'Our Legacy', 'Max Mara', 'Jil Sander', 'Miu Miu', 'Balmain', 'Barbour',
-  'Trapstar', 'Corteiz', 'Represent', 'Chrome Hearts', 'Marc Jacobs',
-  'Armani', 'Versace', 'Carhartt', 'Patagonia', 'Arcteryx', 'Champion',
-  'Lacoste', 'Ellesse', 'Toteme', 'Ganni', 'Loewe', 'Marni', 'Kenzo',
-  'Hermes', 'Chanel', 'Celine', 'Fendi', 'Prada', 'Gucci', 'Dior', 'Coach',
-  'Furla', 'Amiri', 'Diesel', 'Stussy', 'Adidas', 'Nike', 'Levis', 'Fila',
-  'Kappa', 'Nudie',
-  // Added after the first pass surfaced them in the unmatched list.
-  'Giuseppe Zanotti', 'Alexander Wang', 'Rick Owens', 'Thom Browne',
-  'Off White', 'MCM',
-  'Lanvin', 'Ami Paris', 'Ami', 'Etro', 'Zegna', 'Brunello Cucinelli',
-  'Herno', 'Mackage', 'Nobis', 'Peak Performance', 'Holzweiler', 'Rains',
-  'Sandro', 'Maje', 'Iro', 'Pinko', 'Twinset', 'Liu Jo', 'Elisabetta Franchi',
-];
+// Shared with cleanup.js, which writes these same derived values back to the
+// store — see _build/parse.js.
+const {
+  designerOf, stripDesigner, categoryOf, conditionOf, stripTags,
+} = require('./parse');
 
-// Observed misspellings in the live catalogue.
-const TYPOS = [
-  [/lo?uis\s+vo?ui?tton/i, 'Louis Vuitton'],
-  [/vuiton\b/i,            'Louis Vuitton'],
-  [/moncler?r\b/i,         'Moncler'],
-  [/c[ée]line/i,           'Celine'],
-];
-
-// The catalogue writes brands inconsistently — "C.P. Company", "C.P Company"
-// and "CP Company" are all the same label. Flatten punctuation before matching
-// so one list entry covers every spelling.
-const flatten = s => String(s).toLowerCase().replace(/[.'’\-]/g, '').replace(/\s+/g, ' ');
-
-function designerOf(title) {
-  for (const [re, name] of TYPOS) if (re.test(title)) return name;
-  const t = flatten(title);
-  for (const d of DESIGNERS) if (t.includes(flatten(d))) return d;
-  return null;
-}
-
-const tidy = s => s.replace(/^[\s\-–—·,|]+|[\s\-–—·,|]+$/g, '').replace(/\s{2,}/g, ' ');
-
-// Remove the designer's words from the title regardless of how they were
-// punctuated, by matching on the flattened form of each word window.
-function stripDesigner(title, designer) {
-  if (!designer) return title;
-  let tokens = title.split(/\s+/).filter(Boolean);
-  const target = flatten(designer);
-  for (let size = Math.min(4, tokens.length); size >= 1; size--) {
-    for (let i = 0; i + size <= tokens.length; i++) {
-      if (flatten(tokens.slice(i, i + size).join(' ')) === target) {
-        return tidy(tokens.slice(0, i).concat(tokens.slice(i + size)).join(' ')) || title;
-      }
-    }
-  }
-  let t = title;
-  for (const [re] of TYPOS) t = t.replace(re, '');
-  return tidy(t) || title;
-}
-
-const CATEGORIES = [
-  [/\b(keepall|speedy|alma|neverfull|pochette|noe|jackie|tote|handbag|shoulder bag|crossbody|clutch|backpack|duffle|bumbag|belt bag|bag)\b/i, 'Bags'],
-  [/\b(wallet|card holder|purse|belt|cap|hat|beanie|scarf|glove|sunglasses|keychain|tie)\b/i, 'Accessories'],
-  [/\b(sneaker|shoe|boot|loafer|trainer|slide|sandal)\b/i, 'Shoes'],
-  [/\b(jacket|coat|parka|gilet|vest|puffer|bomber|windbreaker|anorak)\b/i, 'Outerwear'],
-  [/\b(trouser|pant|jean|short|chino|cargo)\b/i, 'Bottoms'],
-  [/\b(hoodie|sweater|knit|jumper|cardigan|sweatshirt|polo|shirt|tee|t-shirt|top)\b/i, 'Tops'],
-];
-
-function categoryOf(title) {
-  for (const [re, c] of CATEGORIES) if (re.test(title)) return c;
-  return 'Other';
-}
-
-// Ordered by specificity — "new with tags" must beat "good".
-const CONDITIONS = [
-  [/new with tags|brand new|never used|unused/i, 'New with tags'],
-  [/like new|as new|mint/i,                      'Excellent'],
-  [/excellent/i,                                 'Excellent'],
-  [/very good|great condition/i,                 'Very Good'],
-  [/good condition|\bgood\b/i,                   'Good'],
-  [/fair|well used|heavily used/i,               'Fair'],
-];
-
-function conditionOf(bodyText) {
-  for (const [re, c] of CONDITIONS) if (re.test(bodyText)) return c;
-  return null;
-}
-
-const stripTags = html => (html || '').replace(/<[^>]*>/g, ' ')
-  .replace(/&nbsp;/g, ' ').replace(/\s+/g, ' ').trim();
 
 function sizesOf(product, variants) {
   const idx = (product.options || []).findIndex(o => /size|taille|storlek/i.test(o.name));
