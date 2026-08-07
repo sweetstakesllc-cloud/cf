@@ -135,6 +135,31 @@ async function graphql(cfg, token, query, variables) {
   return j.data;
 }
 
+// Only status:active. The store also holds 2 316 archived products (past sales)
+// and 36 drafts that the public feed never showed — leave them alone.
+async function fetchActive(cfg, token) {
+  const Q = `query($c: String) {
+    products(first: 250, query: "status:active", after: $c) {
+      pageInfo { hasNextPage endCursor }
+      edges { node { id handle title vendor productType } }
+    }
+  }`;
+  const out = [];
+  let cursor = null;
+  do {
+    const d = await graphql(cfg, token, Q, { c: cursor });
+    out.push(...d.products.edges.map(e => e.node));
+    cursor = d.products.pageInfo.hasNextPage ? d.products.pageInfo.endCursor : null;
+  } while (cursor);
+  return out;
+}
+
+function rollbackPath() {
+  fs.mkdirSync(OUT, { recursive: true });
+  const t = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
+  return path.join(OUT, `rollback-${t}.csv`);
+}
+
 /* --------------------------------------------------------------------- main */
 
 (async function main() {
@@ -197,7 +222,66 @@ async function graphql(cfg, token, query, variables) {
     process.exit(1);
   }
   console.log(`\ntoken acquired, scopes: ${scope}`);
-  console.error('\n--apply is wired but intentionally not enabled yet.');
-  console.error('Unblock it only after the client has signed off on the CSV.\n');
-  process.exit(1);
+
+  // Admin, not the public feed, is the source of truth for what we are about to
+  // overwrite — products.json omits drafts and reflects the Online Store channel
+  // only. Restrict to status:active: the other 2 353 products are archived past
+  // sales and 36 drafts, and must not be touched.
+  const live = await fetchActive(cfg, token);
+  console.log(`active products in admin  : ${live.length}`);
+
+  // Rollback file BEFORE any mutation. Shopify has no undo for a bulk vendor
+  // rewrite, and 505 of 524 product_type values are empty — once overwritten the
+  // original state is unrecoverable without this.
+  const stamp = rollbackPath();
+  fs.writeFileSync(stamp, [
+    'id,handle,vendor,product_type',
+    ...live.map(p => [p.id, p.handle, p.vendor || '', p.productType || ''].map(q).join(',')),
+  ].join('\n') + '\n');
+  console.log(`rollback written          : ${path.relative(process.cwd(), stamp)}`);
+
+  const work = live
+    .map(p => ({ p, plan: planFor({ ...p, product_type: p.productType, tags: [], variants: [] }) }))
+    .filter(({ p, plan }) => plan.newVendor !== (p.vendor || '') ||
+                             plan.newType   !== (p.productType || ''));
+
+  const limitArg = process.argv.find(a => a.startsWith('--limit='));
+  const limit    = limitArg ? parseInt(limitArg.split('=')[1], 10) : work.length;
+  const batch    = work.slice(0, limit);
+
+  console.log(`\nproducts needing a change : ${work.length}`);
+  console.log(`applying now              : ${batch.length}${limit < work.length ? '  (canary)' : ''}\n`);
+
+  const MUTATION = `mutation($input: ProductInput!) {
+    productUpdate(input: $input) {
+      product { id vendor productType }
+      userErrors { field message }
+    }
+  }`;
+
+  let ok = 0; const failed = [];
+  for (const [i, { p, plan }] of batch.entries()) {
+    try {
+      const d = await graphql(cfg, token, MUTATION, {
+        input: { id: p.id, vendor: plan.newVendor, productType: plan.newType },
+      });
+      const errs = d.productUpdate.userErrors;
+      if (errs && errs.length) { failed.push([p.handle, JSON.stringify(errs)]); }
+      else ok++;
+    } catch (e) {
+      failed.push([p.handle, e.message.slice(0, 120)]);
+    }
+    if ((i + 1) % 25 === 0 || i === batch.length - 1) {
+      process.stdout.write(`\r  ${i + 1}/${batch.length}  ok ${ok}  failed ${failed.length}`);
+    }
+  }
+  console.log('\n');
+
+  if (failed.length) {
+    console.log('failures:');
+    for (const [h, m] of failed.slice(0, 15)) console.log(`  ${h}  ${m}`);
+    if (failed.length > 15) console.log(`  … and ${failed.length - 15} more`);
+  }
+  console.log(`\ndone — ${ok} updated, ${failed.length} failed.`);
+  console.log(`revert with the rollback file if anything looks wrong.\n`);
 })();
