@@ -46,7 +46,7 @@
           "type": "qa",
           "settings": {
             "question": "Where do you ship?",
-            "answer": "<p>[TO CONFIRM — list the countries or regions you ship to, and note that returns are only accepted within the EU.]</p>",
+            "answer": "<p>We ship from Sweden to the European Union, the United Kingdom and the United States.</p><p>Please note that returns can only be accepted within the European Union, so orders to the UK and the US cannot be returned.</p>",
             "open": false
           }
         },
@@ -54,7 +54,7 @@
           "type": "qa",
           "settings": {
             "question": "How long does delivery take, and what does it cost?",
-            "answer": "<p>[TO CONFIRM — carrier, delivery time for Sweden / EU / rest of world, shipping cost and any free-shipping threshold. The shipping policy page is currently empty.]</p>",
+            "answer": "<p>Shipping is calculated at checkout from your delivery address. As a guide: within Sweden from 59 SEK with PostNord, with DHL and PostNord service point options from 69 SEK and an insured option at 179 SEK. Elsewhere in the EU it is around 156 SEK, and to the United Kingdom and the United States 159 SEK with PostNord or 199 SEK with UPS.</p><p>These are standard services, so delivery time depends on the carrier and the destination.</p>",
             "open": false
           }
         },
@@ -62,7 +62,7 @@
           "type": "qa",
           "settings": {
             "question": "Which payment methods can I use?",
-            "answer": "<p>[TO CONFIRM — list the payment methods enabled at checkout.]</p>",
+            "answer": "<p>We accept Visa, Mastercard, Maestro and American Express, as well as PayPal. You can also check out with Shop Pay, Apple Pay or Google Pay.</p>",
             "open": false
           }
         },
@@ -130,7 +130,7 @@
           "type": "qa",
           "settings": {
             "question": "Where can I see a piece up close before buying?",
-            "answer": "<p>We show pieces in hand on our TikTok live, at real scale and with the wear visible, and you can ask about anything before you commit. [TO CONFIRM — the days and time the stream runs.]</p>",
+            "answer": "<p>We show pieces in hand on our TikTok live, at real scale and with the wear visible, and you can ask about anything before you commit.</p><p>We do not run to a fixed schedule, so follow <a href=\"https://www.tiktok.com/@circularfash\">@circularfash</a> on TikTok and you will be notified when we go live.</p>",
             "open": false
           }
         }
