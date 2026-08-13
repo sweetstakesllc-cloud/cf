@@ -24,6 +24,24 @@
     endif
 
     assign source_links = section.settings.source_menu.links
+
+    comment
+      The brand links live nested under the BRANDS item of the main menu rather
+      than in a menu of their own, so a link_list setting alone cannot reach
+      them. source_item names the parent item to drill into.
+    endcomment
+    assign wanted = section.settings.source_item | downcase | strip
+    if wanted != blank
+      assign drilled = nil
+      for parent_link in source_links
+        assign parent_title = parent_link.title | downcase | strip
+        if parent_title == wanted
+          assign drilled = parent_link.links
+          break
+        endif
+      endfor
+      assign source_links = drilled
+    endif
   -%}
   {%- comment -%}
     When a source menu is set, the page mirrors that menu instead of dumping every
@@ -101,7 +119,13 @@
       "type": "link_list",
       "id": "source_menu",
       "label": "Show collections from menu",
-      "info": "Leave empty to list every collection in the store. Set it to the BRANDS menu so this page shows brands only."
+      "info": "Leave empty to list every collection in the store."
+    },
+    {
+      "type": "text",
+      "id": "source_item",
+      "label": "…under this menu item",
+      "info": "Name of the parent item to drill into, e.g. BRANDS. Leave empty to use the menu's top level."
     },
     {
       "type": "checkbox",

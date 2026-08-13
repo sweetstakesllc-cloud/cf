@@ -60,6 +60,8 @@
       "type": "main-list-collections",
       "settings": {
         "title": "",
+        "source_menu": "main-menu",
+        "source_item": "BRANDS",
         "hide_empty": true,
         "sort": "alphabetical",
         "image_ratio": "adapt",
