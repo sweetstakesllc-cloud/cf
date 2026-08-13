@@ -1,0 +1,206 @@
+// Transforms web/assets/site.css into a .cf-scoped theme asset so the mockup
+// design system can coexist with Refresh's base.css (which also uses .card,
+// .grid, .price, etc.).
+const fs = require('fs');
+const path = require('path');
+
+const ROOT = '/Users/shahloshanazarova/Desktop/claude/web';
+const src = fs.readFileSync(path.join(ROOT, 'assets/site.css'), 'utf8');
+
+const out = [];
+for (const line of src.split('\n')) {
+  const t = line.trim();
+
+  // drop rules the theme already handles globally
+  if (/^html\{/.test(t)) continue;
+
+  // keyframe steps + at-rules + closing braces + comments pass through
+  if (/^@/.test(t) || /^[\d]+%/.test(t) || /^(from|to)[,{]/.test(t) || !t.includes('{') || /^\/\*/.test(t) || /^\}/.test(t)) {
+    out.push(line);
+    continue;
+  }
+
+  const m = line.match(/^(\s*)([^{]+)\{(.*)$/);
+  if (!m) { out.push(line); continue; }
+  const [, indent, selList, rest] = m;
+
+  const transformed = selList.split(',').map(s => {
+    let sel = s.trim();
+    if (sel === ':root') return ':root';
+    if (sel === '*') return '.cf *';
+    if (sel === 'body') return '.cf';
+    if (sel === 'img') return '.cf img';
+    if (sel === 'a') return '.cf a';
+    // element selectors that exist as bare tags in the mockup get cf- classes
+    sel = sel.replace(/^section(?![-\w])/, '.cf-section');
+    sel = sel.replace(/^footer(?![-\w])/, '.cf-footer');
+    if (sel.startsWith(':root')) return sel;
+    return '.cf ' + sel;
+  }).join(',');
+
+  out.push(indent + transformed + '{' + rest);
+}
+
+const header = `/* ==========================================================================
+   Circular Fash design system — generated from web/assets/site.css.
+   Loaded AFTER base.css. Every rule is scoped under .cf so Refresh's own
+   .card/.grid/.price classes are untouched outside CF sections.
+   Regenerate with web/_build/make-circular-css.js — do not hand-edit the
+   scoped block.
+   ========================================================================== */
+`;
+
+const extras = `
+/* ---------- theme integration (hand-written, keep when regenerating) ---------- */
+.cf{background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.6;-webkit-font-smoothing:antialiased}
+.cf-section{display:block}
+.shopify-section .cf{margin:0}
+/* the theme's content wrapper adds side padding; .wrap manages its own */
+.cf .wrap{max-width:1320px}
+/* cart link is plain text in this design; neutralise Refresh icon styles */
+.cf #cart-icon-bubble{display:inline;color:inherit}
+/* base.css paints h1-h5 with the scheme foreground (a navy on this store);
+   CF headings must state their colors explicitly to win over it */
+.cf h1,.cf h2,.cf h3,.cf h4,.cf h5{color:var(--text)}
+.cf .hero h1,.cf .hero .eyebrow,.cf .tile-inner h3{color:#fff}
+.cf .tile-inner .kicker{color:#DADADA}
+
+/* ---------- Refresh component restyle (matches the CF design system) ---------- */
+/* buttons + section titles sitewide */
+.button,.shopify-challenge__button,.customer button{text-transform:uppercase;letter-spacing:.16em;font-size:12.5px;font-weight:600}
+.title,.title-wrapper-with-link .title{text-transform:uppercase;letter-spacing:.06em}
+
+/* product page (PDP) */
+.product__title>h1,.product__title>h2{font-size:clamp(21px,2.1vw,27px);font-weight:600;letter-spacing:.04em;line-height:1.25;text-transform:none}
+.product__info-container .price .price-item{font-size:26px;font-weight:700}
+.product__info-container .price{margin-top:6px}
+.cf-trust{border:1px solid #E8E8E8;background:#F7F7F7;padding:20px 22px;display:flex;gap:15px;align-items:flex-start;margin:22px 0 6px;text-align:left}
+.cf-trust .cf-tick{font-size:19px;line-height:1.35}
+.cf-trust h4{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 5px}
+.cf-trust p{font-size:13.5px;color:#5C5C5C;max-width:46ch;margin:0}
+.cf-trust a{font-weight:600;text-decoration:underline;text-underline-offset:3px;color:#121212}
+.accordion summary,.accordion .summary__title{text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:600}
+
+/* collection page (PLP) */
+.collection-hero{padding:30px 0 8px}
+.collection-hero__title{text-align:center;text-transform:uppercase;letter-spacing:.08em;font-size:clamp(26px,3.2vw,40px);font-weight:600}
+.collection-hero__description{color:#5C5C5C;text-align:center;max-width:62ch;margin:12px auto 0}
+.facets__summary,.mobile-facets__open,.facet-filters__label,.collection-filters__sort,.facets__sort label{text-transform:uppercase;letter-spacing:.1em;font-size:12px;font-weight:600}
+.pagination__item{border:1px solid #E8E8E8;border-radius:0;font-size:12.5px;font-weight:600}
+.pagination__item:hover{border-color:#121212}
+.pagination__item--current{background:#121212;color:#fff;border-color:#121212;text-decoration:none}
+
+/* card images: keep full image visible in the square frame (no crop),
+   no border around the image frame */
+.cf .card .frame{border:none;background:#fff}
+.cf .card .frame img{object-fit:contain;background:#fff}
+/* Refresh's component-price.css paints .price with the scheme foreground
+   (navy on this store) - force the design's near-black */
+.cf .card-info .price{color:var(--text)}
+/* hover-swap is desktop-only: touch browsers set :hover on tap, which was
+   hiding the extra slides mid-swipe (grey squares) */
+@media (hover:hover){
+  .cf .card:hover img.alt.extra{opacity:0}
+}
+/* touch devices: the frame becomes a swipeable snap carousel */
+@media (hover:none){
+  .cf .card .frame.cf-slides{display:flex;overflow-x:auto;scroll-snap-type:x mandatory;scrollbar-width:none}
+  .cf .card .frame.cf-slides::-webkit-scrollbar{display:none}
+  .cf .card .frame.cf-slides img{position:static;flex:0 0 100%;width:100%;opacity:1;scroll-snap-align:center}
+  .cf .card:hover img.alt{opacity:1}
+}
+
+/* product page: media column stays put while the info column scrolls */
+@media(min-width:990px){
+  .product__media-wrapper{position:sticky;top:24px;align-self:flex-start}
+}
+
+/* search modal (CF header) */
+.cf-header-section{position:relative}
+.cf .cf-search-toggle{font-size:12px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;cursor:pointer;list-style:none;display:inline-block}
+.cf .cf-search-toggle::-webkit-details-marker{display:none}
+.cf .header__search .search-modal{position:absolute;top:100%;left:0;right:0;z-index:70;background:#fff;border-bottom:1px solid #E8E8E8}
+.cf-search-suggest{display:flex;flex-wrap:wrap;gap:8px 10px;align-items:center;padding:14px 0 4px}
+.cf-search-suggest__label{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:#5C5C5C;margin-right:6px}
+.cf-search-suggest a{font-size:12px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border:1px solid #E8E8E8;padding:7px 14px;color:#121212;text-decoration:none}
+.cf-search-suggest a:hover{border-color:#121212}
+/* predictive results: Refresh anchors them to its own .header class, which
+   the CF header lacks - anchor to the search form instead, cap the height
+   so long result lists scroll, and keep them inside the viewport */
+.cf .header__search predictive-search{position:relative;display:block}
+.cf .header__search .predictive-search{left:0;right:0;width:100%;max-height:min(60dvh,520px);overflow-y:auto;border-radius:0}
+.cf .header__search .search-modal__content{position:relative;padding:18px clamp(16px,4vw,48px) 22px;max-width:1320px;margin:0 auto;box-sizing:border-box}
+.cf .search-modal__close-button{position:absolute;top:20px;right:clamp(8px,2vw,20px)}
+/* mobile: search becomes a full-screen overlay; results flow in-page and
+   the whole overlay scrolls, so nothing is clipped by the dropdown box */
+@media(max-width:749px){
+  .cf .header__search .search-modal{position:fixed;inset:0;height:100dvh;border-bottom:0;z-index:100}
+  .cf .header__search .search-modal__content{height:100%;overflow-y:auto;padding:56px 16px 96px;display:flex;flex-direction:column;justify-content:flex-start;align-items:stretch}
+  .cf .header__search .search-modal__form{width:100%}
+  .cf .header__search .predictive-search{position:static;max-height:none;overflow:visible;border:0;box-shadow:none}
+  .cf .search-modal__close-button{position:fixed;top:12px;right:12px;z-index:2}
+}
+/* while live results are open, the popular-search chips give way so the
+   results sit directly under the input */
+.cf predictive-search[open] .cf-search-suggest,
+.cf predictive-search[loading] .cf-search-suggest{display:none}
+/* result-group headings: the .cf h2 display size leaks in here - keep them
+   as small caption labels */
+.cf .predictive-search__heading{font-size:11.5px;letter-spacing:.18em;font-weight:700;text-transform:uppercase}
+/* sticky "Search for ..." row = always-visible bottom edge, so a long
+   result list reads as scrollable rather than cut off */
+.cf .predictive-search__search-for-button{position:sticky;bottom:0;background:#fff;border-top:1px solid #E8E8E8;margin:0}
+.cf .predictive-search__search-for-button .predictive-search__item{background:#fff}
+/* search must stay reachable on mobile (mockup hid the left column) */
+@media(max-width:960px){.cf .mast-left{display:flex}}
+
+/* ---------- header nav dropdowns ----------
+   These were originally hand-added to the generated circular.css, which meant
+   the next regeneration silently dropped them. They live here now so they
+   survive. .top is an <a> for leaf items and a <button> for items with a
+   dropdown, so the button needs the font/background reset an anchor doesn't. */
+.cf nav.cats .top{display:block;font:inherit;color:inherit;background:none;border:0;cursor:pointer;font-size:12.5px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;padding:14px 16px;border-bottom:2px solid transparent}
+.cf nav.cats>div:hover .top,.cf nav.cats .top[aria-current]{border-bottom-color:var(--text)}
+.cf nav.cats>div:hover .drop,.cf nav.cats>div.open .drop{visibility:visible;opacity:1}
+
+/* FAQ page: one .acc per question, so drop the per-block spacing and border that
+   .acc carries when it is used once on a PDP. */
+.cf .faq{max-width:820px;margin:0 auto}
+.cf .faq .acc{margin-top:0;border-top:0}
+.cf .faq .acc:first-of-type details,.cf .faq .faq-group+.acc details{border-top:1px solid var(--line)}
+.cf .faq .acc-body{max-width:none}
+.cf .faq-group{font-size:11px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--text-soft);margin:40px 0 8px}
+.cf .faq-group:first-child{margin-top:0}
+.cf .faq-foot{max-width:820px;margin:32px auto 0;text-align:center;font-size:14px;color:var(--text-soft)}
+
+@media(max-width:960px){
+  /* No hover below 960px, so the dropdown becomes a tap-to-open panel on its own
+     full-width row rather than being hidden outright (which left BRANDS and
+     CATEGORIES with no reachable children at all on mobile). */
+  .cf nav.cats>div{position:static}
+  .cf nav.cats>div.open{flex:1 0 100%;display:flex;flex-direction:column;align-items:center}
+  .cf .drop{display:none;position:static;transform:none;visibility:visible;opacity:1;width:100%;border:0;border-top:1px solid var(--line);padding:18px 0 22px;grid-template-columns:repeat(2,minmax(0,1fr));justify-items:center;gap:8px 20px}
+  .cf nav.cats>div.open .drop{display:grid}
+  .cf .drop .head{display:none} /* the open button already says it */
+}
+
+/* size line on product cards */
+.cf .card-info .csize{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-soft);margin-bottom:6px}
+
+/* "Shop All" button under a homepage product grid */
+.cf .cf-grid-cta{display:flex;justify-content:center;margin-top:clamp(34px,5vw,54px)}
+
+/* divider announcing the sold tail of a collection's pagination */
+.cf-sold-divider{text-transform:uppercase;letter-spacing:.18em;font-size:11.5px;font-weight:700;color:#5C5C5C;border-top:1px solid #E8E8E8;padding-top:18px;margin:0 0 18px}
+
+/* cart page */
+.cart-items th{text-transform:uppercase;letter-spacing:.1em;font-size:11.5px;color:#5C5C5C;font-weight:600}
+.cart-item{border-bottom:1px solid #E8E8E8}
+.totals__total{font-weight:700}
+.cart__ctas .cart__checkout-button{max-width:none}
+/* keep CF grid card text from inheriting Refresh heading margins */
+.cf .card-info *{margin:0}
+`;
+
+fs.writeFileSync(path.join(ROOT, 'theme/assets/circular.css'), header + out.join('\n') + extras);
+console.log('written', (header + out.join('\n') + extras).length, 'bytes');

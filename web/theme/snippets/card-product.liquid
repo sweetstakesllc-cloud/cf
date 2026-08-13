@@ -29,6 +29,46 @@
       endif
     endif
 
+    comment
+      Sizes on the card, so a shopper never has to open a product to find out
+      it isn't their size. The catalogue names this option inconsistently
+      (Size / Taille / Storlek), and sizes are read off the variants rather
+      than option.values so sold-out sizes of a part-sold product stay hidden.
+    endcomment
+    assign size_index = 0
+    for option in card_product.options_with_values
+      assign option_name = option.name | downcase
+      if option_name contains 'size' or option_name contains 'taille' or option_name contains 'storlek'
+        assign size_index = forloop.index
+      endif
+    endfor
+
+    assign size_list = ''
+    if size_index > 0
+      for variant in card_product.variants
+        if variant.available
+          assign size_value = ''
+          case size_index
+            when 1
+              assign size_value = variant.option1
+            when 2
+              assign size_value = variant.option2
+            when 3
+              assign size_value = variant.option3
+          endcase
+          comment
+            "One size" / "one-size" (140 variants) carries no information on a
+            bag or wallet, so it is dropped and the row falls back to the
+            spacer. Real sizes are kept exactly as the catalogue spells them.
+          endcomment
+          assign size_check = size_value | downcase | replace: '-', ' ' | replace: '_', ' ' | strip
+          if size_value != blank and size_value != 'Default Title' and size_check != 'one size' and size_check != 'onesize' and size_check != 'os'
+            assign size_list = size_list | append: size_value | append: '~'
+          endif
+        endif
+      endfor
+    endif
+    assign sizes = size_list | split: '~' | uniq
   -%}
   <div class="cf">{% render 'wishlisthero-collection-product' with product: card_product %}
     <a class="card" href="{{ card_product.url }}">
@@ -66,6 +106,15 @@
           <div class="brand">{{ brand }}</div>
         {%- endif -%}
         <div class="pname">{{ display_title }}</div>
+        {%- comment -%}
+          Held open with a spacer when a piece has no size (bags, wallets) so
+          prices stay on one line across the row.
+        {%- endcomment -%}
+        {%- if sizes.size > 0 -%}
+          <div class="csize">{{ sizes | join: ' · ' }}</div>
+        {%- else -%}
+          <div class="csize">&nbsp;</div>
+        {%- endif -%}
         <div class="price">{{ price | money }}</div>
       </div>
     </a>
