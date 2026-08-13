@@ -1,0 +1,184 @@
+{% comment %}
+  Circular Fash segmented pagination.
+
+  Shopify has no "out of stock last" sort order, so a collection is browsed as
+  two consecutive segments driven by its own availability facet: the in-stock
+  pages first, then the sold pages. Page numbers run continuously across both,
+  so sold items always land on the final pages.
+
+  URLs for the segment being viewed come from Shopify's own paginate.parts, so
+  any other active facet (size, price, brand) and the sort order are preserved.
+  Only the cross-segment links are built here, and always from the *inactive*
+  availability value, whose url_to_add is the full current state plus that value.
+
+  Accepts:
+  - paginate: {Object} paginate object of the current segment (required)
+  - anchor: {String} optional
+{% endcomment %}
+
+{{ 'component-pagination.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign per_page = paginate.page_size
+  assign in_count = 0
+  assign sold_count = 0
+  assign segment = 'in'
+  assign has_avail = false
+  assign avail_base = collection.url
+
+  comment
+    url_to_add APPENDS a value rather than replacing it, which would yield
+    ...availability=1&availability=0. Build cross-segment links from the active
+    value's url_to_remove instead: current state minus availability, plus the
+    value we want. Other facets and sort_by survive.
+  endcomment
+  for f in collection.filters
+    if f.param_name == 'filter.v.availability'
+      assign has_avail = true
+      for v in f.values
+        if v.value == '1'
+          assign in_count = v.count
+        elsif v.value == '0'
+          assign sold_count = v.count
+        endif
+        if v.active
+          assign avail_base = v.url_to_remove
+          if v.value == '0'
+            assign segment = 'sold'
+          else
+            assign segment = 'in'
+          endif
+        endif
+      endfor
+    endif
+  endfor
+
+  assign in_pages = 0
+  if in_count > 0
+    assign in_pages = in_count | divided_by: per_page
+    assign in_rem = in_count | modulo: per_page
+    if in_rem > 0
+      assign in_pages = in_pages | plus: 1
+    endif
+  endif
+
+  assign sold_pages = 0
+  if sold_count > 0
+    assign sold_pages = sold_count | divided_by: per_page
+    assign sold_rem = sold_count | modulo: per_page
+    if sold_rem > 0
+      assign sold_pages = sold_pages | plus: 1
+    endif
+  endif
+
+  assign total_pages = in_pages | plus: sold_pages
+
+  if segment == 'sold'
+    assign offset = in_pages
+  else
+    assign offset = 0
+  endif
+
+  comment
+    Cross-segment jump targets. Going forward always lands on page 1 of the
+    sold segment; going back lands on the *last* in-stock page, not its first.
+  endcomment
+  assign joiner = '?'
+  if avail_base contains '?'
+    assign joiner = '&'
+  endif
+  assign cross_forward = ''
+  assign cross_back = ''
+  if segment == 'in'
+    assign cross_forward = avail_base | append: joiner | append: 'filter.v.availability=0&page=1'
+  else
+    assign cross_back = avail_base | append: joiner | append: 'filter.v.availability=1&page=' | append: in_pages
+  endif
+
+  assign next_virtual = in_pages | plus: 1
+-%}
+
+{%- comment -%}
+  Fall back to the stock pagination when the availability facet is unavailable
+  (nothing to segment on) or when the collection fits on a single page.
+{%- endcomment -%}
+{%- if has_avail == false or total_pages < 2 -%}
+  {%- if paginate.pages > 1 -%}
+    {% render 'pagination', paginate: paginate, anchor: anchor %}
+  {%- endif -%}
+{%- else -%}
+  <div class="pagination-wrapper" data-page="{{ paginate.current_page | plus: offset }}">
+    <nav class="pagination" role="navigation" aria-label="{{ 'general.pagination.label' | t }}">
+      <ul class="pagination__list list-unstyled" role="list">
+        {%- comment -%} Previous {%- endcomment -%}
+        {%- if paginate.previous -%}
+          <li>
+            <a href="{{ paginate.previous.url }}{{ anchor }}" class="pagination__item pagination__item--next pagination__item-arrow link motion-reduce" aria-label="{{ 'general.pagination.previous' | t }}">
+              <span class="svg-wrapper">{{- 'icon-caret.svg' | inline_asset_content -}}</span>
+            </a>
+          </li>
+        {%- elsif cross_back != '' -%}
+          <li>
+            <a href="{{ cross_back }}{{ anchor }}" class="pagination__item pagination__item--next pagination__item-arrow link motion-reduce" aria-label="{{ 'general.pagination.previous' | t }}">
+              <span class="svg-wrapper">{{- 'icon-caret.svg' | inline_asset_content -}}</span>
+            </a>
+          </li>
+        {%- endif -%}
+
+        {%- comment -%}
+          Shopify emits no parts for a single-page segment, so render that one
+          page here or it would vanish from the sequence.
+        {%- endcomment -%}
+        {%- if paginate.parts.size == 0 -%}
+          {%- assign only_label = paginate.current_page | plus: offset -%}
+          <li>
+            <a role="link" aria-disabled="true" class="pagination__item pagination__item--current light" aria-current="page" aria-label="{{ 'general.pagination.page' | t: number: only_label }}">{{- only_label -}}</a>
+          </li>
+        {%- endif -%}
+
+        {%- comment -%} Pages of the segment being viewed, renumbered {%- endcomment -%}
+        {%- for part in paginate.parts -%}
+          {%- liquid
+            assign label = part.title
+            if part.title != '&hellip;'
+              assign label = part.title | plus: offset
+            endif
+          -%}
+          <li>
+            {%- if part.is_link -%}
+              <a href="{{ part.url }}{{ anchor }}" class="pagination__item link" aria-label="{{ 'general.pagination.page' | t: number: label }}">{{- label -}}</a>
+            {%- elsif part.title == paginate.current_page -%}
+              <a role="link" aria-disabled="true" class="pagination__item pagination__item--current light" aria-current="page" aria-label="{{ 'general.pagination.page' | t: number: label }}">{{- label -}}</a>
+            {%- else -%}
+              <span class="pagination__item">{{ label }}</span>
+            {%- endif -%}
+          </li>
+        {%- endfor -%}
+
+        {%- comment -%} First sold page, shown as the next number in sequence {%- endcomment -%}
+        {%- if segment == 'in' and sold_pages > 0 -%}
+          <li>
+            <a href="{{ cross_forward }}{{ anchor }}" class="pagination__item link" aria-label="{{ 'general.pagination.page' | t: number: next_virtual }}">
+              {{- next_virtual -}}
+            </a>
+          </li>
+        {%- endif -%}
+
+        {%- comment -%} Next {%- endcomment -%}
+        {%- if paginate.next -%}
+          <li>
+            <a href="{{ paginate.next.url }}{{ anchor }}" class="pagination__item pagination__item--prev pagination__item-arrow link motion-reduce" aria-label="{{ 'general.pagination.next' | t }}">
+              <span class="svg-wrapper">{{- 'icon-caret.svg' | inline_asset_content -}}</span>
+            </a>
+          </li>
+        {%- elsif cross_forward != '' -%}
+          <li>
+            <a href="{{ cross_forward }}{{ anchor }}" class="pagination__item pagination__item--prev pagination__item-arrow link motion-reduce" aria-label="{{ 'general.pagination.next' | t }}">
+              <span class="svg-wrapper">{{- 'icon-caret.svg' | inline_asset_content -}}</span>
+            </a>
+          </li>
+        {%- endif -%}
+      </ul>
+    </nav>
+  </div>
+{%- endif -%}

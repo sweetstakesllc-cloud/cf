@@ -1,0 +1,416 @@
+{% comment %}
+  Renders a product card
+  
+  FIXED VERSION:
+  1. REVERTED Image Logic: Images now follow fixed ratio (Square/Portrait) to prevent jumping.
+  2. REVERTED Height Logic: Cards can extend to match neighbors again.
+  3. KEPT Text Logic: Desktop-Default styles with stabilized titles.
+{% endcomment %}
+
+{{ 'component-rating.css' | asset_url | stylesheet_tag }}
+{{ 'component-volume-pricing.css' | asset_url | stylesheet_tag }}
+
+{%- if card_product and card_product != empty -%}
+  {%- liquid
+    assign ratio = 1
+    if card_product.featured_media and media_aspect_ratio == 'portrait'
+      assign ratio = 0.8
+    elsif card_product.featured_media and media_aspect_ratio == 'adapt'
+      assign ratio = card_product.featured_media.aspect_ratio
+    endif
+    if ratio == 0 or ratio == null
+      assign ratio = 1
+    endif
+  -%}
+  <div class="card-wrapper product-card-wrapper underline-links-hover">
+    <div
+      class="
+        card card--{{ settings.card_style }}
+        {% if card_product.featured_media %} card--media{% else %} card--text{% endif %}
+        {% if settings.card_style == 'card' %} color-{{ settings.card_color_scheme }} gradient{% endif %}
+        {% if image_shape and image_shape != 'default' %} card--shape{% endif %}
+        {% if extend_height %} card--extend-height{% endif %}
+        {% if card_product.featured_media == nil and settings.card_style == 'card' %} ratio{% endif %}
+        {% if horizontal_class %} card--horizontal{% endif %}
+      "
+      style="--ratio-percent: {{ 1 | divided_by: ratio | times: 100 }}%;"
+    >
+      <div
+        class="card__inner {% if settings.card_style == 'standard' %}color-{{ settings.card_color_scheme }} gradient{% endif %}{% if card_product.featured_media or settings.card_style == 'standard' %} ratio{% endif %}"
+        style="--ratio-percent: {{ 1 | divided_by: ratio | times: 100 }}%;"
+      >
+        
+        {% comment %} --- BADGE LOGIC START --- {% endcomment %}
+        {% assign condition_obj_badge = card_product.metafields.custom.condition.value %}
+        {% assign score_badge = condition_obj_badge.value | plus: 0 %}
+        {% assign badge_top_position = 10 %} 
+        
+        {% comment %} 1. BRAND NEW BADGE {% endcomment %}
+        {% if score_badge == 10 %}
+          <span style="position: absolute; top: {{ badge_top_position }}px; left: 0px; z-index: 10; background-color: #888888; color: #ffffff; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.01rem; padding: 2.5px 5px; border-radius: 2px; line-height: 1; pointer-events: none; text-align: center;">
+            Brand New
+          </span>
+          {% assign badge_top_position = badge_top_position | plus: 22 %}
+        {% endif %}
+
+        {% comment %} 2. SOLD OUT BADGE {% endcomment %}
+        {% if card_product.available == false %}
+           <span style="position: absolute; top: {{ badge_top_position }}px; left: 0px; z-index: 10; background-color:rgb(229, 94, 94); color: #ffffff; font-size: 1.2rem; text-transform: uppercase; letter-spacing: 0.01rem; padding: 2.5px 11px; border-radius: 2px; line-height: 1; pointer-events: none; text-align: center;">
+            SOLD OUT
+          </span>
+        {% endif %}
+        {% comment %} --- BADGE LOGIC END --- {% endcomment %}
+
+        {%- if card_product.featured_media -%}
+          <div class="card__media{% if image_shape and image_shape != 'default' %} shape--{{ image_shape }} color-{{ settings.card_color_scheme }} gradient{% endif %}">
+            <div class="media media--transparent media--hover-effect">
+              <img
+                srcset="
+                  {%- if card_product.featured_media.width >= 165 -%}{{ card_product.featured_media | image_url: width: 165 }} 165w,{%- endif -%}
+                  {%- if card_product.featured_media.width >= 360 -%}{{ card_product.featured_media | image_url: width: 360 }} 360w,{%- endif -%}
+                  {%- if card_product.featured_media.width >= 533 -%}{{ card_product.featured_media | image_url: width: 533 }} 533w,{%- endif -%}
+                  {%- if card_product.featured_media.width >= 720 -%}{{ card_product.featured_media | image_url: width: 720 }} 720w,{%- endif -%}
+                  {%- if card_product.featured_media.width >= 940 -%}{{ card_product.featured_media | image_url: width: 940 }} 940w,{%- endif -%}
+                  {%- if card_product.featured_media.width >= 1066 -%}{{ card_product.featured_media | image_url: width: 1066 }} 1066w,{%- endif -%}
+                  {{ card_product.featured_media | image_url }} {{ card_product.featured_media.width }}w
+                "
+                src="{{ card_product.featured_media | image_url: width: 533 }}"
+                sizes="(min-width: {{ settings.page_width }}px) {{ settings.page_width | minus: 130 | divided_by: 4 }}px, (min-width: 990px) calc((100vw - 130px) / 4), (min-width: 750px) calc((100vw - 120px) / 3), calc((100vw - 35px) / 2)"
+                alt="{{ card_product.featured_media.alt | escape }}"
+                class="motion-reduce"
+                {% unless lazy_load == false %}
+                  loading="lazy"
+                {% endunless %}
+                width="{{ card_product.featured_media.width }}"
+                height="{{ card_product.featured_media.height }}"
+              >
+              {%- if card_product.media[1] != null and show_secondary_image -%}
+                <img
+                  srcset="
+                    {%- if card_product.media[1].width >= 165 -%}{{ card_product.media[1] | image_url: width: 165 }} 165w,{%- endif -%}
+                    {%- if card_product.media[1].width >= 360 -%}{{ card_product.media[1] | image_url: width: 360 }} 360w,{%- endif -%}
+                    {%- if card_product.media[1].width >= 533 -%}{{ card_product.media[1] | image_url: width: 533 }} 533w,{%- endif -%}
+                    {%- if card_product.media[1].width >= 720 -%}{{ card_product.media[1] | image_url: width: 720 }} 720w,{%- endif -%}
+                    {%- if card_product.media[1].width >= 940 -%}{{ card_product.media[1] | image_url: width: 940 }} 940w,{%- endif -%}
+                    {%- if card_product.media[1].width >= 1066 -%}{{ card_product.media[1] | image_url: width: 1066 }} 1066w,{%- endif -%}
+                    {{ card_product.media[1] | image_url }} {{ card_product.media[1].width }}w
+                  "
+                  src="{{ card_product.media[1] | image_url: width: 533 }}"
+                  sizes="(min-width: {{ settings.page_width }}px) {{ settings.page_width | minus: 130 | divided_by: 4 }}px, (min-width: 990px) calc((100vw - 130px) / 4), (min-width: 750px) calc((100vw - 120px) / 3), calc((100vw - 35px) / 2)"
+                  alt=""
+                  class="motion-reduce"
+                  loading="lazy"
+                  width="{{ card_product.media[1].width }}"
+                  height="{{ card_product.media[1].height }}"
+                >
+              {%- endif -%}
+            </div>
+          </div>
+        {%- endif -%}
+        
+        <div class="card__content">
+          {% comment %} --- NO TITLE HERE (PREVENTS DUPLICATE) --- {% endcomment %}
+          <div class="card__badge {{ settings.badge_position }}">
+            {%- if card_product.available == false -%}
+              <span id="NoMediaStandardBadge-{{ section_id }}-{{ card_product.id }}" class="badge badge--bottom-left color-{{ settings.sold_out_badge_color_scheme }}">{{- 'products.product.sold_out' | t -}}</span>
+            {%- elsif card_product.compare_at_price > card_product.price and card_product.available -%}
+              <span id="NoMediaStandardBadge-{{ section_id }}-{{ card_product.id }}" class="badge badge--bottom-left color-{{ settings.sale_badge_color_scheme }}">{{- 'products.product.on_sale' | t -}}</span>
+            {%- endif -%}
+          </div>
+        </div>
+      </div>
+      <div class="card__content">
+        <div class="card__information">
+          
+          {% comment %} --- ITEM 1: HEADING (TOP) --- {% endcomment %}
+          <h3 class="card__heading custom-card-heading {% if card_product.featured_media or settings.card_style == 'standard' %} h5{% endif %}" {% if card_product.featured_media or settings.card_style == 'card' %} id="title-{{ section_id }}-{{ card_product.id }}" {% endif %}>
+            <a href="{{ card_product.url }}" id="CardLink-{{ section_id }}-{{ card_product.id }}" class="full-unstyled-link" aria-labelledby="CardLink-{{ section_id }}-{{ card_product.id }} Badge-{{ section_id }}-{{ card_product.id }}">
+              {{ card_product.title | escape }}
+            </a>
+          </h3>
+          
+          <div class="card-information">
+            {%- if show_vendor -%}
+              <span class="visually-hidden">{{ 'accessibility.vendor' | t }}</span>
+              <div class="caption-with-letter-spacing light">{{ card_product.vendor }}</div>
+            {%- endif -%}
+            <span class="caption-large light">{{ block.settings.description | escape }}</span>
+            
+            {% comment %} --- ITEM 2: PRICE (MIDDLE) --- {% endcomment %}
+            <div class="custom-price-container">
+              {%- assign current_variant = card_product.selected_or_first_available_variant -%}
+              {%- assign compare_price = current_variant.compare_at_price -%}
+              {%- assign price = current_variant.price -%}
+
+              {% comment %} Sale Price {% endcomment %}
+              <div class="custom-price-current">
+                {{ price | money }}
+              </div>
+
+              {% comment %} Compare Price {% endcomment %}
+              {%- if compare_price > price -%}
+                <div class="custom-price-compare">
+                  {{ compare_price | money }}
+                </div>
+              {%- endif -%}
+            </div>
+          </div>
+            
+          {% comment %} --- ITEM 3: OPTIONS (BOTTOM) --- {% endcomment %}
+          {% unless card_product.has_only_default_variant %}
+            <div class="custom-options-container">
+              {%- for option in card_product.options_with_values -%}
+                {% assign option_name_downcase = option.name | downcase %}
+                
+                {%- if option_name_downcase contains 'size' -%}
+                  <span class="custom-size-text">
+                    {%- for value in option.values -%}
+                      {{ value }}{% unless forloop.last %} <span class="custom-size-divider">|</span> {% endunless %}
+                    {%- endfor -%}
+                  </span>
+                {%- endif -%}
+      
+                {%- if option_name_downcase contains 'color' or option_name_downcase contains 'colour' -%}
+                    {%- if option.values.size > 1 -%}
+                      <span class="custom-color-text">
+                        {{ option.values.size }} Colors Available
+                      </span>
+                    {%- endif -%}
+                {%- endif -%}
+                
+              {%- endfor -%}
+            </div>
+          {% endunless %}
+            
+        </div>
+        {%- if show_quick_add -%}
+          <div class="quick-add no-js-hidden">
+             {%- liquid
+              assign product_form_id = 'quick-add-' | append: section_id | append: card_product.id
+              assign qty_rules = false
+              if card_product.selected_or_first_available_variant.quantity_rule.min > 1 or card_product.selected_or_first_available_variant.quantity_rule.max != null or card_product.selected_or_first_available_variant.quantity_rule.increment > 1
+                assign qty_rules = true
+              endif
+            -%}
+            {%- if card_product.variants.size > 1 or qty_rules -%}
+              <modal-opener data-modal="#QuickAdd-{{ card_product.id }}">
+                <button
+                  id="{{ product_form_id }}-submit"
+                  type="submit"
+                  name="add"
+                  class="quick-add__submit button button--full-width button--secondary{% if horizontal_quick_add %} card--horizontal__quick-add animate-arrow{% endif %}"
+                  aria-haspopup="dialog"
+                  aria-labelledby="{{ product_form_id }}-submit title-{{ section_id }}-{{ card_product.id }}"
+                  data-product-url="{{ card_product.url }}"
+                >
+                  {{ 'products.product.choose_options' | t }}
+                  {%- if horizontal_quick_add -%}
+                    <span class="icon-wrap">{% render 'icon-arrow' %}</span>
+                  {%- endif -%}
+                  <div class="loading-overlay__spinner hidden">
+                    <svg aria-hidden="true" focusable="false" class="spinner" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                      <circle class="path" fill="none" stroke-width="6" cx="33" cy="33" r="30"></circle>
+                    </svg>
+                  </div>
+                </button>
+              </modal-opener>
+              <quick-add-modal id="QuickAdd-{{ card_product.id }}" class="quick-add-modal">
+                <div role="dialog" aria-label="{{ 'products.product.choose_product_options' | t: product_name: card_product.title | escape }}" aria-modal="true" class="quick-add-modal__content global-settings-popup" tabindex="-1">
+                  <button id="ModalClose-{{ card_product.id }}" type="button" class="quick-add-modal__toggle" aria-label="{{ 'accessibility.close' | t }}">
+                    {% render 'icon-close' %}
+                  </button>
+                  <div id="QuickAddInfo-{{ card_product.id }}" class="quick-add-modal__content-info"></div>
+                </div>
+              </quick-add-modal>
+            {%- else -%}
+              <product-form data-section-id="{{ section.id }}">
+                {%- form 'product', card_product, id: product_form_id, class: 'form', novalidate: 'novalidate', data-type: 'add-to-cart-form' -%}
+                  <input type="hidden" name="id" value="{{ card_product.selected_or_first_available_variant.id }}" class="product-variant-id" disabled>
+                  <button id="{{ product_form_id }}-submit" type="submit" name="add" class="quick-add__submit button button--full-width button--secondary{% if horizontal_quick_add %} card--horizontal__quick-add{% endif %}" aria-haspopup="dialog" aria-labelledby="{{ product_form_id }}-submit title-{{ section_id }}-{{ card_product.id }}" aria-live="polite" data-sold-out-message="true" {% if card_product.selected_or_first_available_variant.available == false %} disabled {% endif %}>
+                    <span>
+                      {%- if card_product.selected_or_first_available_variant.available -%}{{ 'products.product.add_to_cart' | t }}{%- else -%}{{ 'products.product.sold_out' | t }}{%- endif -%}
+                    </span>
+                    <span class="sold-out-message hidden">{{ 'products.product.sold_out' | t }}</span>
+                    {%- if horizontal_quick_add -%}<span class="icon-wrap">{% render 'icon-plus' %}</span>{%- endif -%}
+                    <div class="loading-overlay__spinner hidden">
+                      <svg aria-hidden="true" focusable="false" class="spinner" viewBox="0 0 66 66" xmlns="http://www.w3.org/2000/svg">
+                        <circle class="path" fill="none" stroke-width="6" cx="33" cy="33" r="30"></circle>
+                      </svg>
+                    </div>
+                  </button>
+                {%- endform -%}
+              </product-form>
+            {%- endif -%}
+          </div>
+        {%- endif -%}
+        <div class="card__badge {{ settings.badge_position }}">
+          {%- if card_product.available == false -%}
+            <span id="Badge-{{ section_id }}-{{ card_product.id }}" class="badge badge--bottom-left color-{{ settings.sold_out_badge_color_scheme }}">{{- 'products.product.sold_out' | t -}}</span>
+          {%- elsif card_product.compare_at_price > card_product.price and card_product.available -%}
+            <span id="Badge-{{ section_id }}-{{ card_product.id }}" class="badge badge--bottom-left color-{{ settings.sale_badge_color_scheme }}">{{- 'products.product.on_sale' | t -}}</span>
+          {%- endif -%}
+        </div>
+      </div>
+    </div>
+  </div>
+{%- else -%}
+  <div class="card-wrapper product-card-wrapper underline-links-hover">
+    <div class="card card--{{ settings.card_style }} {% if extend_height %} card--extend-height{% endif %} {% if settings.card_style == 'card' %} color-{{ settings.card_color_scheme }} gradient{% endif %}" style="--ratio-percent: 100%;">
+      <div class="card__inner{% if settings.card_style == 'standard' %} color-{{ settings.card_color_scheme }} gradient{% endif %} ratio" style="--ratio-percent: 100%;">
+        <div class="card__media"><div class="media media--transparent">{%- if placeholder_image -%}{{ placeholder_image | placeholder_svg_tag: 'placeholder-svg' }}{%- else -%}{{ 'product-apparel-2' | placeholder_svg_tag: 'placeholder-svg' }}{% endif %}</div></div>
+      </div>
+      <div class="card__content">
+        <div class="card__information">
+          <h3 class="card__heading card__heading--placeholder{% if settings.card_style == 'standard' %} h5{% endif %}"><a role="link" aria-disabled="true" class="full-unstyled-link">{{ 'onboarding.product_title' | t }}</a></h3>
+          <div class="card-information">{%- if show_vendor -%}<span class="visually-hidden">{{ 'accessibility.vendor' | t }}</span><div class="caption-with-letter-spacing light">{{ 'products.product.vendor' | t }}</div>{%- endif -%}{% render 'price', show_compare_at_price: true %}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+{%- endif -%}
+
+{% comment %} 
+  ---------------------------------------------------------
+  /* --- CONFIGURATION START --- */
+  EDIT THE STYLES BELOW TO CUSTOMIZE THE CARD APPEARANCE
+  ---------------------------------------------------------
+{% endcomment %}
+<style>
+  
+  /* --- GLOBAL RESETS (Applies to both) --- */
+  .card-wrapper { height: 100%; }
+  .card { height: 100%; display: flex; flex-direction: column; }
+  .card__content { flex-grow: 1; display: flex; flex-direction: column; }
+  
+  /* Layout Base */
+  .card__information {
+    height: 100%;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-left: 5px !important; 
+    padding-right: 5px !important;
+    padding-bottom: 5px !important; 
+  }
+  
+  .card-information {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    margin-top: 5px !important; 
+  }
+
+  /* Price Container Base */
+  .custom-price-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    line-height: 1;
+  }
+  
+  /* Options Container Base */
+  .custom-options-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center; 
+    gap: 4px; 
+    margin: 0 !important;
+    margin-top: auto !important; /* Pushes to bottom */
+    padding-top: 10px;
+  }
+  .custom-size-divider { opacity: 0.4; }
+
+  /* ============================================================ */
+  /* A. DEFAULT SETTINGS (DESKTOP / BASE)                       */
+  /* These apply to ALL screens first.                          */
+  /* ============================================================ */
+  
+    /* 1. TITLE */
+    .custom-card-heading {
+      font-size: 20px !important;    
+      color: #000000;
+      margin: 0 !important;
+      font-weight: 100;
+      text-align: center;
+      line-height: 1 !important;
+      letter-spacing: 0.01rem;
+      
+      /* STABILIZER: Reserves space for 2 lines */
+      min-height: 40px !important; 
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    /* 2. PRICES */
+    .custom-price-container { margin-top: 5px; }
+    
+    .custom-price-current {
+      font-size: 18px !important;       
+      color: rgb(0, 0, 0); 
+      font-weight: 100;
+      margin-bottom: 0.5px;
+    }
+
+    .custom-price-compare {
+      font-size: 18px !important;       
+      color: rgb(0, 0, 0);   
+      text-decoration: line-through;
+      margin-top: 0.5px;
+    }
+
+    /* 3. OPTIONS */
+    .custom-size-text {
+      font-size: 18px !important;      
+      color: rgb(0, 0, 0);  
+      line-height: 1.2;
+      text-align: center;
+    }
+
+    .custom-color-text {
+      font-size: 20px !important;      
+      color: rgb(0, 0, 0);  
+      font-style: italic;
+      text-align: center;
+    }
+
+  /* ============================================================ */
+  /* B. STRICT MOBILE OVERRIDES (Screens NARROWER than 749px)  */
+  /* These only activate on small screens.                     */
+  /* ============================================================ */
+  @media screen and (max-width: 749px) {
+    
+    /* 1. TITLE */
+    .custom-card-heading {
+      font-size: 12px !important;  
+      min-height: 24px !important; /* Mobile stabilizer */
+      letter-spacing: 0.01rem;
+    }
+
+    /* 2. PRICES */
+    .custom-price-container { margin-top: 2px; }
+
+    .custom-price-current {
+      font-size: 11px !important;   
+      margin-bottom: 1px;
+    }
+
+    .custom-price-compare {
+      font-size: 11px !important;    
+      margin-top: 0px;
+    }
+
+    /* 3. OPTIONS */
+    .custom-size-text {
+      font-size: 12px !important;    
+    }
+
+    .custom-color-text {
+      font-size: 11px !important;    
+    }
+  }
+
+</style>
+{% comment %} /* --- CONFIGURATION END --- */ {% endcomment %}

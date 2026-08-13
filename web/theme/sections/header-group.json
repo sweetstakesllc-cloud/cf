@@ -1,0 +1,19 @@
+{
+  "name": "t:sections.header.name",
+  "type": "header",
+  "sections": {
+    "header": {
+      "type": "header-cf",
+      "settings": {
+        "wordmark": "Circular Fash",
+        "menu": "main-menu",
+        "util_left_label": "Join Our Newsletter",
+        "live_line": "Live on TikTok",
+        "sell_label": "Sell Now",
+        "sell_link": "/pages/sell-to-us-1",
+        "region_line": "Sweden · SEK kr"
+      }
+    }
+  },
+  "order": ["header"]
+}

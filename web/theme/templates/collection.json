@@ -1,0 +1,87 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "custom_liquid_LBBbMy": {
+      "type": "custom-liquid",
+      "name": "t:sections.custom-liquid.presets.name",
+      "settings": {
+        "custom_liquid": "{% if collection.image %}\n  <style>\n    .custom-collection-banner-container {\n      width: 100%;\n      display: block;\n      text-align: center; /* Centers inline content */\n      padding: 20px 0;    /* Optional: adds breathing room top/bottom */\n    }\n\n    .custom-collection-banner-container img {\n      display: block;\n      margin-left: auto !important;   /* Force Left Auto Margin */\n      margin-right: auto !important;  /* Force Right Auto Margin */\n      max-width: 500px;               /* Limits width on Desktop (fixes height issue) */\n      width: 40%;                    /* Full width on Mobile */\n      height: auto;                   /* Keeps original ratio */\n    }\n  </style>\n\n  <div class=\"custom-collection-banner-container\">\n    <img\n      src=\"{{ collection.image | image_url: width: 1500 }}\"\n      srcset=\"\n        {{ collection.image | image_url: width: 375 }} 375w,\n        {{ collection.image | image_url: width: 550 }} 550w,\n        {{ collection.image | image_url: width: 750 }} 750w,\n        {{ collection.image | image_url: width: 1100 }} 1100w,\n        {{ collection.image | image_url: width: 1500 }} 1500w\n      \"\n      sizes=\"(min-width: 750px) 500px, 100vw\"\n      loading=\"eager\"\n      alt=\"{{ collection.title | escape }}\"\n      width=\"{{ collection.image.width }}\"\n      height=\"{{ collection.image.height }}\"\n    >\n  </div>\n{% endif %}",
+        "color_scheme": "",
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "17642852604fbaabe4": {
+      "type": "_blocks",
+      "settings": {}
+    },
+    "banner": {
+      "type": "main-collection-banner",
+      "settings": {
+        "show_collection_description": true,
+        "show_collection_image": false,
+        "color_scheme": "background-1"
+      }
+    },
+    "product-grid": {
+      "type": "main-collection-product-grid",
+      "settings": {
+        "products_per_page": 36,
+        "columns_desktop": 4,
+        "columns_mobile": "2",
+        "color_scheme": "background-1",
+        "image_ratio": "portrait",
+        "image_shape": "default",
+        "show_secondary_image": true,
+        "show_vendor": false,
+        "show_rating": false,
+        "quick_add": "none",
+        "enable_filtering": true,
+        "filter_type": "drawer",
+        "enable_sorting": true,
+        "padding_top": 0,
+        "padding_bottom": 0
+      }
+    },
+    "17661531885645f6e6": {
+      "type": "_blocks",
+      "settings": {}
+    },
+    "multicolumn_VgUYND": {
+      "type": "multicolumn",
+      "name": "t:sections.multicolumn.presets.name",
+      "settings": {
+        "title": "",
+        "heading_size": "h2",
+        "image_width": "full",
+        "image_ratio": "adapt",
+        "button_label": "Shop All",
+        "button_link": "shopify://collections/all",
+        "columns_desktop": 3,
+        "column_alignment": "center",
+        "background_style": "primary",
+        "color_scheme": "scheme-b7f58240-4e3c-4aae-a3c8-e605f606d0f9",
+        "columns_mobile": "1",
+        "swipe_on_mobile": false,
+        "padding_top": 0,
+        "padding_bottom": 16
+      }
+    }
+  },
+  "order": [
+    "custom_liquid_LBBbMy",
+    "17642852604fbaabe4",
+    "banner",
+    "product-grid",
+    "17661531885645f6e6",
+    "multicolumn_VgUYND"
+  ]
+}

@@ -1,0 +1,65 @@
+{% comment %}
+  Three-up feature row (Circular Fash TV / Authenticated / Circular by
+  Design). Mirrors the .features block in web/index.html. The first block
+  can show a phone-framed looping stream clip.
+{% endcomment %}
+
+<div class="cf">
+  <section class="cf-section features">
+    <div class="wrap feat-grid">
+      {%- for block in section.blocks -%}
+        <div class="feat" {{ block.shopify_attributes }}>
+          {%- if block.settings.video != blank or block.settings.video_asset != blank -%}
+            <div class="phone">
+              <div class="frame" data-label="Stream clip">
+                {%- if block.settings.video != blank -%}
+                  {{ block.settings.video | video_tag: autoplay: true, muted: true, loop: true, playsinline: true, controls: false }}
+                {%- else -%}
+                  <video src="{{ block.settings.video_asset | asset_url }}" autoplay muted loop playsinline></video>
+                {%- endif -%}
+                {%- if block.settings.show_live_tag -%}<span class="live-tag">LIVE</span>{%- endif -%}
+              </div>
+            </div>
+          {%- elsif block.settings.icon != blank -%}
+            <div class="icon">{{ block.settings.icon }}</div>
+          {%- endif -%}
+          <h3>{% if block.settings.show_live_dot %}<span class="live-dot"></span>{% endif %}{{ block.settings.heading }}</h3>
+          <p>{{ block.settings.text }}</p>
+          {%- if block.settings.link_label != blank -%}
+            <a class="link" href="{{ block.settings.link }}">{{ block.settings.link_label }}</a>
+          {%- endif -%}
+        </div>
+      {%- endfor -%}
+    </div>
+  </section>
+</div>
+
+{% schema %}
+{
+  "name": "CF Feature Row",
+  "max_blocks": 3,
+  "blocks": [
+    {
+      "type": "feat",
+      "name": "Feature",
+      "settings": [
+        { "type": "video", "id": "video", "label": "Phone video (uploaded)" },
+        { "type": "text", "id": "video_asset", "label": "Video theme asset filename", "info": "e.g. live-replay.mp4" },
+        { "type": "text", "id": "icon", "label": "Icon character (used if no video)", "info": "e.g. ✓ or ↺" },
+        { "type": "checkbox", "id": "show_live_tag", "label": "LIVE tag on video", "default": false },
+        { "type": "checkbox", "id": "show_live_dot", "label": "Pulsing dot before heading", "default": false },
+        { "type": "text", "id": "heading", "label": "Heading" },
+        { "type": "textarea", "id": "text", "label": "Text" },
+        { "type": "text", "id": "link_label", "label": "Link label" },
+        { "type": "url", "id": "link", "label": "Link" }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "CF Feature Row",
+      "blocks": [{ "type": "feat" }, { "type": "feat" }, { "type": "feat" }]
+    }
+  ]
+}
+{% endschema %}

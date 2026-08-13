@@ -1,0 +1,50 @@
+{
+  "name": "t:sections.footer.name",
+  "type": "footer",
+  "sections": {
+    "footer": {
+      "type": "footer-cf",
+      "blocks": {
+        "shop": {
+          "type": "custom",
+          "settings": {
+            "heading": "Shop With Us",
+            "label1": "New Arrivals", "url1": "/collections/new",
+            "label2": "Men", "url2": "/collections/mens",
+            "label3": "Women", "url3": "/collections/women",
+            "label4": "Authenticity", "url4": "/pages/authenticity"
+          }
+        },
+        "sell": {
+          "type": "custom",
+          "settings": {
+            "heading": "Sell With Us",
+            "label1": "Ways to Sell", "url1": "/pages/sell-to-us-1",
+            "label2": "Submit an Item", "url2": "/pages/sell-to-us-1"
+          }
+        },
+        "service": {
+          "type": "custom",
+          "settings": {
+            "heading": "Customer Service",
+            "label1": "About Us", "url1": "/pages/about-us",
+            "label2": "Contact Us", "url2": "/pages/contact",
+            "label3": "Returns", "url3": "/policies/refund-policy"
+          }
+        }
+      },
+      "block_order": ["shop", "sell", "service"],
+      "settings": {
+        "wordmark": "Circular Fash",
+        "blurb": "Authenticated pre-owned luxury fashion, shipped from Sweden to the world.",
+        "newsletter_heading": "Join Our Newsletter",
+        "newsletter_text": "New drops and live schedule, straight to your inbox.",
+        "tiktok": "https://www.tiktok.com/@circularfash",
+        "instagram": "https://www.instagram.com/circularfash_/",
+        "facebook": "https://www.facebook.com/groups/923079832366605",
+        "trustpilot": "https://www.trustpilot.com/review/circularfash.com"
+      }
+    }
+  },
+  "order": ["footer"]
+}

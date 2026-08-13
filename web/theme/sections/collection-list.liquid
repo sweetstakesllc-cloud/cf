@@ -1,0 +1,396 @@
+{{ 'section-collection-list.css' | asset_url | stylesheet_tag }}
+{{ 'component-card.css' | asset_url | stylesheet_tag }}
+
+{%- style -%}
+/* ===== Section Padding ===== */
+.section-{{ section.id }}-padding {
+  padding-top: {{ section.settings.padding_top | times: 0 | round: 0 }}px;
+  padding-bottom: {{ section.settings.padding_bottom | times: 0 | round: 0 }}px;
+}
+
+@media screen and (min-width: 750px) {
+  .section-{{ section.id }}-padding {
+    padding-top: {{ section.settings.padding_top }}px;
+    padding-bottom: {{ section.settings.padding_bottom }}px;
+  }
+}
+
+/* ===== Card Styling Fixes ===== */
+.section-{{ section.id }}-padding .card {
+  overflow: visible !important;
+}
+
+.section-{{ section.id }}-padding .card__heading {
+  font-size: 0 !important;
+  line-height: 0 !important;
+  margin: 0 !important;
+}
+
+.section-{{ section.id }}-padding .card__heading a {
+  font-size: 0 !important;
+  position: absolute;
+  inset: 0;
+  z-index: 10;
+  text-indent: -9999px;
+}
+
+.section-{{ section.id }}-padding .card__information {
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+.section-{{ section.id }}-padding .card {
+  position: relative;
+}
+
+.section-{{ section.id }}-padding .card:active .card__inner {
+  transform: scale(0.96);
+  opacity: 0.9;
+  transition: 0.15s ease;
+}
+
+/* ===== Embla Mobile Styles ===== */
+@media screen and (max-width: 749px) /* Break the carousel out of the page-width wrapper */
+  .embla-{{ section.id }} {
+    overflow: hidden;
+    padding-bottom: 2px;
+    /* Pull the carousel to the left edge to bypass the global page-width padding */
+    margin-left: -1.5rem; 
+    /* Optional: do the same for the right side so it bleeds off the screen cleanly */
+    margin-right: -1.5rem; 
+  }
+
+  .embla-{{ section.id }} .embla__viewport {
+    overflow: hidden;
+    width: 100%;
+  }
+
+  /* Force the UL element to drop all default browser padding/margins */
+  .embla-{{ section.id }} .embla__container {
+    display: flex;
+    gap: 2px;
+    margin: 0 !important;
+    padding: 0 !important;
+    list-style: none !important;
+  }
+
+  .embla-{{ section.id }} .embla__slide {
+    flex: 0 0 40%;
+    width: 40%;
+    min-width: 40%;
+    padding: 1px; 
+    position: relative;
+  }
+
+  /* Custom Optimized Mobile Card Styles */
+  .mobile-optimized-card {
+    display: block;
+    position: relative;
+    width: 100%;
+    border-radius: var(--media-radius, 2px);
+    overflow: hidden;
+    
+    /* FIX: Use a subtle border instead of a dark background */
+    border: 0px solid rgba(var(--color-foreground), 0.08);
+    box-shadow: 0 4px 5px rgba(0,0,0,0.09);
+  }
+  
+  .mobile-optimized-image-wrapper {
+    position: relative;
+    width: 100%;
+    padding-bottom: 100%; 
+    
+    /* FIX: Force background transparent so PNGs don't look muddy */
+    background: transparent; 
+  }
+
+  .mobile-optimized-image {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover; 
+    /* Ensure image renders crisply */
+    image-rendering: -webkit-optimize-contrast;
+  }
+
+  .mobile-card-title {
+    margin-top: 0px;
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-align: center;
+    /* FIX: Use the theme text color for the title only */
+    color: rgb(var(--color-foreground));
+    text-decoration: none;
+    display: block;
+  }
+}
+{%- endstyle -%}
+
+<div class="color-{{ section.settings.color_scheme }} gradient">
+  <div class="collection-list-wrapper page-width isolate section-{{ section.id }}-padding">
+
+    {%- unless section.settings.title == blank -%}
+      <h2 class="collection-list-title {{ section.settings.heading_size }}">
+        {{ section.settings.title }}
+      </h2>
+    {%- endunless -%}
+
+    <div class="small-hide">
+      <ul class="collection-list grid grid--{{ section.settings.columns_desktop }}-col-desktop" role="list">
+        {%- for block in section.blocks -%}
+          <li class="grid__item" {{ block.shopify_attributes }}>
+              {% render 'card-collection',
+                card_collection: block.settings.collection,
+                media_aspect_ratio: section.settings.image_ratio,
+                columns: section.settings.columns_desktop,
+                placeholder_image: placeholder_image,
+                optimize_images: section.settings.optimize_images
+              %}
+          </li>
+        {%- endfor -%}
+      </ul>
+    </div>
+
+    <div class="medium-hide large-up-hide embla-{{ section.id }}">
+      <div class="embla__viewport">
+        <ul class="embla__container" role="list">
+          {%- for block in section.blocks -%}
+            <li class="embla__slide" {{ block.shopify_attributes }}>
+              
+              {%- assign collection = block.settings.collection -%}
+              
+              <a href="{{ collection.url }}" class="mobile-optimized-card">
+                <div class="mobile-optimized-image-wrapper">
+                  {% if collection.featured_image != blank %}
+                    <img 
+                      class="mobile-optimized-image"
+                      src="{{ collection.featured_image | image_url: width: 500, height: 500, crop: 'center', format: 'png' }}" 
+                      alt="{{ collection.title | escape }}"
+                      loading="lazy"
+                      width="500"
+                      height="500"
+                    >
+                  {% else %}
+                    {{ 'collection-1' | placeholder_svg_tag: 'mobile-optimized-image' }}
+                  {% endif %}
+                </div>
+              </a>
+              <a href="{{ collection.url }}" class="mobile-card-title">
+                {{ collection.title }}
+              </a>
+
+            </li>
+          {%- endfor -%}
+        </ul>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  // 1. Safety Checks
+  if (window.innerWidth > 749) return;
+  if (typeof EmblaCarousel === "undefined") return;
+
+  var emblaNode = document.querySelector('.embla-{{ section.id }} .embla__viewport');
+  if (!emblaNode) return;
+
+  // 2. Initialize Embla
+  var embla = EmblaCarousel(emblaNode, {
+    loop: false,
+    align: 'start',
+    containScroll: 'trimSnaps',
+    dragFree: true,
+    speed: 30
+  });
+
+  // 3. Autoplay with Rewind
+  {% if section.settings.autoplay %}
+    
+    var delay = {{ section.settings.autoplay_delay }};
+    var stopOnInteraction = {{ section.settings.stop_on_interaction }};
+    var autoplayInterval;
+    var isStopped = false;
+
+    function startAutoplay() {
+      if (isStopped) return;
+      clearInterval(autoplayInterval);
+      
+      autoplayInterval = setInterval(function() {
+        if (!embla.clickAllowed()) return; 
+
+        if (embla.canScrollNext()) {
+          embla.scrollNext();
+        } else {
+          embla.scrollTo(0);
+        }
+      }, delay);
+    }
+
+    function stopAutoplay() {
+      clearInterval(autoplayInterval);
+    }
+
+    startAutoplay();
+
+    embla.on('pointerDown', function() {
+      if (stopOnInteraction) {
+        isStopped = true;
+        stopAutoplay();
+      } else {
+        stopAutoplay();
+      }
+    });
+
+    embla.on('pointerUp', function() {
+      if (!stopOnInteraction) {
+        startAutoplay();
+      }
+    });
+
+  {% endif %}
+
+});
+</script>
+
+{% schema %}
+{
+  "name": "t:sections.collection-list.name",
+  "tag": "section",
+  "class": "section section-collection-list",
+  "max_blocks": 50,
+  "disabled_on": {
+    "groups": ["header", "footer"]
+  },
+  "settings": [
+    {
+      "type": "inline_richtext",
+      "id": "title",
+      "default": "t:sections.collection-list.settings.title.default",
+      "label": "t:sections.collection-list.settings.title.label"
+    },
+    {
+      "type": "select",
+      "id": "heading_size",
+      "options": [
+        { "value": "h2", "label": "Small" },
+        { "value": "h1", "label": "Medium" },
+        { "value": "h0", "label": "Large" },
+        { "value": "hxl", "label": "XL" },
+        { "value": "hxxl", "label": "XXL" }
+      ],
+      "default": "h1",
+      "label": "Heading size"
+    },
+    {
+      "type": "select",
+      "id": "image_ratio",
+      "options": [
+        { "value": "adapt", "label": "Adapt" },
+        { "value": "portrait", "label": "Portrait" },
+        { "value": "square", "label": "Square" }
+      ],
+      "default": "square",
+      "label": "Image ratio"
+    },
+    {
+      "type": "checkbox",
+      "id": "optimize_images",
+      "default": false,
+      "label": "Optimize collection images (lighter / faster)"
+    },
+    {
+      "type": "range",
+      "id": "columns_desktop",
+      "min": 1,
+      "max": 10,
+      "step": 1,
+      "default": 3,
+      "label": "Desktop columns"
+    },
+    {
+      "type": "header",
+      "content": "Autoplay Settings"
+    },
+    {
+      "type": "checkbox",
+      "id": "autoplay",
+      "default": false,
+      "label": "Enable autoplay"
+    },
+    {
+      "type": "range",
+      "id": "autoplay_delay",
+      "min": 1000,
+      "max": 8000,
+      "step": 500,
+      "default": 3000,
+      "label": "Autoplay delay (ms)"
+    },
+    {
+      "type": "checkbox",
+      "id": "stop_on_interaction",
+      "default": true,
+      "label": "Stop autoplay on interaction"
+    },
+    {
+      "type": "checkbox",
+      "id": "stop_on_mouse_enter",
+      "default": true,
+      "label": "Stop autoplay on mouse enter"
+    },
+    {
+      "type": "color_scheme",
+      "id": "color_scheme",
+      "default": "scheme-1",
+      "label": "Color scheme"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "default": 36,
+      "label": "Padding top"
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 100,
+      "step": 4,
+      "default": 36,
+      "label": "Padding bottom"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "featured_collection",
+      "name": "Collection",
+      "settings": [
+        {
+          "type": "collection",
+          "id": "collection",
+          "label": "Select collection"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Collection list",
+      "blocks": [
+        { "type": "featured_collection" },
+        { "type": "featured_collection" },
+        { "type": "featured_collection" }
+      ]
+    }
+  ]
+}
+{% endschema %}

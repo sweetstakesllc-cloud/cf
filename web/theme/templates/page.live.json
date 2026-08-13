@@ -1,0 +1,29 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero-campaign",
+      "settings": {
+        "video_asset": "live-hero.mp4",
+        "eyebrow": "Circular Fash Live",
+        "heading": "Shop with us on TikTok Live",
+        "subtext": "See pieces up close, ask questions and buy on the spot.",
+        "cta1_label": "Follow on TikTok",
+        "cta1_link": "https://www.tiktok.com/@circularfash",
+        "cta2_label": "Shop All",
+        "cta2_link": "/collections/all",
+        "live_line": "Live on TikTok"
+      }
+    },
+    "main": { "type": "main-page" },
+    "clips": {
+      "type": "cf-clips",
+      "settings": { "heading": "From the Live", "subtext": "Replays from recent streams." },
+      "blocks": {
+        "c1": { "type": "clip", "settings": { "video_asset": "live-hero.mp4", "caption": "Latest drop" } },
+        "c2": { "type": "clip", "settings": { "video_asset": "live-replay.mp4", "caption": "As seen on the live" } }
+      },
+      "block_order": ["c1", "c2"]
+    }
+  },
+  "order": ["hero", "main", "clips"]
+}

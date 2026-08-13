@@ -1,0 +1,97 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero-campaign",
+      "settings": {
+        "eyebrow": "Pre-Loved Luxury · Authenticated in Sweden",
+        "heading": "Luxury deserves a second life",
+        "subtext": "Hand-picked pieces from Gucci, Louis Vuitton, Moncler and more. Every item verified by our experts.",
+        "cta1_label": "Shop All",
+        "cta1_link": "/collections/all",
+        "cta2_label": "Sell Now",
+        "cta2_link": "/pages/sell-to-us-1",
+        "live_line": "Live on TikTok @circularfash"
+      }
+    },
+    "fresh_finds": {
+      "type": "featured-collection-cf",
+      "settings": {
+        "collection": "new",
+        "heading": "Fresh Finds",
+        "subtext": "Your daily designer drop.",
+        "sub_link_label": "Shop New Arrivals",
+        "sub_link": "/collections/new",
+        "limit": 8,
+        "button_label": "Shop All",
+        "button_link": "/collections/all"
+      }
+    },
+    "tiles": {
+      "type": "promo-tiles",
+      "blocks": {
+        "live_tile": {
+          "type": "tile",
+          "settings": {
+            "video_asset": "live-hero.mp4",
+            "kicker": "Circular Fash Live",
+            "heading": "Shop With Us on TikTok Live",
+            "button_label": "Watch on TikTok",
+            "button_link": "https://www.tiktok.com/@circularfash",
+            "button_solid": true
+          }
+        },
+        "sell_tile": {
+          "type": "tile",
+          "settings": {
+            "image": "shopify://shop_images/9A1F83C7-4A37-4A40-B3EE-2E7E4867FFD5.jpg",
+            "kicker": "Explore",
+            "heading": "Ways to Sell",
+            "button_label": "Sell Now",
+            "button_link": "/pages/sell-to-us-1",
+            "button_solid": false
+          }
+        }
+      },
+      "block_order": ["live_tile", "sell_tile"]
+    },
+    "features": {
+      "type": "feature-row",
+      "blocks": {
+        "tv": {
+          "type": "feat",
+          "settings": {
+            "video_asset": "live-replay.mp4",
+            "show_live_tag": true,
+            "show_live_dot": true,
+            "heading": "Circular Fash TV",
+            "text": "Shop with us on TikTok LIVE. See pieces up close, ask questions and buy on the spot.",
+            "link_label": "Follow Us",
+            "link": "https://www.tiktok.com/@circularfash"
+          }
+        },
+        "auth": {
+          "type": "feat",
+          "settings": {
+            "icon": "✓",
+            "heading": "Authenticated",
+            "text": "Every item is inspected and verified by our experts before listing. If it isn't genuine, it isn't here.",
+            "link_label": "Our Process",
+            "link": "/pages/authenticity"
+          }
+        },
+        "circular": {
+          "type": "feat",
+          "settings": {
+            "icon": "↺",
+            "heading": "Circular by Design",
+            "text": "Ships from Sweden. Pre-owned keeps exceptional pieces in circulation.",
+            "link_label": "Returns",
+            "link": "/policies/refund-policy"
+          }
+        }
+      },
+      "block_order": ["tv", "auth", "circular"]
+    }
+  },
+  "order": ["hero", "fresh_finds", "tiles", "features"]
+}

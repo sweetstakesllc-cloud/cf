@@ -1,0 +1,33 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero-campaign",
+      "settings": {
+        "compact": true,
+        "eyebrow": "Sell With Circular Fash",
+        "heading": "Give your luxury a second life",
+        "subtext": "Send us your designer pieces. We authenticate, photograph and sell them for you.",
+        "cta1_label": "Submit an Item",
+        "cta1_link": "#ContactForm",
+        "cta2_label": "",
+        "live_line": ""
+      }
+    },
+    "main": { "type": "main-page" },
+    "steps": {
+      "type": "cf-steps",
+      "settings": { "heading": "How It Works", "subtext": "" },
+      "blocks": {
+        "s1": { "type": "step", "settings": { "heading": "Submit Your Item", "text": "Send photos and details through the form below: brand, model, size and condition." } },
+        "s2": { "type": "step", "settings": { "heading": "We Review & Authenticate", "text": "Our experts assess every submission and verify authenticity before anything goes live." } },
+        "s3": { "type": "step", "settings": { "heading": "You Get Paid", "text": "Once your item sells, you receive your payout. Ask us about consignment terms." } }
+      },
+      "block_order": ["s1", "s2", "s3"]
+    },
+    "form": {
+      "type": "contact-form",
+      "settings": {}
+    }
+  },
+  "order": ["hero", "main", "steps", "form"]
+}

@@ -1,0 +1,59 @@
+{% comment %}
+  "Fresh Finds" — 4-column CF product grid from a chosen collection.
+  Mirrors the homepage grid in web/index.html (filter pills arrive with
+  Search & Discovery once the catalogue cleanup has run).
+{% endcomment %}
+
+<div class="cf">
+  <section class="cf-section">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2>{{ section.settings.heading }}</h2>
+        {%- if section.settings.subtext != blank -%}
+          <p class="sec-sub">
+            {{ section.settings.subtext }}
+            {%- if section.settings.sub_link_label != blank %}
+              <a href="{{ section.settings.sub_link | default: section.settings.collection.url }}">{{ section.settings.sub_link_label }}</a>
+            {%- endif -%}
+          </p>
+        {%- endif -%}
+      </div>
+      <div class="grid">
+        {%- for product in section.settings.collection.products limit: section.settings.limit -%}
+          {% render 'card-product', card_product: product, show_secondary_image: true %}
+        {%- else -%}
+          {%- for i in (1..4) -%}
+            {% render 'card-product', card_product: null %}
+          {%- endfor -%}
+        {%- endfor -%}
+      </div>
+      {%- comment -%}
+        Escape hatch at the foot of the grid: someone who scrolled the whole
+        row without finding their piece shouldn't have to travel back up to
+        the nav to keep looking.
+      {%- endcomment -%}
+      {%- if section.settings.button_label != blank -%}
+        <div class="cf-grid-cta">
+          <a class="btn solid" href="{{ section.settings.button_link | default: routes.all_products_collection_url }}">{{ section.settings.button_label }}</a>
+        </div>
+      {%- endif -%}
+    </div>
+  </section>
+</div>
+
+{% schema %}
+{
+  "name": "CF Product Grid",
+  "settings": [
+    { "type": "collection", "id": "collection", "label": "Collection" },
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Fresh Finds" },
+    { "type": "text", "id": "subtext", "label": "Subtext", "default": "Your daily designer drop." },
+    { "type": "text", "id": "sub_link_label", "label": "Subtext link label", "default": "Shop New Arrivals" },
+    { "type": "url", "id": "sub_link", "label": "Subtext link" },
+    { "type": "range", "id": "limit", "label": "Products", "min": 4, "max": 12, "step": 4, "default": 8 },
+    { "type": "text", "id": "button_label", "label": "Button below grid", "default": "Shop All", "info": "Leave blank to hide." },
+    { "type": "url", "id": "button_link", "label": "Button link" }
+  ],
+  "presets": [{ "name": "CF Product Grid" }]
+}
+{% endschema %}

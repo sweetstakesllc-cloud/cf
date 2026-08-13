@@ -1,0 +1,198 @@
+{%- style -%}
+  /* Generate dynamic variables from settings */
+  #Section-{{ section.id }} {
+    --icon-size: {{ section.settings.icon_size }}px;
+    --icon-radius: {{ section.settings.corner_radius }}px;
+    --icon-gap: {{ section.settings.gap }}px;
+    --icon-bg: {{ section.settings.bg_color }};
+    --icon-shadow: {% if section.settings.shadow == 'soft' %}0 4px 12px rgba(0,0,0,0.1){% elsif section.settings.shadow == 'hard' %}4px 4px 0px rgba(0,0,0,1){% else %}none{% endif %};
+    --icon-border: {% if section.settings.show_border %}1px solid {{ section.settings.border_color }}{% else %}none{% endif %};
+  }
+
+  .brand-icons-container {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: {{ section.settings.alignment }};
+    gap: var(--icon-gap);
+    padding-top: {{ section.settings.padding_top }}px;
+    padding-bottom: {{ section.settings.padding_bottom }}px;
+  }
+
+  .brand-icon-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: var(--icon-size);
+    height: var(--icon-size);
+    background-color: var(--icon-bg);
+    border-radius: var(--icon-radius);
+    box-shadow: var(--icon-shadow);
+    border: var(--icon-border);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-decoration: none;
+    overflow: hidden; /* Ensures image stays inside radius */
+  }
+
+  .brand-icon-link:hover {
+    transform: translateY(-2px);
+  }
+
+  .brand-icon-img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain; /* Keeps logo aspect ratio intact */
+    padding: 8px; /* Inner spacing so logo doesn't touch edges */
+    display: block;
+  }
+{%- endstyle -%}
+
+{%- assign brand_list = product.metafields.custom.brands.value -%}
+
+{%- if brand_list != blank -%}
+  <div id="Section-{{ section.id }}" class="page-width">
+    <div class="brand-icons-container">
+      
+      {%- comment -%} 
+        Handle both "List of Metaobjects" and single entries 
+      {%- endcomment -%}
+      {%- if brand_list.count -%}
+        {%- for brand in brand_list -%}
+          {%- assign target_collection = brand.collection.value -%}
+          {%- if target_collection and target_collection.image -%}
+            <a href="{{ target_collection.url }}" class="brand-icon-link" aria-label="View {{ target_collection.title }}">
+              {{ target_collection.image | image_url: width: 200 | image_tag: loading: 'lazy', class: 'brand-icon-img' }}
+            </a>
+          {%- endif -%}
+        {%- endfor -%}
+      
+      {%- else -%}
+        {%- comment -%} Single Item Fallback {%- endcomment -%}
+        {%- assign target_collection = brand_list.collection.value -%}
+        {%- if target_collection and target_collection.image -%}
+          <a href="{{ target_collection.url }}" class="brand-icon-link" aria-label="View {{ target_collection.title }}">
+            {{ target_collection.image | image_url: width: 200 | image_tag: loading: 'lazy', class: 'brand-icon-img' }}
+          </a>
+        {%- endif -%}
+      {%- endif -%}
+
+    </div>
+  </div>
+{%- endif -%}
+
+{% schema %}
+{
+  "name": "Product Brand Icons",
+  "tag": "section",
+  "class": "section",
+  "settings": [
+    {
+      "type": "header",
+      "content": "Layout"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "min": 30,
+      "max": 150,
+      "step": 5,
+      "unit": "px",
+      "label": "Button Size",
+      "default": 60
+    },
+    {
+      "type": "range",
+      "id": "gap",
+      "min": 0,
+      "max": 50,
+      "step": 2,
+      "unit": "px",
+      "label": "Space Between Buttons",
+      "default": 12
+    },
+    {
+      "type": "select",
+      "id": "alignment",
+      "label": "Alignment",
+      "options": [
+        { "value": "flex-start", "label": "Left" },
+        { "value": "center", "label": "Center" },
+        { "value": "flex-end", "label": "Right" }
+      ],
+      "default": "flex-start"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "range",
+      "id": "corner_radius",
+      "min": 0,
+      "max": 100,
+      "step": 2,
+      "unit": "px",
+      "label": "Corner Radius (0=Square, 100=Circle)",
+      "default": 8
+    },
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color",
+      "default": "#F4F4F4"
+    },
+    {
+      "type": "select",
+      "id": "shadow",
+      "label": "Shadow Style",
+      "options": [
+        { "value": "none", "label": "None" },
+        { "value": "soft", "label": "Soft Blur" },
+        { "value": "hard", "label": "Hard Edge" }
+      ],
+      "default": "none"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_border",
+      "label": "Show Border",
+      "default": false
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border Color",
+      "default": "#e5e5e5"
+    },
+    {
+      "type": "header",
+      "content": "Padding"
+    },
+    {
+      "type": "range",
+      "id": "padding_top",
+      "min": 0,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "label": "Top Padding",
+      "default": 12
+    },
+    {
+      "type": "range",
+      "id": "padding_bottom",
+      "min": 0,
+      "max": 60,
+      "step": 4,
+      "unit": "px",
+      "label": "Bottom Padding",
+      "default": 12
+    }
+  ],
+  "presets": [
+    {
+      "name": "Product Brand Icons"
+    }
+  ]
+}
+{% endschema %}

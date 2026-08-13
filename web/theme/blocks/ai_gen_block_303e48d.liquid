@@ -1,0 +1,210 @@
+{% doc %}
+  @prompt
+    I want to add our trustpilot with trustpilot icon and a text saying "Review us on trustpilot! that is clickable. Here is the link to our trustpilot https://www.trustpilot.com/review/circularfash.com
+    with the icon green star at the end of the text. make the text centered aswell. , make the background color completely white. now its grey, make a green edge around it so it looks more clickable. very thin green so its not standing out too much but still people will know they can click on it. , tighten the green line for a more discreet look
+{% enddoc %}
+{% assign ai_gen_id = block.id | replace: '_', '' | downcase %}
+
+{% style %}
+  .ai-trustpilot-container-{{ ai_gen_id }} {
+    background-color: {{ block.settings.background_color }};
+  }
+
+  .ai-trustpilot-link-{{ ai_gen_id }} {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: {{ block.settings.padding }}px;
+    text-decoration: none;
+    transition: opacity 0.3s ease, border-color 0.3s ease;
+    border: {{ block.settings.border_thickness }}px solid {{ block.settings.border_color }};
+    border-radius: {{ block.settings.border_radius }}px;
+  }
+
+  .ai-trustpilot-link-wrapper-{{ ai_gen_id }} {
+    display: flex;
+    justify-content: center;
+  }
+
+  .ai-trustpilot-link-{{ ai_gen_id }}:hover {
+    opacity: 0.8;
+    border-color: {{ block.settings.border_hover_color }};
+  }
+
+  .ai-trustpilot-text-{{ ai_gen_id }} {
+    color: {{ block.settings.text_color }};
+    font-size: {{ block.settings.font_size }}px;
+    font-weight: {{ block.settings.font_weight }};
+  }
+
+  .ai-trustpilot-icon-{{ ai_gen_id }} {
+    width: {{ block.settings.icon_size }}px;
+    height: {{ block.settings.icon_size }}px;
+    flex-shrink: 0;
+  }
+
+  .ai-trustpilot-icon-{{ ai_gen_id }} svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+{% endstyle %}
+
+<div class="ai-trustpilot-container-{{ ai_gen_id }}" {{ block.shopify_attributes }}>
+  <div class="ai-trustpilot-link-wrapper-{{ ai_gen_id }}">
+    <a
+      href="{{ block.settings.trustpilot_url }}"
+      class="ai-trustpilot-link-{{ ai_gen_id }}"
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <span class="ai-trustpilot-text-{{ ai_gen_id }}">{{ block.settings.link_text }}</span>
+      <span class="ai-trustpilot-icon-{{ ai_gen_id }}">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="{{ block.settings.star_color }}">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      </span>
+    </a>
+  </div>
+</div>
+
+{% schema %}
+{
+  "name": "Trustpilot review link",
+  "settings": [
+    {
+      "type": "text",
+      "id": "link_text",
+      "label": "Link text",
+      "default": "Review us on Trustpilot!"
+    },
+    {
+      "type": "url",
+      "id": "trustpilot_url",
+      "label": "Trustpilot URL"
+    },
+    {
+      "type": "header",
+      "content": "Style"
+    },
+    {
+      "type": "color",
+      "id": "background_color",
+      "label": "Background color",
+      "default": "#ffffff"
+    },
+    {
+      "type": "color",
+      "id": "text_color",
+      "label": "Text color",
+      "default": "#000000"
+    },
+    {
+      "type": "range",
+      "id": "font_size",
+      "min": 12,
+      "max": 32,
+      "step": 2,
+      "unit": "px",
+      "label": "Font size",
+      "default": 16
+    },
+    {
+      "type": "select",
+      "id": "font_weight",
+      "label": "Font weight",
+      "options": [
+        {
+          "value": "400",
+          "label": "Normal"
+        },
+        {
+          "value": "500",
+          "label": "Medium"
+        },
+        {
+          "value": "600",
+          "label": "Semi-bold"
+        },
+        {
+          "value": "700",
+          "label": "Bold"
+        }
+      ],
+      "default": "400"
+    },
+    {
+      "type": "range",
+      "id": "padding",
+      "min": 0,
+      "max": 40,
+      "step": 4,
+      "unit": "px",
+      "label": "Padding",
+      "default": 12
+    },
+    {
+      "type": "header",
+      "content": "Border"
+    },
+    {
+      "type": "range",
+      "id": "border_thickness",
+      "min": 0,
+      "max": 4,
+      "step": 1,
+      "unit": "px",
+      "label": "Border thickness",
+      "default": 1
+    },
+    {
+      "type": "color",
+      "id": "border_color",
+      "label": "Border color",
+      "default": "#00b67a"
+    },
+    {
+      "type": "color",
+      "id": "border_hover_color",
+      "label": "Border hover color",
+      "default": "#008a5e"
+    },
+    {
+      "type": "range",
+      "id": "border_radius",
+      "min": 0,
+      "max": 40,
+      "step": 2,
+      "unit": "px",
+      "label": "Border radius",
+      "default": 8
+    },
+    {
+      "type": "header",
+      "content": "Star icon"
+    },
+    {
+      "type": "color",
+      "id": "star_color",
+      "label": "Star color",
+      "default": "#00b67a"
+    },
+    {
+      "type": "range",
+      "id": "icon_size",
+      "min": 16,
+      "max": 48,
+      "step": 2,
+      "unit": "px",
+      "label": "Icon size",
+      "default": 24
+    }
+  ],
+  "presets": [
+    {
+      "name": "Trustpilot review link"
+    }
+  ]
+}
+{% endschema %}

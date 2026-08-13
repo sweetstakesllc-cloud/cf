@@ -1,0 +1,181 @@
+{% schema %}
+{
+  "name": "Elastic Card Nav",
+  "settings": [
+    {
+      "type": "color",
+      "id": "bg_color",
+      "label": "Background Color",
+      "default": "#111111"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "link",
+      "name": "Card",
+      "settings": [
+        {
+          "type": "text",
+          "id": "title",
+          "label": "Label",
+          "default": "Menu Item"
+        },
+        {
+          "type": "url",
+          "id": "url",
+          "label": "Link"
+        },
+        {
+          "type": "color",
+          "id": "card_color",
+          "label": "Card Color",
+          "default": "#3b82f6"
+        }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "Elastic Card Nav",
+      "blocks": [
+        { "type": "link", "settings": { "title": "Home", "card_color": "#2563eb" } },
+        { "type": "link", "settings": { "title": "About", "card_color": "#db2777" } },
+        { "type": "link", "settings": { "title": "Shop", "card_color": "#16a34a" } },
+        { "type": "link", "settings": { "title": "Contact", "card_color": "#ea580c" } }
+      ]
+    }
+  ]
+}
+{% endschema %}
+
+<div class="card-nav-container" style="background-color: {{ section.settings.bg_color }};">
+  <div class="card-nav-wrapper">
+    {% for block in section.blocks %}
+      <a href="{{ block.settings.url | default: '#' }}" class="nav-card" style="background-color: {{ block.settings.card_color }}; z-index: {{ forloop.rindex }};">
+        <span class="card-text">{{ block.settings.title }}</span>
+        <div class="card-shine"></div>
+      </a>
+    {% endfor %}
+  </div>
+</div>
+
+<style>
+  .card-nav-container {
+    height: 400px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    width: 100%;
+  }
+
+  .card-nav-wrapper {
+    position: relative;
+    width: 100%;
+    height: 250px; /* Card Height + Bounce room */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .nav-card {
+    position: absolute;
+    width: 200px;
+    height: 250px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    color: white;
+    font-size: 24px;
+    font-weight: 700;
+    box-shadow: 0 10px 30px -5px rgba(0,0,0,0.3);
+    cursor: pointer;
+    transform-origin: center bottom;
+    /* Initial Stacked State */
+    top: 0; 
+    /* We use JS to set left/x positions, but center it initially with CSS */
+    left: 50%;
+    transform: translateX(-50%);
+    transition: filter 0.2s;
+  }
+
+  .card-text {
+    position: relative;
+    z-index: 2;
+    pointer-events: none; /* Let clicks pass to card */
+  }
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const wrapper = document.querySelector('.card-nav-wrapper');
+  const cards = document.querySelectorAll('.nav-card');
+  const total = cards.length;
+  
+  // 1. Initial Stack Setup (The "Deck" look)
+  // We offset them slightly so you can see the stack
+  gsap.set(cards, {
+    xPercent: -50, // Keep centered
+    x: (i) => i * 15, // Slight horizontal offset
+    y: (i) => i * -2, // Slight vertical offset
+    rotation: (i) => (i - total/2) * 2, // Slight fan rotation
+    scale: (i) => 1 - (i * 0.05), // Cards get smaller towards back
+  });
+
+  // 2. The Interaction
+  wrapper.addEventListener('mouseenter', () => {
+    // THIS IS THE ANIMATION YOU WANT
+    gsap.to(cards, {
+      xPercent: -50, // Keep centered
+      x: (i) => {
+        // Calculate spread: Center is 0, others spread left/right
+        const center = (total - 1) / 2;
+        const spacing = 220; // Width of card + gap
+        return (i - center) * spacing;
+      },
+      y: 0,
+      rotation: 0,
+      scale: 1,
+      duration: 1.2, // Time
+      stagger: 0.05, // Domino effect
+      ease: "elastic.out(1, 0.8)" // THE EXACT BOUNCE
+    });
+  });
+
+  wrapper.addEventListener('mouseleave', () => {
+    // Reset to Stack
+    gsap.to(cards, {
+      xPercent: -50,
+      x: (i) => i * 15,
+      y: (i) => i * -2,
+      rotation: (i) => (i - total/2) * 2,
+      scale: (i) => 1 - (i * 0.05),
+      duration: 0.6,
+      stagger: 0.02,
+      ease: "power3.out"
+    });
+  });
+
+  // Optional: Hover effect on individual cards
+  cards.forEach((card, i) => {
+    card.addEventListener('mouseenter', (e) => {
+       e.stopPropagation(); // Don't trigger wrapper
+       gsap.to(card, {
+         y: -20, // Pop up slightly
+         duration: 0.3,
+         ease: "back.out(2)"
+       });
+    });
+    card.addEventListener('mouseleave', (e) => {
+       gsap.to(card, {
+         y: 0,
+         duration: 0.3
+       });
+    });
+  });
+});
+</script>

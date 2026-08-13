@@ -1,0 +1,130 @@
+{% comment %}
+  Circular Fash header — utility bar + centered wordmark + category nav.
+  Mirrors web/index.html. Cart link keeps the #cart-icon-bubble id so
+  Refresh's cart drawer (rendered from theme.liquid) still opens and its
+  count still live-updates via the cart-icon-bubble section.
+{% endcomment %}
+
+<link rel="stylesheet" href="{{ 'component-search.css' | asset_url }}" media="print" onload="this.media='all'">
+{%- if settings.predictive_search_enabled -%}
+  <link rel="stylesheet" href="{{ 'component-price.css' | asset_url }}" media="print" onload="this.media='all'">
+{%- endif -%}
+
+<div class="cf">
+  <div class="util">
+    <div class="wrap util-in">
+      <a href="#footer-newsletter">{{ section.settings.util_left_label }}</a>
+      <div class="util-right">
+        {%- if section.settings.live_line != blank -%}
+          <span class="muted">{{ section.settings.live_line }}</span>
+        {%- endif -%}
+        <a href="{{ section.settings.sell_link }}">{{ section.settings.sell_label }}</a>
+        {%- if shop.customer_accounts_enabled -%}
+          {%- if customer -%}
+            <a href="{{ routes.account_url }}">Account</a>
+          {%- else -%}
+            <a href="{{ routes.account_login_url }}">Sign In</a>
+          {%- endif -%}
+        {%- endif -%}
+        {%- if section.settings.region_line != blank -%}
+          <span class="muted">{{ section.settings.region_line }}</span>
+        {%- endif -%}
+      </div>
+    </div>
+  </div>
+
+  <div class="masthead">
+    <div class="wrap">
+      <div class="mast-top">
+        <div class="mast-left">{% render 'header-search-cf', input_id: 'Search-In-Modal-CF' %}</div>
+        <a class="biglogo" href="{{ routes.root_url }}">{{ section.settings.wordmark | default: shop.name }}</a>
+        <div class="mast-right">
+          <a href="{{ routes.cart_url }}" id="cart-icon-bubble">Cart ({{ cart.item_count }})<span class="visually-hidden">{{ 'templates.cart.cart' | t }}</span></a>
+        </div>
+      </div>
+      <nav class="cats" aria-label="Main">
+        {%- for link in section.settings.menu.links -%}
+          {%- comment -%}
+            A parent with children opens its dropdown instead of navigating. Its own
+            URL is almost always a junk destination (BRANDS pointed at /collections,
+            CATEGORIES at /collections/all) and the children are the real navigation.
+          {%- endcomment -%}
+          <div{% if link.links != blank %} class="has-drop"{% endif %}>
+            {%- if link.links != blank -%}
+              <button
+                type="button"
+                class="top"
+                aria-expanded="false"
+                aria-controls="cf-drop-{{ section.id }}-{{ forloop.index }}"
+                {% if link.child_active %}aria-current="true"{% endif %}
+              >
+                {{ link.title }}
+              </button>
+              <div class="drop" id="cf-drop-{{ section.id }}-{{ forloop.index }}">
+                <span class="head">{{ link.title }}</span>
+                {%- for child in link.links -%}
+                  <a href="{{ child.url }}">{{ child.title }}</a>
+                {%- endfor -%}
+              </div>
+            {%- else -%}
+              <a class="top" href="{{ link.url }}" {% if link.current %}aria-current="page"{% endif %}>{{ link.title }}</a>
+            {%- endif -%}
+          </div>
+        {%- endfor -%}
+      </nav>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    var nav = document.querySelector('.cf nav.cats');
+    if (!nav) return;
+    var items = nav.querySelectorAll('.has-drop');
+
+    function close(item) {
+      item.classList.remove('open');
+      var btn = item.querySelector('.top');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+    function closeAll(except) {
+      items.forEach(function (item) {
+        if (item !== except) close(item);
+      });
+    }
+
+    items.forEach(function (item) {
+      var btn = item.querySelector('.top');
+      if (!btn) return;
+      btn.addEventListener('click', function () {
+        var open = item.classList.contains('open');
+        closeAll(item);
+        item.classList.toggle('open', !open);
+        btn.setAttribute('aria-expanded', open ? 'false' : 'true');
+      });
+    });
+
+    document.addEventListener('click', function (event) {
+      if (!nav.contains(event.target)) closeAll();
+    });
+    document.addEventListener('keydown', function (event) {
+      if (event.key === 'Escape') closeAll();
+    });
+  })();
+</script>
+
+{% schema %}
+{
+  "name": "CF Header",
+  "class": "cf-header-section",
+  "settings": [
+    { "type": "text", "id": "wordmark", "label": "Wordmark", "default": "Circular Fash" },
+    { "type": "link_list", "id": "menu", "label": "Menu", "default": "main-menu" },
+    { "type": "text", "id": "util_left_label", "label": "Utility bar left link", "default": "Join Our Newsletter" },
+    { "type": "text", "id": "live_line", "label": "Live line (leave blank to hide)", "default": "Live on TikTok" },
+    { "type": "text", "id": "sell_label", "label": "Sell link label", "default": "Sell Now" },
+    { "type": "url", "id": "sell_link", "label": "Sell link" },
+    { "type": "text", "id": "region_line", "label": "Region line", "default": "Sweden · SEK kr" }
+  ]
+}
+{% endschema %}

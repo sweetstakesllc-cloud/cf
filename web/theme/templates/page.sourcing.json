@@ -1,0 +1,26 @@
+{
+  "sections": {
+    "hero": {
+      "type": "hero-campaign",
+      "settings": {
+        "compact": true,
+        "eyebrow": "Sourcing Requests",
+        "heading": "Looking for something specific?",
+        "subtext": "Tell us the piece and the size you are after and we will go and find it.",
+        "cta1_label": "Make a Request",
+        "cta1_link": "#ContactForm",
+        "cta2_label": "",
+        "live_line": ""
+      }
+    },
+    "main": { "type": "main-page" },
+    "form": {
+      "type": "contact-form",
+      "settings": {
+        "heading": "Specify the DESIRED ITEM and SIZE, and we will respond to your request.",
+        "heading_size": "h2"
+      }
+    }
+  },
+  "order": ["hero", "main", "form"]
+}

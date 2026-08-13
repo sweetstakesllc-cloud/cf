@@ -1,0 +1,47 @@
+{% comment %}
+  Numbered how-it-works steps (sell page). Mirrors .steps in web/sell.html.
+{% endcomment %}
+
+<div class="cf">
+  <section class="cf-section">
+    <div class="wrap">
+      {%- if section.settings.heading != blank -%}
+        <div class="sec-head">
+          <h2>{{ section.settings.heading }}</h2>
+          {%- if section.settings.subtext != blank -%}<p class="sec-sub">{{ section.settings.subtext }}</p>{%- endif -%}
+        </div>
+      {%- endif -%}
+      <div class="steps">
+        {%- for block in section.blocks -%}
+          <div class="step-card" {{ block.shopify_attributes }}>
+            <span class="n">Step {{ forloop.index | prepend: '0' }}</span>
+            <h3>{{ block.settings.heading }}</h3>
+            <p>{{ block.settings.text }}</p>
+          </div>
+        {%- endfor -%}
+      </div>
+    </div>
+  </section>
+</div>
+
+{% schema %}
+{
+  "name": "CF Steps",
+  "max_blocks": 4,
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "How It Works" },
+    { "type": "text", "id": "subtext", "label": "Subtext" }
+  ],
+  "blocks": [
+    {
+      "type": "step",
+      "name": "Step",
+      "settings": [
+        { "type": "text", "id": "heading", "label": "Heading" },
+        { "type": "textarea", "id": "text", "label": "Text" }
+      ]
+    }
+  ],
+  "presets": [{ "name": "CF Steps", "blocks": [{ "type": "step" }, { "type": "step" }, { "type": "step" }] }]
+}
+{% endschema %}

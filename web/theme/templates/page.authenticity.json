@@ -1,0 +1,85 @@
+/*
+ * ------------------------------------------------------------
+ * IMPORTANT: The contents of this file are auto-generated.
+ *
+ * This file may be updated by the Shopify admin theme editor
+ * or related systems. Please exercise caution as any changes
+ * made to this file may be overwritten.
+ * ------------------------------------------------------------
+ */
+{
+  "sections": {
+    "rich_text_tQN6wk": {
+      "type": "rich-text",
+      "blocks": {
+        "text_9W84GU": {
+          "type": "text",
+          "disabled": true,
+          "settings": {
+            "text": "<p><strong>If you want to sell to us: please fill the first form. If you would like a special product sourced for you please fill out the form below the first one.<br/><br/> For Returns: Please fill out the same form but instead of describing flaws, please state the reason of the return and we will contact you as soon as possible :).</strong><br/></p>"
+          }
+        }
+      },
+      "block_order": [
+        "text_9W84GU"
+      ],
+      "settings": {
+        "desktop_content_position": "center",
+        "content_alignment": "center",
+        "color_scheme": "",
+        "full_width": true,
+        "padding_top": 40,
+        "padding_bottom": 52
+      }
+    },
+    "174671798324726b80": {
+      "type": "apps",
+      "blocks": {
+        "formful_app_block_form_7XTnLF": {
+          "type": "shopify://apps/formful/blocks/app-block-form/be9de36b-78a1-4ce9-8de3-f1044fb2ee2e",
+          "disabled": true,
+          "settings": {
+            "form_id": "form_zY_YvvxASb",
+            "max_width": 75,
+            "column_gap": 2,
+            "row_gap": 1,
+            "padding_top": 36,
+            "padding_bottom": 36,
+            "color_scheme": ""
+          }
+        }
+      },
+      "block_order": [
+        "formful_app_block_form_7XTnLF"
+      ],
+      "disabled": true,
+      "settings": {
+        "include_margins": true
+      }
+    },
+    "contact_form_pNwdJN": {
+      "type": "contact-form",
+      "disabled": true,
+      "settings": {
+        "heading": "For any sourcing requests, kindly fill out the form below, specifying the <em><strong>DESIRED ITEM</strong></em> and <em><strong>SIZE.</strong></em> We will promptly respond to your inquiry.",
+        "heading_size": "h2",
+        "color_scheme": "",
+        "padding_top": 36,
+        "padding_bottom": 36
+      }
+    },
+    "main": {
+      "type": "main-page",
+      "settings": {
+        "padding_top": 8,
+        "padding_bottom": 12
+      }
+    }
+  },
+  "order": [
+    "rich_text_tQN6wk",
+    "174671798324726b80",
+    "contact_form_pNwdJN",
+    "main"
+  ]
+}

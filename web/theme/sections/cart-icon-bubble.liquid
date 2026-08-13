@@ -1,0 +1,9 @@
+{% comment %}
+  Fetched by cart.js / cart-drawer.js via the Section Rendering API to
+  refresh the #cart-icon-bubble link after cart changes. Renders the CF
+  text-style cart label instead of Refresh's icon.
+{% endcomment %}
+Cart ({{ cart.item_count }})<span class="visually-hidden">{{ 'templates.cart.cart' | t }}</span>
+{%- if cart != empty -%}
+  <span class="visually-hidden">{{ 'sections.header.cart_count' | t: count: cart.item_count }}</span>
+{%- endif -%}

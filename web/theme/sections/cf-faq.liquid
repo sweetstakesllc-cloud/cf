@@ -1,0 +1,79 @@
+{% comment %}
+  FAQ accordion. Reuses the .acc styles already used by the PDP and sell page.
+  Built because the FAQ menu item pointed at /apps/help-center, which 404s — the
+  help-center app is gone, so the page rendered blank.
+{% endcomment %}
+
+<div class="cf">
+  <section class="cf-section">
+    <div class="wrap">
+      {%- if section.settings.heading != blank -%}
+        <div class="sec-head">
+          <h2>{{ section.settings.heading }}</h2>
+          {%- if section.settings.subtext != blank -%}
+            <p class="sec-sub">{{ section.settings.subtext }}</p>
+          {%- endif -%}
+        </div>
+      {%- endif -%}
+
+      <div class="faq">
+        {%- for block in section.blocks -%}
+          {%- case block.type -%}
+            {%- when 'group' -%}
+              <h3 class="faq-group" {{ block.shopify_attributes }}>{{ block.settings.heading }}</h3>
+            {%- when 'qa' -%}
+              <div class="acc" {{ block.shopify_attributes }}>
+                <details {% if block.settings.open %}open{% endif %}>
+                  <summary>{{ block.settings.question }}</summary>
+                  <div class="acc-body">{{ block.settings.answer }}</div>
+                </details>
+              </div>
+          {%- endcase -%}
+        {%- endfor -%}
+      </div>
+
+      {%- if section.settings.footer_text != blank -%}
+        <p class="faq-foot">{{ section.settings.footer_text }}</p>
+      {%- endif -%}
+    </div>
+  </section>
+</div>
+
+{% schema %}
+{
+  "name": "CF FAQ",
+  "max_blocks": 50,
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "Frequently Asked Questions" },
+    { "type": "text", "id": "subtext", "label": "Subtext" },
+    {
+      "type": "richtext",
+      "id": "footer_text",
+      "label": "Footer text",
+      "default": "<p>Still need help? Email Info@circularfash.com and we will get back to you.</p>"
+    }
+  ],
+  "blocks": [
+    {
+      "type": "group",
+      "name": "Group heading",
+      "settings": [{ "type": "text", "id": "heading", "label": "Heading" }]
+    },
+    {
+      "type": "qa",
+      "name": "Question",
+      "settings": [
+        { "type": "text", "id": "question", "label": "Question" },
+        { "type": "richtext", "id": "answer", "label": "Answer" },
+        { "type": "checkbox", "id": "open", "label": "Expanded by default", "default": false }
+      ]
+    }
+  ],
+  "presets": [
+    {
+      "name": "CF FAQ",
+      "blocks": [{ "type": "qa" }, { "type": "qa" }, { "type": "qa" }]
+    }
+  ]
+}
+{% endschema %}

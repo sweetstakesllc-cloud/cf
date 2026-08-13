@@ -1,0 +1,83 @@
+{% comment %}
+  Circular Fash product card (Fashionphile-style) — replaces the Refresh
+  card while keeping the same render interface, so featured-collection,
+  main-collection-product-grid, search and related-products all pick it up.
+
+  The previous customized card is preserved at
+  snippets/WISHLIST_HERO_BKP_card-product-pre-cf.liquid.
+
+  The condition line and the "Est. retail / % below retail" line were both
+  removed 2026-08-08 at the client's request; restore from git history if
+  ever wanted again.
+{% endcomment %}
+
+{%- if card_product and card_product != empty -%}
+  {%- liquid
+    assign current_variant = card_product.selected_or_first_available_variant
+    assign price = current_variant.price
+
+    assign brand = ''
+    if card_product.vendor != blank and card_product.vendor != shop.name
+      assign brand = card_product.vendor
+    endif
+
+    assign display_title = card_product.title
+    if brand != ''
+      assign display_title = card_product.title | remove_first: brand | strip
+      if display_title == ''
+        assign display_title = card_product.title
+      endif
+    endif
+
+  -%}
+  <div class="cf">{% render 'wishlisthero-collection-product' with product: card_product %}
+    <a class="card" href="{{ card_product.url }}">
+      {%- if card_product.available == false -%}
+        <span class="seen">Sold</span>
+      {%- endif -%}
+      <div class="frame cf-slides" data-label="{{ card_product.title | escape }}">
+        {%- if card_product.featured_media -%}
+          <img
+            class="main"
+            srcset="{{ card_product.featured_media | image_url: width: 400 }} 400w, {{ card_product.featured_media | image_url: width: 800 }} 800w"
+            src="{{ card_product.featured_media | image_url: width: 800 }}"
+            sizes="(min-width: 990px) 320px, (min-width: 750px) 33vw, 50vw"
+            alt="{{ card_product.featured_media.alt | escape }}"
+            {% unless lazy_load == false %}loading="lazy"{% endunless %}
+            width="{{ card_product.featured_media.width }}"
+            height="{{ card_product.featured_media.height }}"
+          >
+          {%- if show_secondary_image -%}
+            {%- for media in card_product.media offset: 1 limit: 3 -%}
+              <img
+                class="alt{% unless forloop.first %} extra{% endunless %}"
+                src="{{ media | image_url: width: 800 }}"
+                alt=""
+                loading="lazy"
+                width="{{ media.width }}"
+                height="{{ media.height }}"
+              >
+            {%- endfor -%}
+          {%- endif -%}
+        {%- endif -%}
+      </div>
+      <div class="card-info">
+        {%- if brand != '' -%}
+          <div class="brand">{{ brand }}</div>
+        {%- endif -%}
+        <div class="pname">{{ display_title }}</div>
+        <div class="price">{{ price | money }}</div>
+      </div>
+    </a>
+  </div>
+{%- else -%}
+  <div class="cf">
+    <a class="card" href="#">
+      <div class="frame" data-label="Product"></div>
+      <div class="card-info">
+        <div class="pname">Example product</div>
+        <div class="price">{{ 1999 | money }}</div>
+      </div>
+    </a>
+  </div>
+{%- endif -%}
