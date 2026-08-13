@@ -64,7 +64,9 @@ The header link carries `?filter.v.availability=1` (7 pages → 2), but the **fo
 Confirmed in the page HTML: the `<ol>` contains a **single** `<li>` holding points 1
 and 2 (the "2." is typed by hand inside it), then the "who we serve" paragraph, then
 "3. The third: Sustainability" floating loose below it.
-→ **Rewritten:** `web/content/about-us.html`, ready to paste into the page editor.
+→ **DONE, live 2026-08-13.** Rewritten from `web/content/about-us.html` via the
+Admin API; the original body is backed up in the session scratchpad as
+`backup-about-us.html`. Verified live: the `<ol>` now holds three items.
 Age range 16–50 removed. The postal address moves to Contact
 (`web/content/contact-company-info.html`) — it cannot simply disappear, Swedish
 distance-selling rules require a reachable geographic address, but About is the
@@ -110,6 +112,16 @@ NEW IN and the brand pages stay clean without any per-collection work.
 **Backlog:** the rule only covers future sales. 326 products are already sold and
 still published. Clearing those is a bulk write to live product data — it needs a CSV
 dry run and an explicit go-ahead first.
+
+## Where each fix lives
+
+Theme code is staged on the **CF Staging** theme (id `188182659400`, unpublished),
+previewable at `https://circularfash.com/?preview_theme_id=188182659400`.
+
+Pages and menus are store data shared by every theme, so they cannot be staged —
+editing one changes the live site immediately. About Us and Contact are done. The
+FAQ page, the Sourcing page and the FAQ menu item are deliberately held until CF
+Staging is published, because they only pay off once the new templates are live.
 
 ## Theme changes in this batch
 
