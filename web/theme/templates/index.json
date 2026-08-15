@@ -7,8 +7,8 @@
         "layout": "split",
         "fill": true,
         "overlay": 50,
-        "eyebrow": "",
-        "heading": "Luxury deserves a second life",
+        "eyebrow": "Pre-Loved Luxury · Authenticated in Sweden",
+        "heading": "",
         "subtext": "Hand-picked pieces from Gucci, Louis Vuitton, Moncler and more. Every item verified by our experts.",
         "cta1_label": "Shop All",
         "cta1_link": "/collections/all",
@@ -57,7 +57,10 @@
           }
         }
       },
-      "block_order": ["live_tile", "sell_tile"]
+      "block_order": [
+        "live_tile",
+        "sell_tile"
+      ]
     },
     "features": {
       "type": "feature-row",
@@ -95,8 +98,17 @@
           }
         }
       },
-      "block_order": ["tv", "auth", "circular"]
+      "block_order": [
+        "tv",
+        "auth",
+        "circular"
+      ]
     }
   },
-  "order": ["hero", "fresh_finds", "tiles", "features"]
+  "order": [
+    "hero",
+    "fresh_finds",
+    "tiles",
+    "features"
+  ]
 }
