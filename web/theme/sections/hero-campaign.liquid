@@ -4,14 +4,38 @@
   Mirrors the .hero block in web/index.html.
 {% endcomment %}
 
+{%- liquid
+  comment
+    overlay 50 reproduces the original .42/.58 gradient, so an unset section
+    keeps rendering exactly as before.
+  endcomment
+  assign shade = section.settings.overlay | default: 50
+  assign shade_top = shade | times: 84 | divided_by: 10000.0
+  assign shade_bottom = shade | times: 116 | divided_by: 10000.0
+-%}
 <div class="cf">
-  <section class="cf-section hero{% if section.settings.compact %} compact{% endif %}" style="padding:0">
+  <section
+    class="cf-section hero{% if section.settings.compact %} compact{% endif %}{% if section.settings.fill %} filled{% endif %}"
+    style="padding:0;--hero-shade-top:{{ shade_top }};--hero-shade-bottom:{{ shade_bottom }}"
+  >
     <div class="bg">
       {%- if section.settings.video_asset != blank -%}
         <video src="{{ section.settings.video_asset | asset_url }}" autoplay muted loop playsinline></video>
       {%- elsif section.settings.image != blank -%}
         {{ section.settings.image | image_url: width: 800 | image_tag: class: 'blur', alt: '', loading: 'eager' }}
         {{ section.settings.image | image_url: width: 1800 | image_tag: class: 'sharp', alt: section.settings.heading, loading: 'eager' }}
+      {%- elsif section.settings.image_asset != blank -%}
+        {%- comment -%}
+          A theme-asset fallback, for when the campaign shot lives in the theme
+          rather than in Files.
+        {%- endcomment -%}
+        <img class="blur" src="{{ section.settings.image_asset | asset_url }}" alt="" aria-hidden="true">
+        <img
+          class="sharp"
+          src="{{ section.settings.image_asset | asset_url }}"
+          alt="{{ section.settings.heading | escape }}"
+          loading="eager"
+        >
       {%- else -%}
         <img class="blur" src="https://circularfash.com/cdn/shop/files/F5976BE4-6FF3-4292-8726-79D7454A6B90.jpg?v=1785401188&width=800" alt="" aria-hidden="true">
         <img class="sharp" src="https://circularfash.com/cdn/shop/files/F5976BE4-6FF3-4292-8726-79D7454A6B90.jpg?v=1785401188&width=1600" alt="{{ section.settings.heading | escape }}">
@@ -47,6 +71,9 @@
     { "type": "checkbox", "id": "compact", "label": "Compact height", "default": false },
     { "type": "text", "id": "video_asset", "label": "Background video asset filename", "info": "e.g. live-hero.mp4 (overrides the image)" },
     { "type": "image_picker", "id": "image", "label": "Campaign image", "info": "Ideally one landscape ~16:9 shot; portrait images get the blur-fill treatment." },
+    { "type": "text", "id": "image_asset", "label": "…or campaign image asset filename", "info": "e.g. hero-keepall.jpg, for an image stored in the theme instead of Files. Used only when no campaign image is picked above." },
+    { "type": "checkbox", "id": "fill", "label": "Crop image to fill the band", "default": false, "info": "For landscape shots. Leave off for portrait, which then gets the blurred fill behind it." },
+    { "type": "range", "id": "overlay", "label": "Darkening over the image", "min": 0, "max": 80, "step": 5, "unit": "%", "default": 50, "info": "Raise it for pale images so the white text stays readable." },
     { "type": "text", "id": "eyebrow", "label": "Eyebrow", "default": "Pre-Loved Luxury · Authenticated in Sweden" },
     { "type": "text", "id": "heading", "label": "Heading", "default": "Luxury deserves a second life" },
     { "type": "textarea", "id": "subtext", "label": "Subtext", "default": "Hand-picked pieces from Gucci, Louis Vuitton, Moncler and more. Every item verified by our experts." },

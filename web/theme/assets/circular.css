@@ -66,7 +66,11 @@
 .cf .hero .bg img{position:absolute;inset:0;width:100%;height:100%}
 .cf .hero .bg img.blur{object-fit:cover;filter:blur(30px) brightness(.8);transform:scale(1.18)}
 .cf .hero .bg img.sharp{object-fit:contain}
-.cf .hero .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(18,18,18,.42),rgba(18,18,18,.58));z-index:1}
+.cf .hero .bg::after{content:"";position:absolute;inset:0;background:linear-gradient(rgba(18,18,18,var(--hero-shade-top,.42)),rgba(18,18,18,var(--hero-shade-bottom,.58)));z-index:1}
+/* Landscape campaign shots crop to fill the band; the blurred copy behind is
+   only there to pad out portrait ones. */
+.cf .hero.filled .bg img.sharp{object-fit:cover}
+.cf .hero.filled .bg img.blur{display:none}
 .cf .hero-inner{position:relative;z-index:2;padding:80px 24px;max-width:760px}
 .cf .hero .eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.32em;text-transform:uppercase;margin-bottom:18px;display:block}
 .cf h1{font-weight:600;font-size:clamp(38px,5.4vw,66px);line-height:1.06;text-transform:uppercase;letter-spacing:.03em}
