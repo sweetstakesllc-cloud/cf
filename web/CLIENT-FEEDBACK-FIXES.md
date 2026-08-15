@@ -124,37 +124,52 @@ pagination. `/collections/sold` is linked from nowhere. Nothing was written to a
 product to achieve this — it is entirely presentational and reversible from the theme
 editor checkbox.
 
+## Shipped 2026-08-15
+
+CF Staging (`188182659400`) was **published and is now the live theme**. The previous
+live theme, "Circular Fash Redesign" (`188129083720`), is unpublished and is the
+rollback — republish it to undo everything in this batch.
+
+Also done as live store data:
+- `/pages/faq` created (`faq` template) — the FAQ renders for the first time.
+- `/pages/sourcing-requests` created (`sourcing` template).
+- Sell To Us moved onto the `sell` template, so it shows its own copy and its
+  Formful form, and no longer carries the sourcing form.
+
+Checked after publishing: NEW IN is one page of 12 with no pagination and no sold
+items; ALL, WOMEN and the brand pages are in-stock only and survive sorting; the
+BRANDS page lists 23 real brands with no blank cards; `/pages/questions-answers` no
+longer renders Sell To Us; every menu target returns 200 except the FAQ item below.
+
 ## Still open
 
-**Store writes (need a go-ahead — nothing has been written):**
-1. Create the FAQ page (`faq` suffix) and Sourcing Requests page (`sourcing` suffix).
-2. Repoint the FAQ menu item off the 404; add Sourcing Requests.
-3. Assign the `sell` suffix to Sell To Us, with the `page.json` fix in the same step.
-4. Point CATEGORIES somewhere real, and drop the now-redundant
-   `?filter.v.availability=1` from the WOMEN menu URL (the theme handles it, and the
-   hard-coded absolute URL is why WOMEN never shows as the active nav item).
-5. Delete or unpublish the 5 empty brand collections and remove them from the menu.
-6. `/policies/shipping-policy` is 15 characters — Shopify links it from checkout.
+**One store write is prepared but not applied** — the permission classifier refused
+it twice, so it needs to be run by hand (`menu.js --apply`, dry run verified, backs
+the menu up first):
+1. **FAQ menu item still points at `/apps/help-center`, which 404s.** The page now
+   exists at `/pages/faq`; only the menu still has to be repointed. Until then the
+   client's FAQ complaint is only half fixed.
+2. Add SOURCING REQUESTS to the menu (the page exists and is reachable by URL).
+3. Drop the hard-coded `?filter.v.availability=1` from the WOMEN menu URL — the theme
+   handles it now, and the absolute URL is why WOMEN never shows as the active item.
+4. Trim the 5 empty brands from the BRANDS menu. Cosmetic: the theme already hides
+   them from both the dropdown and the brands page.
+
+**Blocked on API scope:** unpublishing those 5 empty collections needs
+`read_publications`, which the app does not have.
 
 **Client decisions:**
-7. Whether sold products should be archived on sale (Shopify Flow). No longer needed
+5. Whether sold products should be archived on sale (Shopify Flow). No longer needed
    to keep the site clean, but 342 sold products still sit published.
-8. NEW IN is the rule `tag = DRIPPY`, not a date, so nothing ages out of it.
-9. Three sources of truth for returns disagree — the FAQ, `/policies/refund-policy`,
+6. NEW IN is the rule `tag = DRIPPY`, not a date, so nothing ages out of it.
+7. Three sources of truth for returns disagree — the FAQ, `/policies/refund-policy`,
    and `/pages/return-policy` (which omits the 50 SEK clause). Pick one.
-10. Search has no in-stock default and still shows sold items. Deliberately left
-    alone: forcing a product filter on a search that also returns pages and articles
-    needs a decision first.
-
-## Where each fix lives
-
-Theme code is on **CF Staging** (`188182659400`, unpublished), previewable at
-`https://circularfash.com/?preview_theme_id=188182659400`. Staging matches the repo
-as of 2026-08-15. **The fixes above are not on the live theme yet** — publishing CF
-Staging is what delivers them.
-
-Pages and menus are store data shared by every theme, so they cannot be staged;
-editing one changes the live site immediately. About Us and Contact are done.
+8. `/policies/shipping-policy` is 15 characters, and Shopify links it from checkout.
+9. Search has no in-stock default and still shows sold items. Deliberately left
+   alone: forcing a product filter on a search that also returns pages and articles
+   needs a decision first.
+10. Brand collections still have no images of their own, so Shopify's placeholder
+    drawing is what shows. That was the client's "drawings" remark.
 
 ## Theme changes in this batch
 
