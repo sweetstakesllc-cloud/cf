@@ -85,6 +85,7 @@
 .cf .hero .btn.ghost:hover{background:#fff;color:var(--text)}
 .cf .btn.ghost:hover{background:var(--text);color:#fff}
 .cf .hero .live-line{margin-top:26px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;display:inline-flex;align-items:center;gap:9px}
+.cf a.live-line:hover{text-decoration:underline;text-underline-offset:4px}
 
 /* Split hero: copy beside the product rather than on top of it. For packshots
    on a plain background, where a full-bleed crop either cuts the product or

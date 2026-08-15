@@ -58,7 +58,13 @@
         {%- endif -%}
       </div>
       {%- if section.settings.live_line != blank -%}
-        <span class="live-line"><span class="live-dot"></span>{{ section.settings.live_line }}</span>
+        {%- if section.settings.live_link != blank -%}
+          <a class="live-line" href="{{ section.settings.live_link }}" target="_blank" rel="noopener">
+            <span class="live-dot"></span>{{ section.settings.live_line }}
+          </a>
+        {%- else -%}
+          <span class="live-line"><span class="live-dot"></span>{{ section.settings.live_line }}</span>
+        {%- endif -%}
       {%- endif -%}
     </div>
   </section>
@@ -89,7 +95,8 @@
     { "type": "url", "id": "cta1_link", "label": "Primary button link" },
     { "type": "text", "id": "cta2_label", "label": "Secondary button label", "default": "Sell Now" },
     { "type": "url", "id": "cta2_link", "label": "Secondary button link" },
-    { "type": "text", "id": "live_line", "label": "Live line", "default": "Live on TikTok" }
+    { "type": "text", "id": "live_line", "label": "Live line", "default": "Live on TikTok" },
+    { "type": "url", "id": "live_link", "label": "Live line link", "info": "Makes the live line clickable, e.g. the TikTok profile. Opens in a new tab." }
   ],
   "presets": [{ "name": "CF Campaign Hero" }]
 }
