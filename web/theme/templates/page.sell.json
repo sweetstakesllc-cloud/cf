@@ -1,33 +1,74 @@
+/*
+ * ------------------------------------------------------------
+ * Sell To Us. What the shared default template used to render for
+ * this page, minus the sourcing form (now /pages/sourcing-requests)
+ * and with the page's own body switched back on — its "1. Share
+ * Photos / 2. Receive Offer" copy had never rendered, because the
+ * default template disabled "main".
+ *
+ * The form is the same Formful block as before. Do not replace it
+ * with Shopify's contact-form section: Formful is what collects the
+ * item details, and submissions route through it.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
-    "hero": {
-      "type": "hero-campaign",
+    "main": {
+      "type": "main-page",
       "settings": {
-        "compact": true,
-        "eyebrow": "Sell With Circular Fash",
-        "heading": "Give your luxury a second life",
-        "subtext": "Send us your designer pieces. We authenticate, photograph and sell them for you.",
-        "cta1_label": "Submit an Item",
-        "cta1_link": "#ContactForm",
-        "cta2_label": "",
-        "live_line": ""
+        "padding_top": 8,
+        "padding_bottom": 0
       }
     },
-    "main": { "type": "main-page" },
-    "steps": {
-      "type": "cf-steps",
-      "settings": { "heading": "How It Works", "subtext": "" },
+    "intro": {
+      "type": "rich-text",
       "blocks": {
-        "s1": { "type": "step", "settings": { "heading": "Submit Your Item", "text": "Send photos and details through the form below: brand, model, size and condition." } },
-        "s2": { "type": "step", "settings": { "heading": "We Review & Authenticate", "text": "Our experts assess every submission and verify authenticity before anything goes live." } },
-        "s3": { "type": "step", "settings": { "heading": "You Get Paid", "text": "Once your item sells, you receive your payout. Ask us about consignment terms." } }
+        "text_sell": {
+          "type": "text",
+          "settings": {
+            "text": "<p><strong>Fill in the form below to sell to us.</strong></p><p>If the item turns out to be fake, a service fee of 10% is charged.<br/><br/>For returns: use the same form, but instead of describing flaws, state the reason for the return and we will contact you as soon as possible.</p>"
+          }
+        }
       },
-      "block_order": ["s1", "s2", "s3"]
+      "block_order": [
+        "text_sell"
+      ],
+      "settings": {
+        "desktop_content_position": "center",
+        "content_alignment": "center",
+        "color_scheme": "",
+        "full_width": true,
+        "padding_top": 24,
+        "padding_bottom": 24
+      }
     },
-    "form": {
-      "type": "contact-form",
-      "settings": {}
+    "sell_form": {
+      "type": "apps",
+      "blocks": {
+        "formful_app_block_form_7XTnLF": {
+          "type": "shopify://apps/formful/blocks/app-block-form/be9de36b-78a1-4ce9-8de3-f1044fb2ee2e",
+          "settings": {
+            "form_id": "form_zY_YvvxASb",
+            "max_width": 75,
+            "column_gap": 2,
+            "row_gap": 1,
+            "padding_top": 36,
+            "padding_bottom": 36,
+            "color_scheme": ""
+          }
+        }
+      },
+      "block_order": [
+        "formful_app_block_form_7XTnLF"
+      ],
+      "settings": {
+        "include_margins": true
+      }
     }
   },
-  "order": ["hero", "main", "steps", "form"]
+  "order": [
+    "main",
+    "intro",
+    "sell_form"
+  ]
 }

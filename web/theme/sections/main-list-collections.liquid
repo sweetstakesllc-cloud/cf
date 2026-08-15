@@ -31,6 +31,7 @@
       them. source_item names the parent item to drill into.
     endcomment
     assign wanted = section.settings.source_item | downcase | strip
+    assign drill_failed = false
     if wanted != blank
       assign drilled = nil
       for parent_link in source_links
@@ -40,6 +41,15 @@
           break
         endif
       endfor
+      comment
+        No match means somebody renamed the menu item. Falling through to the
+        every-collection branch would silently put Shorts, Shoes, Sold and
+        Women back on the brands page — the precise bug this section exists to
+        prevent, reintroduced by a rename in the nav editor. Fail closed.
+      endcomment
+      if drilled == nil
+        assign drill_failed = true
+      endif
       assign source_links = drilled
     endif
   -%}
@@ -48,7 +58,20 @@
     collection in the store. The BRANDS page listing Shorts, Shoes, Sold and Women
     is what this fixes — the menu is the single source of truth for what a brand is.
   {%- endcomment -%}
-  {%- if source_links != blank -%}
+  {%- if drill_failed -%}
+    {%- comment -%}
+      Misconfiguration, not an empty catalogue: no menu item is called
+      "{{ section.settings.source_item }}". Say so in the theme editor, where
+      whoever changed it is standing, and stay quiet on the storefront.
+    {%- endcomment -%}
+    {%- if request.design_mode -%}
+      <p class="cf-list-collections-warning">
+        No menu item called “{{ section.settings.source_item | escape }}” in
+        “{{ section.settings.source_menu.title | escape }}”. Update this section’s
+        <em>Source item</em> setting to match the menu, or clear it to list every collection.
+      </p>
+    {%- endif -%}
+  {%- elsif source_links != blank -%}
     <ul
       class="collection-list grid grid--{{ section.settings.columns_desktop }}-col-desktop grid--{{ section.settings.columns_mobile }}-col-tablet-down"
       role="list"
@@ -57,8 +80,15 @@
         {%- unless link.type == 'collection_link' -%}
           {%- continue -%}
         {%- endunless -%}
-        {%- if section.settings.hide_empty and link.object.all_products_count == 0 -%}
-          {%- continue -%}
+        {%- comment -%}
+          "has products", not "has zero products" — a deleted or unpublished
+          collection has no object, and nil == 0 is false, so the negative test
+          would keep precisely the cards that render blank and link nowhere.
+        {%- endcomment -%}
+        {%- if section.settings.hide_empty -%}
+          {%- unless link.object.all_products_count > 0 -%}
+            {%- continue -%}
+          {%- endunless -%}
         {%- endif -%}
         <li
           class="collection-list__item grid__item{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--slide-in{% endif %}"

@@ -1,26 +1,36 @@
+/*
+ * ------------------------------------------------------------
+ * Sourcing Requests — its own page, which is what the client asked
+ * for. This is the contact-form section that used to sit at the
+ * bottom of Sell To Us (and, via the shared default template, at the
+ * bottom of every other page too).
+ *
+ * No hero section: main-page already renders the page title as the
+ * h1, and a hero heading above it would make two.
+ * ------------------------------------------------------------
+ */
 {
   "sections": {
-    "hero": {
-      "type": "hero-campaign",
+    "main": {
+      "type": "main-page",
       "settings": {
-        "compact": true,
-        "eyebrow": "Sourcing Requests",
-        "heading": "Looking for something specific?",
-        "subtext": "Tell us the piece and the size you are after and we will go and find it.",
-        "cta1_label": "Make a Request",
-        "cta1_link": "#ContactForm",
-        "cta2_label": "",
-        "live_line": ""
+        "padding_top": 8,
+        "padding_bottom": 0
       }
     },
-    "main": { "type": "main-page" },
     "form": {
       "type": "contact-form",
       "settings": {
-        "heading": "Specify the DESIRED ITEM and SIZE, and we will respond to your request.",
-        "heading_size": "h2"
+        "heading": "Specify the <em><strong>DESIRED ITEM</strong></em> and <em><strong>SIZE</strong></em>, and we will respond to your request.",
+        "heading_size": "h2",
+        "color_scheme": "",
+        "padding_top": 36,
+        "padding_bottom": 36
       }
     }
   },
-  "order": ["hero", "main", "form"]
+  "order": [
+    "main",
+    "form"
+  ]
 }

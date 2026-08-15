@@ -72,8 +72,16 @@
                   is always kept.
                 {%- endcomment -%}
                 {%- for child in link.links -%}
-                  {%- if child.type == 'collection_link' and child.object.all_products_count == 0 -%}
-                    {%- continue -%}
+                  {%- comment -%}
+                    Tested as "has products", not "has zero products": a menu
+                    item whose collection was deleted or unpublished has no
+                    object at all, and `nil == 0` is false — so the negative
+                    form would keep exactly the links that lead nowhere.
+                  {%- endcomment -%}
+                  {%- if child.type == 'collection_link' -%}
+                    {%- unless child.object.all_products_count > 0 -%}
+                      {%- continue -%}
+                    {%- endunless -%}
                   {%- endif -%}
                   <a href="{{ child.url }}">{{ child.title }}</a>
                 {%- endfor -%}
