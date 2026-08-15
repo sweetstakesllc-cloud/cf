@@ -19,13 +19,30 @@
         {%- endif -%}
       </div>
       <div class="grid">
-        {%- for product in section.settings.collection.products limit: section.settings.limit -%}
+        {%- comment -%}
+          Take the first N *available* products, not the first N products.
+          A plain `limit` filled this row with whatever sat at the top of the
+          collection, sold pieces included, and the card shows no sold badge
+          here, so they read as buyable until you click. The collection pages
+          hide sold stock (layout/theme.liquid + snippets/pagination-cf.liquid);
+          the shop front has to agree with them.
+        {%- endcomment -%}
+        {%- assign shown = 0 -%}
+        {%- for product in section.settings.collection.products -%}
+          {%- unless product.available -%}
+            {%- continue -%}
+          {%- endunless -%}
           {% render 'card-product', card_product: product, show_secondary_image: true %}
-        {%- else -%}
+          {%- assign shown = shown | plus: 1 -%}
+          {%- if shown >= section.settings.limit -%}
+            {%- break -%}
+          {%- endif -%}
+        {%- endfor -%}
+        {%- if shown == 0 -%}
           {%- for i in (1..4) -%}
             {% render 'card-product', card_product: null %}
           {%- endfor -%}
-        {%- endfor -%}
+        {%- endif -%}
       </div>
       {%- comment -%}
         Escape hatch at the foot of the grid: someone who scrolled the whole

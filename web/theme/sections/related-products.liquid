@@ -37,6 +37,14 @@
       >
         {% assign skip_card_product_styles = false %}
         {% for recommendation in recommendations.products %}
+          {%- comment -%}
+            Shopify's recommendation API happily returns sold stock. Nothing
+            else on the site offers it any more, so recommending it here would
+            send a shopper who is one click from buying to a dead end instead.
+          {%- endcomment -%}
+          {%- unless recommendation.available -%}
+            {%- continue -%}
+          {%- endunless -%}
           <li class="grid__item">
             {% render 'card-product',
               card_product: recommendation,
