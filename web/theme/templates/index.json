@@ -4,6 +4,7 @@
       "type": "hero-campaign",
       "settings": {
         "image_asset": "hero-keepall.jpg",
+        "layout": "split",
         "fill": true,
         "overlay": 50,
         "eyebrow": "Pre-Loved Luxury · Authenticated in Sweden",

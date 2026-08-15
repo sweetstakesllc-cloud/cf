@@ -80,6 +80,25 @@ h1{font-weight:600;font-size:clamp(38px,5.4vw,66px);line-height:1.06;text-transf
 .btn.ghost:hover{background:var(--text);color:#fff}
 .hero .live-line{margin-top:26px;font-size:12px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;display:inline-flex;align-items:center;gap:9px}
 
+/* Split hero: copy beside the product rather than on top of it. For packshots
+   on a plain background, where a full-bleed crop either cuts the product or
+   greys out the backdrop. */
+.hero.split{display:grid;grid-template-columns:1fr 1fr;align-items:center;background:var(--surface);color:var(--text);text-align:left}
+.hero.split .bg{position:relative;inset:auto;order:2;height:100%}
+.hero.split .bg::after{display:none}
+.hero.split .bg img.sharp{object-fit:contain;padding:24px}
+.hero.split .bg img.blur{display:none}
+.hero.split .hero-inner{order:1;padding:48px clamp(24px,5vw,72px);max-width:none}
+/* circular.css pins hero headings to white for the full-bleed treatment, so the
+   light variant has to outrank that rather than rely on inheritance. */
+.hero.split h1,.hero.split .eyebrow{color:var(--text)}
+.hero.split p.sub{margin-left:0;color:var(--text-soft)}
+.hero.split .cta-row{justify-content:flex-start}
+.hero.split .btn.solid{background:var(--text);color:#fff;border-color:var(--text)}
+.hero.split .btn.solid:hover{background:transparent;color:var(--text)}
+.hero.split .btn.ghost{border-color:var(--text);color:var(--text)}
+.hero.split .btn.ghost:hover{background:var(--text);color:#fff}
+
 /* Shorter hero variant for interior pages */
 .hero.compact{min-height:clamp(280px,38vh,400px)}
 .hero.compact .hero-inner{padding:56px 24px}
@@ -320,6 +339,11 @@ footer a:hover{color:var(--text);text-decoration:underline;text-underline-offset
 @media(max-width:960px){
   .mast-left{display:none}
   .mast-top{grid-template-columns:1fr auto 1fr}
+  .hero.split{grid-template-columns:1fr}
+  .hero.split .bg{order:1;height:300px}
+  .hero.split .hero-inner{order:2;text-align:center;padding:28px 24px 44px}
+  .hero.split .cta-row{justify-content:center}
+  .hero.split p.sub{margin-left:auto;margin-right:auto}
   nav.cats{flex-wrap:wrap}
   /* No hover below 960px, so the dropdown becomes a tap-to-open panel on its own
      full-width row rather than being hidden outright (which left BRANDS and
