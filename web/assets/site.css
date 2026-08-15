@@ -86,7 +86,10 @@ h1{font-weight:600;font-size:clamp(38px,5.4vw,66px);line-height:1.06;text-transf
 .hero.split{display:grid;grid-template-columns:1fr 1fr;align-items:center;background:var(--surface);color:var(--text);text-align:left}
 .hero.split .bg{position:relative;inset:auto;order:2;height:100%}
 .hero.split .bg::after{display:none}
-.hero.split .bg img.sharp{object-fit:contain;padding:24px}
+/* The packshot's background is pure white, so multiply drops it into the band
+   and leaves only the product and its shadow. Only safe because the backdrop is
+   a flat colour — over a photo it would muddy it. */
+.hero.split .bg img.sharp{object-fit:contain;padding:24px;mix-blend-mode:multiply}
 .hero.split .bg img.blur{display:none}
 .hero.split .hero-inner{order:1;padding:48px clamp(24px,5vw,72px);max-width:none}
 /* circular.css pins hero headings to white for the full-bleed treatment, so the
