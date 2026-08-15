@@ -141,22 +141,17 @@ items; ALL, WOMEN and the brand pages are in-stock only and survive sorting; the
 BRANDS page lists 23 real brands with no blank cards; `/pages/questions-answers` no
 longer renders Sell To Us; every menu target returns 200 except the FAQ item below.
 
+The main menu was rewritten too (`web/_build/update-menu.js`, backup in
+`menu-backup.json`): FAQ now points at `/pages/faq` instead of the 404, SOURCING
+REQUESTS was added after SELL TO US, WOMEN is a plain `/collections/women` so it
+shows as the active item again, and the 5 empty brands were dropped from BRANDS
+(28 → 23). All ten menu targets return 200.
+
 ## Still open
 
-**One store write is prepared but not applied** — the permission classifier refused
-it twice, so it needs to be run by hand (`menu.js --apply`, dry run verified, backs
-the menu up first):
-1. **FAQ menu item still points at `/apps/help-center`, which 404s.** The page now
-   exists at `/pages/faq`; only the menu still has to be repointed. Until then the
-   client's FAQ complaint is only half fixed.
-2. Add SOURCING REQUESTS to the menu (the page exists and is reachable by URL).
-3. Drop the hard-coded `?filter.v.availability=1` from the WOMEN menu URL — the theme
-   handles it now, and the absolute URL is why WOMEN never shows as the active item.
-4. Trim the 5 empty brands from the BRANDS menu. Cosmetic: the theme already hides
-   them from both the dropdown and the brands page.
-
-**Blocked on API scope:** unpublishing those 5 empty collections needs
-`read_publications`, which the app does not have.
+**Blocked on API scope:** unpublishing the 5 empty brand collections needs
+`read_publications`, which the app does not have. They are already hidden from the
+dropdown and the brands page, so this is tidying only.
 
 **Client decisions:**
 5. Whether sold products should be archived on sale (Shopify Flow). No longer needed
