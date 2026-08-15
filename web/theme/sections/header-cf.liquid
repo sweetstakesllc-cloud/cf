@@ -62,7 +62,19 @@
               </button>
               <div class="drop" id="cf-drop-{{ section.id }}-{{ forloop.index }}">
                 <span class="head">{{ link.title }}</span>
+                {%- comment -%}
+                  Skip children that lead nowhere, on the same test the brands
+                  page uses (sections/main-list-collections.liquid). Five of the
+                  28 brands in the menu have no products at all, so the dropdown
+                  was offering dead ends the brands page had already hidden —
+                  the two views of the same menu disagreeing. A child that is
+                  not a collection (a page, a policy) has no count to check and
+                  is always kept.
+                {%- endcomment -%}
                 {%- for child in link.links -%}
+                  {%- if child.type == 'collection_link' and child.object.all_products_count == 0 -%}
+                    {%- continue -%}
+                  {%- endif -%}
                   <a href="{{ child.url }}">{{ child.title }}</a>
                 {%- endfor -%}
               </div>

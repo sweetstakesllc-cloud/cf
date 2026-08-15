@@ -26,7 +26,41 @@
     assign terms = results.terms | escape
     assign results_url = '?q=' | append: terms | append: '&options%5Bprefix%5D=last&sort_by=' | append: sort_by
   endif
+
+  comment
+    The availability facet is deliberately not drawn as a filter — every visitor
+    is already held to in-stock by layout/theme.liquid. But facets.js rebuilds
+    the whole query string from FormData alone and then calls history.pushState,
+    which is not a navigation, so that redirect never gets a second chance: a
+    facet the forms do not carry is a facet that dies on the first sort or
+    filter click, taking the shopper from an in-stock grid to a mostly-sold one.
+    Carry the active value as a hidden input in every form that gets submitted,
+    and pin it to the "clear all" target for the same reason.
+  endcomment
+  assign cf_availability = ''
+  for f in results.filters
+    if f.param_name == 'filter.v.availability'
+      for v in f.values
+        if v.active
+          assign cf_availability = v.value
+        endif
+      endfor
+    endif
+  endfor
+  if cf_availability != blank
+    assign cf_joiner = '?'
+    if results_url contains '?'
+      assign cf_joiner = '&'
+    endif
+    assign results_url = results_url | append: cf_joiner | append: 'filter.v.availability=' | append: cf_availability
+  endif
 -%}
+
+{%- capture cf_availability_input -%}
+  {%- if cf_availability != blank -%}
+    <input type="hidden" name="filter.v.availability" value="{{ cf_availability | escape }}">
+  {%- endif -%}
+{%- endcapture -%}
 
 <div class="facets-container{% if filter_type == 'drawer' %} facets-container-drawer{% endif %}{% if settings.animations_reveal_on_scroll %} scroll-trigger animate--fade-in{% endif %}">
   {%- if filter_type == 'vertical' or filter_type == 'horizontal' -%}
@@ -35,6 +69,7 @@
         id="FacetFiltersForm"
         class="{% if filter_type == 'horizontal' %}facets__form{% else %}facets__form-vertical{% endif %}"
       >
+        {{ cf_availability_input }}
         {%- if results.terms -%}
           <input type="hidden" name="q" value="{{ results.terms | escape }}">
           <input name="options[prefix]" type="hidden" value="last">
@@ -478,6 +513,7 @@
       </summary>
       <facet-filters-form>
         <form id="FacetFiltersFormMobile" class="mobile-facets">
+          {{ cf_availability_input }}
           <div class="mobile-facets__inner gradient">
             <div class="mobile-facets__header">
               <div class="mobile-facets__header-inner">
@@ -836,6 +872,7 @@
   {%- if enable_sorting and filter_type == 'drawer' -%}
     <facet-filters-form class="facets small-hide">
       <form id="FacetSortDrawerForm" class="facets__form">
+        {{ cf_availability_input }}
         <div class="facet-filters sorting caption small-hide">
           <div class="facet-filters__field">
             <h2 class="facet-filters__label caption-large text-body">

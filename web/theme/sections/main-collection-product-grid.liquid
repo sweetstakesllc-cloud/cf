@@ -42,6 +42,20 @@
     {%- if section.settings.enable_sorting and section.settings.filter_type == 'vertical' -%}
       <facet-filters-form class="facets facets-vertical-sort page-width small-hide">
         <form class="facets-vertical-form" id="FacetSortForm">
+          {%- comment -%}
+            facets.js submits this form too, and rebuilds the query from its
+            FormData alone — so it has to carry the in-stock filter as well or
+            sorting drops it. Same reasoning as snippets/facets.liquid.
+          {%- endcomment -%}
+          {%- for f in collection.filters -%}
+            {%- if f.param_name == 'filter.v.availability' -%}
+              {%- for v in f.values -%}
+                {%- if v.active -%}
+                  <input type="hidden" name="filter.v.availability" value="{{ v.value | escape }}">
+                {%- endif -%}
+              {%- endfor -%}
+            {%- endif -%}
+          {%- endfor -%}
           <div class="facet-filters sorting caption">
             <div class="facet-filters__field">
               <h2 class="facet-filters__label caption-large text-body">
@@ -125,16 +139,46 @@
         {% endif %}
       >
         {%- if collection.products.size == 0 -%}
+          {%- comment -%}
+            Every visitor arrives with the in-stock filter already applied, so
+            "use fewer filters" is wrong advice for a collection that has simply
+            sold through: the shopper chose no filter, and the link it offers
+            only bounces off the redirect in layout/theme.liquid and lands back
+            here. Tell them it is sold out instead, and send them somewhere with
+            stock. Filters the shopper *did* pick still get the stock message.
+          {%- endcomment -%}
+          {%- liquid
+            assign chosen_filters = 0
+            for f in collection.filters
+              unless f.param_name == 'filter.v.availability'
+                assign chosen_filters = chosen_filters | plus: f.active_values.size
+                if f.type == 'price_range' and f.min_value.value != nil
+                  assign chosen_filters = chosen_filters | plus: 1
+                endif
+                if f.type == 'price_range' and f.max_value.value != nil
+                  assign chosen_filters = chosen_filters | plus: 1
+                endif
+              endunless
+            endfor
+          -%}
           <div class="collection collection--empty page-width" id="product-grid" data-id="{{ section.id }}">
             <div class="loading-overlay gradient"></div>
             <div class="title-wrapper center">
               <h2 class="title title--primary">
-                {{ 'sections.collection_template.empty' | t -}}
-                <br>
-                {{
-                  'sections.collection_template.use_fewer_filters_html'
-                  | t: link: collection.url, class: 'underlined-link link'
-                }}
+                {%- if chosen_filters == 0 -%}
+                  Everything in {{ collection.title }} has sold.
+                  <br>
+                  <a class="underlined-link link" href="{{ routes.all_products_collection_url }}">
+                    See what is in stock
+                  </a>
+                {%- else -%}
+                  {{ 'sections.collection_template.empty' | t -}}
+                  <br>
+                  {{
+                    'sections.collection_template.use_fewer_filters_html'
+                    | t: link: collection.url, class: 'underlined-link link'
+                  }}
+                {%- endif -%}
               </h2>
             </div>
           </div>
@@ -146,7 +190,9 @@
             {%- comment -%}
               The sold segment is the tail of the pagination (see
               snippets/pagination-cf.liquid) — label it so the switch from
-              in-stock to sold items is obvious rather than surprising.
+              in-stock to sold items is obvious rather than surprising. Nothing
+              links there while show_sold_segment is off, but the label still
+              stands guard over a hand-typed availability=0 URL.
             {%- endcomment -%}
             {%- for f in collection.filters -%}
               {%- if f.param_name == 'filter.v.availability' -%}
@@ -196,7 +242,11 @@
               {%- endfor -%}
             </ul>
 
-            {% render 'pagination-cf', paginate: paginate, anchor: '' %}
+            {% render 'pagination-cf',
+              paginate: paginate,
+              anchor: '',
+              show_sold: section.settings.show_sold_segment
+            %}
           </div>
         {%- endif -%}
       </div>
@@ -359,6 +409,13 @@
     {
       "type": "header",
       "content": "t:sections.main-collection-product-grid.settings.header__1.content"
+    },
+    {
+      "type": "checkbox",
+      "id": "show_sold_segment",
+      "default": false,
+      "label": "Show sold items after the in-stock ones",
+      "info": "Off: a collection ends when it runs out of stock to sell. On: sold items follow the in-stock ones on the closing pages, under a \"Sold items\" heading."
     },
     {
       "type": "checkbox",

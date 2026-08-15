@@ -1,10 +1,18 @@
 {% comment %}
   Circular Fash segmented pagination.
 
-  Shopify has no "out of stock last" sort order, so a collection is browsed as
-  two consecutive segments driven by its own availability facet: the in-stock
+  Shopify has no "out of stock last" sort order, so a collection CAN be browsed
+  as two consecutive segments driven by its own availability facet: the in-stock
   pages first, then the sold pages. Page numbers run continuously across both,
   so sold items always land on the final pages.
+
+  That tail is OFF by default. Client feedback (Aug 2026) was that a trailing
+  page of sold stock reads as a stray "SOLD OUT" page rather than as the end of
+  the collection — on NEW IN, 12 in-stock items and a page 2 holding only the 8
+  sold ones. With it off, layout/theme.liquid still lands every visitor on the
+  in-stock segment and this snippet falls through to Shopify's own pagination,
+  which then numbers that segment 1..n correctly. Sold items stay in the
+  catalogue and keep their URLs; they are simply not browsable.
 
   URLs for the segment being viewed come from Shopify's own paginate.parts, so
   any other active facet (size, price, brand) and the sort order are preserved.
@@ -13,6 +21,8 @@
 
   Accepts:
   - paginate: {Object} paginate object of the current segment (required)
+  - show_sold: {Boolean} append the sold segment after the in-stock pages.
+      Anything but true — including an omitted argument — keeps it hidden.
   - anchor: {String} optional
 {% endcomment %}
 
@@ -99,10 +109,11 @@
 -%}
 
 {%- comment -%}
-  Fall back to the stock pagination when the availability facet is unavailable
-  (nothing to segment on) or when the collection fits on a single page.
+  Fall back to the stock pagination when the sold tail is switched off, when the
+  availability facet is unavailable (nothing to segment on), or when the
+  collection fits on a single page.
 {%- endcomment -%}
-{%- if has_avail == false or total_pages < 2 -%}
+{%- if show_sold != true or has_avail == false or total_pages < 2 -%}
   {%- if paginate.pages > 1 -%}
     {% render 'pagination', paginate: paginate, anchor: anchor %}
   {%- endif -%}
