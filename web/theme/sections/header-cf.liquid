@@ -26,7 +26,24 @@
             <a href="{{ routes.account_login_url }}">Sign In</a>
           {%- endif -%}
         {%- endif -%}
-        {%- if section.settings.region_line != blank -%}
+        {%- comment -%}
+          The region used to be a hardcoded line of text ("Sweden · SEK kr")
+          while the store already sells into 46 countries across 27 currencies.
+          Render Shopify's own localization form instead, so the figure a
+          shopper sees is the one they will be charged. Falls back to the
+          static line when only one country is configured, which is also what
+          keeps the theme editor's preview honest.
+        {%- endcomment -%}
+        {%- if localization.available_countries.size > 1 -%}
+          <localization-form class="cf-locale" data-prevent-hide>
+            {%- form 'localization', id: 'CfHeaderCountryForm', class: 'localization-form' -%}
+              <h2 class="visually-hidden" id="CfHeaderCountryLabel">
+                {{ 'localization.country_label' | t }}
+              </h2>
+              {%- render 'country-localization', localPosition: 'CfHeaderCountry' -%}
+            {%- endform -%}
+          </localization-form>
+        {%- elsif section.settings.region_line != blank -%}
           <span class="muted">{{ section.settings.region_line }}</span>
         {%- endif -%}
       </div>

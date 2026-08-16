@@ -1,0 +1,145 @@
+{% comment %}
+  Trustpilot.
+
+  Two parts, because Trustpilot's own TrustBox is not currently serving data for
+  this business unit: every template tried (Carousel, Micro Combo, Micro Star,
+  Grid, Horizontal) rendered nothing but the Trustpilot logo, on all three
+  locales, from circularfash.com itself. That is an account setting on
+  Trustpilot's side — TrustBoxes have to be switched on for the business — so
+  the widget is off by default here and can be turned on the day it works.
+
+  Until then the section states the score and links out. The numbers are
+  settings rather than hardcoded copy so they can be corrected as they move;
+  they are NOT pulled live, so re-check them now and then against
+  https://www.trustpilot.com/review/circularfash.com
+
+  We deliberately do not copy review text into the theme. Reviews belong to the
+  people who wrote them and to Trustpilot's platform, they go stale, and a
+  score quoted next to a stale quote stops being true. The link is how a
+  shopper reads them.
+{% endcomment %}
+
+{{ 'component-rating.css' | asset_url | stylesheet_tag }}
+
+{%- liquid
+  assign score = section.settings.score
+  assign full = score | floor
+  assign has_half = false
+  assign remainder = score | minus: full
+  if remainder >= 0.25 and remainder < 0.75
+    assign has_half = true
+  elsif remainder >= 0.75
+    assign full = full | plus: 1
+  endif
+  comment
+    Liquid cannot run a filter inside an if, so the half-star slot is worked
+    out here rather than in the loop condition.
+  endcomment
+  assign half_index = full | plus: 1
+-%}
+
+<div class="cf">
+  <section class="cf-section cf-tp-section">
+    <div class="wrap">
+      {%- if section.settings.heading != blank -%}
+        <div class="sec-head">
+          <h2>{{ section.settings.heading }}</h2>
+        </div>
+      {%- endif -%}
+
+      <div class="cf-tp">
+        <div class="cf-tp-stars" role="img" aria-label="{{ score }} out of 5 stars">
+          {%- for i in (1..5) -%}
+            {%- if i <= full -%}
+              <span class="cf-tp-star is-on">&#9733;</span>
+            {%- elsif has_half and i == half_index -%}
+              <span class="cf-tp-star is-half">&#9733;</span>
+            {%- else -%}
+              <span class="cf-tp-star">&#9733;</span>
+            {%- endif -%}
+          {%- endfor -%}
+        </div>
+        <p class="cf-tp-score">
+          <strong>{{ score }}</strong> out of 5
+        </p>
+        <p class="cf-tp-count">
+          {{ section.settings.count }} reviews on Trustpilot
+        </p>
+        <a class="cf-tp-link" href="{{ section.settings.profile_url }}" target="_blank" rel="noopener">
+          {{ section.settings.link_label }}
+        </a>
+      </div>
+
+      {%- if section.settings.show_widget -%}
+        {%- liquid
+          assign bu = section.settings.businessunit_id | strip
+          assign tpl = section.settings.template_id | strip
+        -%}
+        {%- if bu != blank and tpl != blank -%}
+          <div
+            class="trustpilot-widget cf-tp-widget"
+            data-locale="{{ section.settings.locale }}"
+            data-template-id="{{ tpl }}"
+            data-businessunit-id="{{ bu }}"
+            data-style-height="{{ section.settings.height }}px"
+            data-style-width="100%"
+            data-theme="light"
+          >
+            <a href="{{ section.settings.profile_url }}" target="_blank" rel="noopener">Trustpilot</a>
+          </div>
+          <script src="//widget.trustpilot.com/bootstrap/v5/tp.widget.bootstrap.min.js" async></script>
+          <script>
+            {%- comment -%}
+              The bootstrap script scans for .trustpilot-widget once. The theme
+              editor re-injects a section as innerHTML afterwards, which does not
+              re-run that scan, so re-initialise this one when it re-renders.
+            {%- endcomment -%}
+            document.addEventListener('shopify:section:load', function (event) {
+              if (event.detail.sectionId !== '{{ section.id }}') return;
+              var el = event.target.querySelector('.trustpilot-widget');
+              if (el && window.Trustpilot) window.Trustpilot.loadFromElement(el, true);
+            });
+          </script>
+        {%- endif -%}
+      {%- endif -%}
+    </div>
+  </section>
+</div>
+
+{% schema %}
+{
+  "name": "Trustpilot",
+  "settings": [
+    { "type": "text", "id": "heading", "label": "Heading", "default": "What our customers say" },
+    {
+      "type": "text",
+      "id": "score",
+      "label": "TrustScore",
+      "default": "4.8",
+      "info": "Not pulled live. Check it against the Trustpilot profile now and then."
+    },
+    { "type": "text", "id": "count", "label": "Number of reviews", "default": "98" },
+    { "type": "text", "id": "link_label", "label": "Link label", "default": "Read the reviews on Trustpilot" },
+    { "type": "text", "id": "profile_url", "label": "Trustpilot profile URL", "default": "https://www.trustpilot.com/review/circularfash.com" },
+    { "type": "header", "content": "Live TrustBox widget" },
+    {
+      "type": "checkbox",
+      "id": "show_widget",
+      "label": "Show the Trustpilot widget",
+      "default": false,
+      "info": "Off because Trustpilot currently returns an empty TrustBox for this business. Turn TrustBoxes on at businessapp.b2b.trustpilot.com (Showcase > TrustBoxes), then enable this. The widget shows real review text and a live score, so switch it on as soon as it works."
+    },
+    { "type": "text", "id": "businessunit_id", "label": "Business unit ID", "default": "6602ab7bc80091d789272bf0" },
+    {
+      "type": "text",
+      "id": "template_id",
+      "label": "TrustBox template ID",
+      "default": "53aa8912dec7e10d38f59f36",
+      "info": "Review Carousel (shows review text). Micro Combo is 5419b6ffb0d04a076446a9af."
+    },
+    { "type": "range", "id": "height", "min": 20, "max": 500, "step": 10, "unit": "px", "label": "Widget height", "default": 140 },
+    { "type": "text", "id": "locale", "label": "Locale", "default": "en-US" }
+  ],
+  "presets": [{ "name": "Trustpilot" }]
+}
+{% endschema %}

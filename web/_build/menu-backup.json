@@ -1,0 +1,394 @@
+{
+  "id": "gid://shopify/Menu/231436583240",
+  "handle": "main-menu",
+  "title": "Main Menu",
+  "items": [
+    {
+      "id": "gid://shopify/MenuItem/543137202504",
+      "title": "ALL",
+      "type": "COLLECTION",
+      "url": "/collections/all",
+      "resourceId": "gid://shopify/Collection/606201250120",
+      "tags": [],
+      "items": []
+    },
+    {
+      "id": "gid://shopify/MenuItem/720745627976",
+      "title": "NEW IN",
+      "type": "COLLECTION",
+      "url": "/collections/new",
+      "resourceId": "gid://shopify/Collection/632041079112",
+      "tags": [],
+      "items": []
+    },
+    {
+      "id": "gid://shopify/MenuItem/720600170824",
+      "title": "BRANDS",
+      "type": "COLLECTIONS",
+      "url": "/collections",
+      "resourceId": null,
+      "tags": [],
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/720600203592",
+          "title": "Moncler",
+          "type": "COLLECTION",
+          "url": "/collections/moncler",
+          "resourceId": "gid://shopify/Collection/606200660296",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720600236360",
+          "title": "Canada Goose",
+          "type": "COLLECTION",
+          "url": "/collections/canada-goose",
+          "resourceId": "gid://shopify/Collection/606200463688",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720600269128",
+          "title": "Burberry",
+          "type": "COLLECTION",
+          "url": "/collections/burberry",
+          "resourceId": "gid://shopify/Collection/606200398152",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720600301896",
+          "title": "C.P. Company",
+          "type": "COLLECTION",
+          "url": "/collections/c-p-company",
+          "resourceId": "gid://shopify/Collection/606200430920",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720600334664",
+          "title": "Stone Island",
+          "type": "COLLECTION",
+          "url": "/collections/stone-island",
+          "resourceId": "gid://shopify/Collection/606200791368",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601350472",
+          "title": "Dsquared2",
+          "type": "COLLECTION",
+          "url": "/collections/dsquared2",
+          "resourceId": "gid://shopify/Collection/606200496456",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601383240",
+          "title": "Louis Vuitton",
+          "type": "COLLECTION",
+          "url": "/collections/louis-vuitton",
+          "resourceId": "gid://shopify/Collection/606200627528",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601416008",
+          "title": "Lanvin",
+          "type": "COLLECTION",
+          "url": "/collections/lanvin",
+          "resourceId": "gid://shopify/Collection/641816625480",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601448776",
+          "title": "Dior",
+          "type": "COLLECTION",
+          "url": "/collections/dior",
+          "resourceId": "gid://shopify/Collection/641816822088",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601481544",
+          "title": "Fendi",
+          "type": "COLLECTION",
+          "url": "/collections/fendi",
+          "resourceId": "gid://shopify/Collection/606200561992",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601514312",
+          "title": "Gucci",
+          "type": "COLLECTION",
+          "url": "/collections/gucci",
+          "resourceId": "gid://shopify/Collection/606200594760",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601547080",
+          "title": "Palm Angels",
+          "type": "COLLECTION",
+          "url": "/collections/palm-angels",
+          "resourceId": "gid://shopify/Collection/606200693064",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601579848",
+          "title": "Saint Laurent",
+          "type": "COLLECTION",
+          "url": "/collections/saint-laurent",
+          "resourceId": "gid://shopify/Collection/606200758600",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601612616",
+          "title": "Prada",
+          "type": "COLLECTION",
+          "url": "/collections/prada",
+          "resourceId": "gid://shopify/Collection/606200725832",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601645384",
+          "title": "Moose Knuckles",
+          "type": "COLLECTION",
+          "url": "/collections/moose-knuckles",
+          "resourceId": "gid://shopify/Collection/615200162120",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601678152",
+          "title": "Valentino",
+          "type": "COLLECTION",
+          "url": "/collections/valentino",
+          "resourceId": "gid://shopify/Collection/606200824136",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601710920",
+          "title": "Balmain",
+          "type": "COLLECTION",
+          "url": "/collections/balmain",
+          "resourceId": "gid://shopify/Collection/606200365384",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601743688",
+          "title": "Louboutin",
+          "type": "COLLECTION",
+          "url": "/collections/christian-louboutin",
+          "resourceId": "gid://shopify/Collection/642934079816",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601776456",
+          "title": "Jacquemus",
+          "type": "COLLECTION",
+          "url": "/collections/jacquemus",
+          "resourceId": "gid://shopify/Collection/658253545800",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601809224",
+          "title": "ami",
+          "type": "COLLECTION",
+          "url": "/collections/ami",
+          "resourceId": "gid://shopify/Collection/658255577416",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601841992",
+          "title": "Off-White",
+          "type": "COLLECTION",
+          "url": "/collections/off-white",
+          "resourceId": "gid://shopify/Collection/658255610184",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601874760",
+          "title": "Givenchy",
+          "type": "COLLECTION",
+          "url": "/collections/givenchy",
+          "resourceId": "gid://shopify/Collection/658256003400",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601907528",
+          "title": "Woolrich",
+          "type": "COLLECTION",
+          "url": "/collections/woolrich",
+          "resourceId": "gid://shopify/Collection/609395212616",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601940296",
+          "title": "Philippe Model",
+          "type": "COLLECTION",
+          "url": "/collections/philippe-model",
+          "resourceId": "gid://shopify/Collection/658431050056",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720601973064",
+          "title": "Amiri",
+          "type": "COLLECTION",
+          "url": "/collections/amiri",
+          "resourceId": "gid://shopify/Collection/658431181128",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720602005832",
+          "title": "Parajumpers",
+          "type": "COLLECTION",
+          "url": "/collections/parajumpers",
+          "resourceId": "gid://shopify/Collection/658431213896",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720602038600",
+          "title": "Loro Piana",
+          "type": "COLLECTION",
+          "url": "/collections/loro-piana",
+          "resourceId": "gid://shopify/Collection/658431082824",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/720602071368",
+          "title": "Acne Studios",
+          "type": "COLLECTION",
+          "url": "/collections/acne-studios",
+          "resourceId": "gid://shopify/Collection/606200332616",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/MenuItem/543012028744",
+      "title": "CATEGORIES",
+      "type": "CATALOG",
+      "url": "/collections/all",
+      "resourceId": null,
+      "tags": [],
+      "items": [
+        {
+          "id": "gid://shopify/MenuItem/543137366344",
+          "title": "Accessories",
+          "type": "COLLECTION",
+          "url": "/collections/accessories",
+          "resourceId": "gid://shopify/Collection/606200037704",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/543050531144",
+          "title": "Coats & Jackets",
+          "type": "COLLECTION",
+          "url": "/collections/winterjackets",
+          "resourceId": "gid://shopify/Collection/606172021064",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/543138283848",
+          "title": "Cardigans",
+          "type": "COLLECTION",
+          "url": "/collections/cardigans",
+          "resourceId": "gid://shopify/Collection/606201708872",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/543138316616",
+          "title": "Light Jackets",
+          "type": "COLLECTION",
+          "url": "/collections/lightweight-jackets",
+          "resourceId": "gid://shopify/Collection/606201741640",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/543137399112",
+          "title": "Polo Shirts",
+          "type": "COLLECTION",
+          "url": "/collections/polo-shirts",
+          "resourceId": "gid://shopify/Collection/606200070472",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/543138349384",
+          "title": "Jeans & Trousers",
+          "type": "COLLECTION",
+          "url": "/collections/pants",
+          "resourceId": "gid://shopify/Collection/606201610568",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/543133761864",
+          "title": "Shoes & Sneakers",
+          "type": "COLLECTION",
+          "url": "/collections/shoes",
+          "resourceId": "gid://shopify/Collection/606199939400",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/574784373064",
+          "title": "Shorts",
+          "type": "COLLECTION",
+          "url": "/collections/shorts",
+          "resourceId": "gid://shopify/Collection/622328611144",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/543049023816",
+          "title": "Shirts",
+          "type": "COLLECTION",
+          "url": "/collections/hoodie",
+          "resourceId": "gid://shopify/Collection/606171529544",
+          "tags": []
+        },
+        {
+          "id": "gid://shopify/MenuItem/543138382152",
+          "title": "Vests",
+          "type": "COLLECTION",
+          "url": "/collections/vests",
+          "resourceId": "gid://shopify/Collection/606201676104",
+          "tags": []
+        }
+      ]
+    },
+    {
+      "id": "gid://shopify/MenuItem/665877676360",
+      "title": "WOMEN",
+      "type": "HTTP",
+      "url": "https://circularfash.com/collections/women?filter.v.availability=1",
+      "resourceId": null,
+      "tags": [],
+      "items": []
+    },
+    {
+      "id": "gid://shopify/MenuItem/543012061512",
+      "title": "CONTACT",
+      "type": "PAGE",
+      "url": "/pages/contact",
+      "resourceId": "gid://shopify/Page/120073847112",
+      "tags": [],
+      "items": []
+    },
+    {
+      "id": "gid://shopify/MenuItem/543138840904",
+      "title": "ABOUT US",
+      "type": "PAGE",
+      "url": "/pages/about-us",
+      "resourceId": "gid://shopify/Page/120113004872",
+      "tags": [],
+      "items": []
+    },
+    {
+      "id": "gid://shopify/MenuItem/549018796360",
+      "title": "SELL TO US",
+      "type": "PAGE",
+      "url": "/pages/sell-to-us-1",
+      "resourceId": "gid://shopify/Page/121834275144",
+      "tags": [],
+      "items": []
+    },
+    {
+      "id": "gid://shopify/MenuItem/670142071112",
+      "title": "FAQ",
+      "type": "HTTP",
+      "url": "/apps/help-center",
+      "resourceId": null,
+      "tags": [],
+      "items": []
+    }
+  ]
+}

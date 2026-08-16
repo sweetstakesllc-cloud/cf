@@ -412,6 +412,47 @@
 .cf .hero h1,.cf .hero .eyebrow,.cf .tile-inner h3{color:#fff}
 .cf .tile-inner .kicker{color:#DADADA}
 
+/* country + currency picker in the utility bar. Refresh styles this control for
+   a footer column, so it arrives with padding and a font size that would push
+   the 38px bar open, and .cf .util a would render the country list uppercase
+   and bold. Reset it to the bar's own small caps, and let the list read at
+   normal body scale once it is open. */
+.cf .util .cf-locale{display:flex;align-items:center}
+.cf .util .cf-locale .localization-form{padding:0;margin:0;display:flex}
+/* Refresh gives this button a white fill and a 40px min-height, which punched
+   through the 38px bar and hid its bottom rule, reading as a stray box; and it
+   positions the caret absolutely, on top of the label. Flatten both. */
+.cf .util .cf-locale .localization-form__select{padding:0;margin:0;min-height:0;height:auto;line-height:1;background:none;border:0;display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.08em;font-weight:400;text-transform:none;color:var(--text-soft)}
+.cf .util .cf-locale .localization-form__select:hover{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+.cf .util .cf-locale .localization-form__select .svg-wrapper,.cf .util .cf-locale .localization-form__select svg{position:static;width:10px;height:10px;margin:0;transform:none}
+/* Refresh opens this panel upward (bottom:12px) because it lives in the footer
+   there. In the utility bar that puts it off the top of the page, so flip it to
+   open downward, and anchor it right so 46 countries cannot run off screen. */
+.cf .util .cf-locale .disclosure__list-wrapper{z-index:6;font-size:14px;letter-spacing:0;text-align:left;top:calc(100% + 10px);bottom:auto;left:auto;right:0}
+.cf .util .cf-locale .disclosure__link,.cf .util .cf-locale .disclosure__link .country{text-transform:none;font-weight:400;letter-spacing:0}
+/* Refresh fades the currency in only on hover, which is fine when the control
+   is a country picker. Here it is the currency picker, so the code is the thing
+   the shopper came for: show it on every row, all the time. */
+.cf .util .cf-locale .localization-form__currency{opacity:1;text-transform:uppercase}
+/* the bar drops .muted below 640px; the picker stays, so tighten it to fit
+   alongside SELL NOW and SIGN IN at 375px */
+@media(max-width:640px){
+  .cf .util-right{gap:13px}
+  .cf .util .cf-locale .localization-form__select{font-size:11px;letter-spacing:.02em}
+  .cf .util .cf-locale .disclosure__list-wrapper{position:fixed;top:auto;left:0;right:0;width:100%}
+}
+
+/* Trustpilot block */
+.cf .cf-tp{text-align:center;padding:4px 0 2px}
+.cf .cf-tp-stars{font-size:26px;line-height:1;letter-spacing:.12em;color:#D8D8D8}
+.cf .cf-tp-star.is-on{color:#00B67A}
+.cf .cf-tp-star.is-half{background:linear-gradient(90deg,#00B67A 50%,#D8D8D8 50%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.cf .cf-tp-score{margin:14px 0 2px;font-size:15px}
+.cf .cf-tp-score strong{font-size:19px;font-weight:700}
+.cf .cf-tp-count{margin:0;font-size:13.5px;color:var(--text-soft)}
+.cf .cf-tp-link{display:inline-block;margin-top:14px;font-size:12.5px;font-weight:600;text-transform:uppercase;letter-spacing:.16em;text-decoration:underline;text-underline-offset:4px}
+.cf .cf-tp-widget{margin-top:22px}
+
 /* ---------- Refresh component restyle (matches the CF design system) ---------- */
 /* buttons + section titles sitewide */
 .button,.shopify-challenge__button,.customer button{text-transform:uppercase;letter-spacing:.16em;font-size:12.5px;font-weight:600}
@@ -421,10 +462,13 @@
 .product__title>h1,.product__title>h2{font-size:clamp(21px,2.1vw,27px);font-weight:600;letter-spacing:.04em;line-height:1.25;text-transform:none}
 .product__info-container .price .price-item{font-size:26px;font-weight:700}
 .product__info-container .price{margin-top:6px}
-.cf-trust{border:1px solid #E8E8E8;background:#F7F7F7;padding:20px 22px;display:flex;gap:15px;align-items:flex-start;margin:22px 0 6px;text-align:left}
+/* the whole info column is centred (every block's alignment setting in
+   templates/product.json), so the trust panel stacks its tick above the
+   heading rather than sitting in a left-aligned row */
+.cf-trust{border:1px solid #E8E8E8;background:#F7F7F7;padding:20px 22px;display:flex;flex-direction:column;gap:8px;align-items:center;margin:22px 0 6px;text-align:center}
 .cf-trust .cf-tick{font-size:19px;line-height:1.35}
 .cf-trust h4{font-size:12px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;margin:0 0 5px}
-.cf-trust p{font-size:13.5px;color:#5C5C5C;max-width:46ch;margin:0}
+.cf-trust p{font-size:13.5px;color:#5C5C5C;max-width:46ch;margin:0 auto}
 .cf-trust a{font-weight:600;text-decoration:underline;text-underline-offset:3px;color:#121212}
 .accordion summary,.accordion .summary__title{text-transform:uppercase;letter-spacing:.14em;font-size:12px;font-weight:600}
 

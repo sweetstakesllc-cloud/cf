@@ -7,7 +7,7 @@
         "layout": "split",
         "fill": true,
         "overlay": 50,
-        "eyebrow": "Pre-Loved Luxury · Authenticated in Sweden",
+        "eyebrow": "Pre-Loved Luxury \u00b7 Authenticated in Sweden",
         "heading": "",
         "subtext": "Hand-picked pieces from Gucci, Louis Vuitton, Moncler and more. Every item verified by our experts.",
         "cta1_label": "Shop All",
@@ -80,7 +80,7 @@
         "auth": {
           "type": "feat",
           "settings": {
-            "icon": "✓",
+            "icon": "\u2713",
             "heading": "Authenticated",
             "text": "Every item is inspected and verified by our experts before listing. If it isn't genuine, it isn't here.",
             "link_label": "Our Process",
@@ -90,7 +90,7 @@
         "circular": {
           "type": "feat",
           "settings": {
-            "icon": "↺",
+            "icon": "\u21ba",
             "heading": "Circular by Design",
             "text": "Ships from Sweden. Pre-owned keeps exceptional pieces in circulation.",
             "link_label": "Returns",
@@ -103,11 +103,27 @@
         "auth",
         "circular"
       ]
+    },
+    "trustpilot": {
+      "type": "cf-trustpilot",
+      "settings": {
+        "heading": "What our customers say",
+        "score": "4.8",
+        "count": "98",
+        "link_label": "Read the reviews on Trustpilot",
+        "profile_url": "https://www.trustpilot.com/review/circularfash.com",
+        "show_widget": false,
+        "businessunit_id": "6602ab7bc80091d789272bf0",
+        "template_id": "53aa8912dec7e10d38f59f36",
+        "height": 140,
+        "locale": "en-US"
+      }
     }
   },
   "order": [
     "hero",
     "fresh_finds",
+    "trustpilot",
     "tiles",
     "features"
   ]

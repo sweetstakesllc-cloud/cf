@@ -22,14 +22,14 @@
           "type": "custom_liquid",
           "disabled": true,
           "settings": {
-            "alignment": "left",
+            "alignment": "center",
             "custom_liquid": "{% comment %}\n  -------------------------------------------------------\n  CONFIGURATION: Change these numbers to adjust the design\n  -------------------------------------------------------\n{% endcomment %}\n{% liquid\n  assign icon_size = 60         \n  assign icon_radius = 8        \n  assign icon_gap = 12          \n  assign align_content = 'flex-start' \n  assign bg_color = '#F4F4F4'\n  assign shadow_opacity = 0.1   \n%}\n\n{% comment %} \n  Valid alignment options: \n  'flex-start' (Left), 'center' (Center), 'flex-end' (Right)\n  \n  Valid radius:\n  0 (Square) to 50 (Circle)\n{% endcomment %}\n\n<style>\n  .custom-brand-widget {\n    display: flex;\n    flex-wrap: wrap;\n    align-items: center;\n    gap: {{ icon_gap }}px;\n    justify-content: {{ align_content }};\n    margin-bottom: 1.5rem; /* Space below the widget */\n  }\n\n  .custom-brand-btn {\n    display: flex;\n    align-items: center;\n    justify-content: center;\n    width: {{ icon_size }}px;\n    height: {{ icon_size }}px;\n    background-color: {{ bg_color }};\n    border-radius: {{ icon_radius }}px;\n    box-shadow: 0 2px 5px rgba(0,0,0, {{ shadow_opacity }});\n    text-decoration: none;\n    transition: transform 0.2s ease, opacity 0.2s ease;\n    overflow: hidden;\n  }\n\n  .custom-brand-btn:hover {\n    transform: translateY(-2px);\n    opacity: 0.9;\n  }\n\n  .custom-brand-btn img {\n    width: 100%;\n    height: 100%;\n    object-fit: contain; \n    padding: 6px; /* Padding inside the button so logo fits nicely */\n    display: block;\n  }\n</style>\n\n{%- assign brand_list = product.metafields.custom.brands.value -%}\n\n{%- if brand_list != blank -%}\n  <div class=\"custom-brand-widget\">\n    \n    {%- comment -%} Check if it is a List or Single Item {%- endcomment -%}\n    {%- if brand_list.count -%}\n      {%- for brand in brand_list -%}\n        {%- assign target_col = brand.collection.value -%}\n        {%- if target_col and target_col.image -%}\n          <a href=\"{{ target_col.url }}\" class=\"custom-brand-btn\" title=\"View {{ target_col.title }}\">\n            {{ target_col.image | image_url: width: 160 | image_tag: loading: 'lazy' }}\n          </a>\n        {%- endif -%}\n      {%- endfor -%}\n    \n    {%- else -%}\n      {%- comment -%} Fallback for Single Item {%- endcomment -%}\n      {%- assign target_col = brand_list.collection.value -%}\n      {%- if target_col and target_col.image -%}\n        <a href=\"{{ target_col.url }}\" class=\"custom-brand-btn\" title=\"View {{ target_col.title }}\">\n          {{ target_col.image | image_url: width: 160 | image_tag: loading: 'lazy' }}\n        </a>\n      {%- endif -%}\n    {%- endif -%}\n\n  </div>\n{%- endif -%}"
           }
         },
         "title": {
           "type": "title",
           "settings": {
-            "alignment": "left"
+            "alignment": "center"
           }
         },
         "brand_icons_ckxhHm": {
@@ -51,19 +51,19 @@
         "rating": {
           "type": "rating",
           "settings": {
-            "alignment": "left"
+            "alignment": "center"
           }
         },
         "price": {
           "type": "price",
           "settings": {
-            "alignment": "left"
+            "alignment": "center"
           }
         },
         "text_UyGmcN": {
           "type": "text",
           "settings": {
-            "alignment": "left",
+            "alignment": "center",
             "text": "Shipping calculated at checkout.",
             "text_style": "uppercase"
           }
@@ -73,7 +73,7 @@
           "name": "Condition",
           "disabled": true,
           "settings": {
-            "alignment": "left",
+            "alignment": "center",
             "custom_liquid": "{% comment %} --- CONDITION STAR RATING (1-10 Scale) --- {% endcomment %}\n\n{% comment %} 1. Get the Metaobject {% endcomment %}\n{% assign condition_obj = product.metafields.custom.condition.value %}\n\n{% if condition_obj != blank and condition_obj.value != blank %}\n\n  {% comment %} 2. Math: Convert 1-10 scale to 1-5 scale {% endcomment %}\n  {% assign raw_score = condition_obj.value | plus: 0 %}\n  {% assign scaled_score = raw_score | divided_by: 2.0 %}\n\n  {% comment %} 3. Logic: Calculate Full, Half, and Empty stars {% endcomment %}\n  {% assign full_stars = scaled_score | floor %}\n  {% assign decimal_part = scaled_score | minus: full_stars %}\n  \n  {% assign has_half_star = false %}\n  {% if decimal_part >= 0.25 and decimal_part < 0.75 %}\n    {% assign has_half_star = true %}\n  {% elsif decimal_part >= 0.75 %}\n    {% assign full_stars = full_stars | plus: 1 %}\n  {% endif %}\n\n  {% assign empty_stars = 5 | minus: full_stars %}\n  {% if has_half_star %}\n    {% assign empty_stars = empty_stars | minus: 1 %}\n  {% endif %}\n\n  <div class=\"condition-rating\" style=\"display: flex; align-items: center; gap: 8px; margin-top: 5px;\">\n    <strong></strong>\n    \n    <div class=\"stars-container\" style=\"display: flex; color: #F5C518;\">\n      \n      {% comment %} RENDER FULL STARS {% endcomment %}\n      {% if full_stars > 0 %}\n        {% for i in (1..full_stars) %}\n          <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\"><path d=\"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z\"/></svg>\n        {% endfor %}\n      {% endif %}\n\n      {% comment %} RENDER HALF STAR {% endcomment %}\n      {% if has_half_star %}\n        <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\">\n          <defs><clipPath id=\"half-star\"><rect x=\"0\" y=\"0\" width=\"12\" height=\"24\" /></clipPath></defs>\n          <path d=\"M22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21 12 17.27 18.18 21l-1.64-7.03L22 9.24zM12 15.4l-3.76 2.27 1-4.28-3.32-2.88 4.38-.38L12 6.1l1.71 4.01 4.38.38-3.32 2.88 1 4.28L12 15.4z\" opacity=\"0.3\"/>\n          <path d=\"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z\" clip-path=\"url(#half-star)\"/>\n        </svg>\n      {% endif %}\n\n      {% comment %} RENDER EMPTY STARS {% endcomment %}\n      {% if empty_stars > 0 %}\n        {% for i in (1..empty_stars) %}\n          <svg width=\"20\" height=\"20\" viewBox=\"0 0 24 24\" fill=\"currentColor\" opacity=\"0.3\"><path d=\"M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z\"/></svg>\n        {% endfor %}\n      {% endif %}\n\n    </div>\n    \n    {% comment %} Text Label (e.g., 9/10) {% endcomment %}\n    <span style=\"font-size: 0.9em; opacity: 0.8;\">({{ raw_score }}/10)</span>\n\n  </div>\n\n{% endif %}"
           }
         },
@@ -217,7 +217,7 @@
           "name": "SKU",
           "disabled": true,
           "settings": {
-            "alignment": "left",
+            "alignment": "center",
             "custom_liquid": "{% assign block_of_text = product.description %} {% if block_of_text contains \"ID: \" %}\n  {% assign text_after_id = block_of_text | split: \"ID: cf\" | last %}\n  \n  {% assign custom_sku = text_after_id | split: \" \" | first | remove: \".\" | remove: \",\" | remove: \"<\" | strip %}\n  \n  SKU: {{ custom_sku }}\n{% endif %}"
           }
         },
@@ -238,7 +238,7 @@
           "type": "custom_liquid",
           "name": "CF trust block",
           "settings": {
-            "alignment": "left",
+            "alignment": "center",
             "custom_liquid": "<div class='cf-trust'><span class='cf-tick'>✓</span><div><h4>Authenticated by Circular Fash</h4><p>Every item is inspected and verified by our experts before listing. If it isn't genuine, it isn't here. <a href='/pages/authenticity'>Our process</a></p></div></div>"
           }
         }
