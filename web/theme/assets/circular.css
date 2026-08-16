@@ -481,6 +481,13 @@
 .pagination__item:hover{border-color:#121212}
 .pagination__item--current{background:#121212;color:#fff;border-color:#121212;text-decoration:none}
 
+/* Card text is centred to match the product page. This is one component shared
+   by the shop front and the category grids, so both move together rather than
+   disagreeing about where a product name sits. */
+.cf .card-info{text-align:center}
+.cf .card-info .pname,.cf .card-info .csize,.cf .card-info .price{text-align:center}
+.cf .card-info .price{justify-content:center}
+
 /* card images: keep full image visible in the square frame (no crop),
    no border around the image frame */
 .cf .card .frame{border:none;background:#fff}
