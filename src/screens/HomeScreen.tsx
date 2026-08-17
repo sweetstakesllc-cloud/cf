@@ -19,6 +19,7 @@ import { getNewArrivals, getFacets } from '../data/mockProducts';
 import { onMarketChange } from '../data/market';
 import ProductCard from '../components/ProductCard';
 import Chip from '../components/Chip';
+import TopBar from '../components/TopBar';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -93,6 +94,9 @@ export default function HomeScreen() {
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
+      {/* Live drop + Trustpilot, as across the top of the website */}
+      <TopBar />
+
       {/* Header */}
       <View style={styles.header}>
         <View>

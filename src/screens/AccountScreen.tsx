@@ -16,7 +16,7 @@ import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { color, type, space, border } from '../theme';
-import { features, links, trustpilot } from '../features';
+import { features, links } from '../features';
 import type { RootStackParamList } from '../navigation/types';
 import { getLoyalty, getLiveShows, type Loyalty } from '../data/mockAccount';
 import { fetchMarkets, getMarket, setMarket, type Market } from '../data/market';
@@ -26,9 +26,6 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 /** Any engagement feature on? Then the hub keeps its in-app group. */
 const hasEngagement = features.rewards || features.refer || features.live || features.chat;
-
-/** Trustpilot's own green. Used only for the stars, as their brand asks. */
-const TRUSTPILOT_GREEN = '#00B67A';
 
 export default function AccountScreen() {
   const navigation = useNavigation<Nav>();
@@ -138,30 +135,8 @@ export default function AccountScreen() {
           </View>
         )}
 
-        {/* What people say. Links out rather than quoting reviews in the app —
-            they are not ours to republish, and a stale quote beside a moving
-            score stops being true. */}
-        <Pressable
-          onPress={() => Linking.openURL(links.trustpilot)}
-          style={({ pressed }) => [styles.trust, pressed && styles.pressed]}
-        >
-          <View style={styles.trustStars}>
-            {[1, 2, 3, 4, 5].map((i) => (
-              <Ionicons
-                key={i}
-                name={i <= Math.round(trustpilot.score) ? 'star' : 'star-outline'}
-                size={16}
-                color={TRUSTPILOT_GREEN}
-              />
-            ))}
-          </View>
-          <Text style={styles.trustScore}>
-            {trustpilot.score} out of 5
-          </Text>
-          <Text style={styles.trustCount}>
-            {trustpilot.reviews} reviews on Trustpilot
-          </Text>
-        </Pressable>
+        {/* Trustpilot moved to the Home top bar — trust is weighed while
+            looking at the stock, not in a settings screen. */}
 
         {/* Market: prices come back from Shopify already converted. */}
         <View style={styles.group}>
@@ -375,19 +350,6 @@ const styles = StyleSheet.create({
   liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: border.hairline, borderColor: color.lineStrong, paddingHorizontal: space.sm, paddingVertical: 3 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: color.hiVis },
   liveText: { ...type.eyebrow, color: color.paper },
-
-  trust: {
-    marginTop: space.xl,
-    marginHorizontal: space.lg,
-    borderWidth: border.hairline,
-    borderColor: color.line,
-    backgroundColor: color.surface,
-    padding: space.lg,
-    alignItems: 'center',
-  },
-  trustStars: { flexDirection: 'row', gap: 3 },
-  trustScore: { ...type.title, fontSize: 15, color: color.paper, marginTop: space.sm },
-  trustCount: { ...type.caption, color: color.paperDim, marginTop: 2 },
 
   sheet: { flex: 1, backgroundColor: color.ink, paddingTop: space.lg },
   sheetHead: {

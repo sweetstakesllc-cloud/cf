@@ -39,6 +39,8 @@ export const links = {
   privacy: 'https://circularfash.com/policies/privacy-policy',
   terms: 'https://circularfash.com/policies/terms-of-service',
   trustpilot: 'https://www.trustpilot.com/review/circularfash.com',
+  /** Same handle the website's live line points at. */
+  tiktok: 'https://www.tiktok.com/@circularfash',
 } as const;
 
 /**
