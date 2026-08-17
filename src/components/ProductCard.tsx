@@ -1,5 +1,6 @@
 import React from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
 import { color, type, space, radius, border, formatMoney } from '../theme';
 import type { Product } from '../types/product';
 
@@ -61,11 +62,20 @@ export default function ProductCard({ product, onPress, hideNew }: Props) {
           )}
         </View>
 
-        {!!product.size && (
-          <View style={styles.sizeTag}>
-            <Text style={styles.sizeText}>{product.size}</Text>
+        {/* The two facts true of every piece here and of nothing in a normal
+            shop: it is the only one, and it was authenticated before listing.
+            One line, because the card had already grown enough. */}
+        <View style={styles.metaRow}>
+          {!!product.size && (
+            <View style={styles.sizeTag}>
+              <Text style={styles.sizeText}>{product.size}</Text>
+            </View>
+          )}
+          <View style={styles.oneOfOne}>
+            <Ionicons name="checkmark" size={10} color={color.paperDim} />
+            <Text style={styles.oneOfOneText}>1 OF 1</Text>
           </View>
-        )}
+        </View>
       </View>
     </Pressable>
   );
@@ -116,10 +126,15 @@ const styles = StyleSheet.create({
   price: { ...type.price, color: color.paper },
   compareAt: { ...type.price, fontSize: 12, color: color.paperMute, textDecorationLine: 'line-through' },
 
+  metaRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    marginTop: space.md, gap: space.sm,
+  },
   sizeTag: {
-    alignSelf: 'flex-start', marginTop: space.md,
     borderWidth: border.hairline, borderColor: color.lineStrong, borderRadius: radius.none,
     paddingHorizontal: space.sm, paddingVertical: 3,
   },
   sizeText: { ...type.price, fontSize: 12, color: color.paperDim },
+  oneOfOne: { flexDirection: 'row', alignItems: 'center', gap: 2, marginLeft: 'auto' },
+  oneOfOneText: { ...type.eyebrow, fontSize: 9, color: color.paperDim },
 });

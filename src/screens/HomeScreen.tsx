@@ -21,6 +21,7 @@ import { onMarketChange } from '../data/market';
 import ProductCard from '../components/ProductCard';
 import TopBar from '../components/TopBar';
 import FilterSheet from '../components/FilterSheet';
+import FeaturedDrop from '../components/FeaturedDrop';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -95,6 +96,14 @@ export default function HomeScreen() {
   const liveCount = products?.length ?? 0;
   const activeCount = (activeCategory ? 1 : 0) + (activeBrand ? 1 : 0);
 
+  // The freshest piece leads. Hidden the moment a filter is on: someone who has
+  // narrowed to "Jackets" is hunting, and does not need introducing again.
+  const featured = activeCount === 0 ? products?.[0] : undefined;
+  const rest = useMemo(
+    () => (featured ? (products ?? []).slice(1) : products ?? []),
+    [products, featured]
+  );
+
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {/* Live drop + Trustpilot, as across the top of the website */}
@@ -145,12 +154,15 @@ export default function HomeScreen() {
         </View>
       ) : (
         <FlatList
-          data={products}
+          data={rest}
           keyExtractor={(p) => p.id}
           numColumns={2}
           columnWrapperStyle={styles.row}
           contentContainerStyle={[styles.grid, { paddingBottom: insets.bottom + space.xxxl }]}
           showsVerticalScrollIndicator={false}
+          ListHeaderComponent={
+            featured ? <FeaturedDrop product={featured} onPress={openProduct} /> : null
+          }
           renderItem={({ item }) => (
             <View style={styles.cell}>
               <ProductCard product={item} onPress={openProduct} />
