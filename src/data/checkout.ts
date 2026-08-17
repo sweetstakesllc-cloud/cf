@@ -17,6 +17,7 @@
 
 import { Linking } from 'react-native';
 import { storefront, shopifyConfigured } from './shopifyClient';
+import { getMarket } from './market';
 import type { Product } from '../types/product';
 
 /** Thrown when a piece can't be taken to checkout (offline demo data, or the
@@ -29,8 +30,13 @@ export class CheckoutUnavailableError extends Error {
   }
 }
 
+// @inContext(country:) has to match the market the price was shown in, or the
+// shopper is quoted CA$671 in the grid and then billed in kronor on Shopify's
+// checkout. The catalogue queries carry this directive too — see
+// src/data/shopify.ts. Both read the same market from src/data/market.ts.
 const CART_CREATE = `
-  mutation CartCreate($lines: [CartLineInput!]!) {
+  mutation CartCreate($lines: [CartLineInput!]!, $country: CountryCode)
+  @inContext(country: $country) {
     cartCreate(input: { lines: $lines }) {
       cart { id checkoutUrl }
       userErrors { field message }
@@ -49,6 +55,7 @@ type CartCreateResult = {
 export async function createCheckoutUrl(variantId: string): Promise<string> {
   const data = await storefront<CartCreateResult>(CART_CREATE, {
     lines: [{ merchandiseId: variantId, quantity: 1 }],
+    country: getMarket().country,
   });
 
   const { cart, userErrors } = data.cartCreate;
