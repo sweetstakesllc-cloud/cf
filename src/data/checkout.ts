@@ -6,18 +6,17 @@
  * checkout (see PROJECT.md) and we never take payment in-app (App Store 3.1.1 —
  * physical goods must not use IAP).
  *
- * Presentation is a seam (`presentCheckout`):
- *   - Today it opens the hosted checkout URL in the system browser via Linking,
- *     which works everywhere — web, Expo Go, and a device build. Fully
- *     functional and store-compliant.
- *   - Once an EAS dev build exists, swap the body of `presentCheckout` for
- *     @shopify/checkout-sheet-kit's `.present(url)` so checkout renders as an
- *     in-app modal. Nothing else changes — callers stay the same.
+ * Presentation is a seam (`presentCheckout`): Shopify's Checkout Sheet renders
+ * the hosted checkout as an in-app modal, and anywhere that native module is
+ * missing — web, Expo Go, or a binary built before it was added — it falls back
+ * to opening the same URL in the system browser. NOTE the sheet only exists
+ * after a rebuild; an over-the-air update alone will keep using the browser.
  */
 
-import { Linking } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { storefront, shopifyConfigured } from './shopifyClient';
 import { getMarket } from './market';
+import { invalidateCatalog } from './mockProducts';
 import type { Product } from '../types/product';
 
 /** Thrown when a piece can't be taken to checkout (offline demo data, or the
@@ -68,9 +67,58 @@ export async function createCheckoutUrl(variantId: string): Promise<string> {
   return cart.checkoutUrl;
 }
 
-/** Hand a checkout URL to Shopify's hosted checkout. Native module swap-in
- *  point (see file header). */
+/**
+ * Shopify's Checkout Sheet, created once and reused.
+ *
+ * Required lazily and behind a try/catch because it is a native module: it does
+ * not exist on web, and it does not exist in a binary built before it was
+ * added. Both cases fall through to the system browser rather than failing —
+ * the shopper still gets to Shopify's checkout either way, which is what
+ * matters when they are one tap from paying.
+ */
+let sheet: { present(url: string): void } | null | undefined;
+
+function getSheet() {
+  if (sheet !== undefined) return sheet;
+  if (Platform.OS === 'web') {
+    sheet = null;
+    return sheet;
+  }
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    const kit = require('@shopify/checkout-sheet-kit');
+    const instance = new kit.ShopifyCheckoutSheet({
+      colorScheme: kit.ColorScheme.light, // app.json pins userInterfaceStyle to light
+    });
+    // A one-of-one just sold. Drop the cached catalogue so it stops showing as
+    // available in the grid the shopper returns to.
+    instance.addEventListener('completed', () => invalidateCatalog());
+    sheet = instance;
+  } catch (err) {
+    console.warn('[checkout] sheet unavailable, using system browser:', err);
+    sheet = null;
+  }
+  return sheet;
+}
+
+/**
+ * Hand a checkout URL to Shopify's hosted checkout.
+ *
+ * In-app modal where the native module is present, system browser otherwise.
+ * Either way this is Shopify's own checkout — we never take payment ourselves
+ * (App Store 3.1.1: physical goods must not use IAP).
+ */
 export async function presentCheckout(url: string): Promise<void> {
+  const s = getSheet();
+  if (s) {
+    try {
+      s.present(url);
+      return;
+    } catch (err) {
+      console.warn('[checkout] sheet present failed, falling back:', err);
+    }
+  }
+
   const can = await Linking.canOpenURL(url);
   if (!can) throw new CheckoutUnavailableError('Unable to open checkout.');
   await Linking.openURL(url);

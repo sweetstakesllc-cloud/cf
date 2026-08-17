@@ -44,12 +44,20 @@ async function getCatalog(): Promise<Product[]> {
   }
 }
 
-// Prices are baked into the cached catalog by the market they were fetched in,
-// so switching country has to throw it away and re-ask Shopify. Without this
-// the grid would keep showing kronor after the shopper picked dollars.
-onMarketChange(() => {
+/**
+ * Drop the cached catalogue so the next read re-asks Shopify.
+ *
+ * Called on two events. A market switch, because prices are baked in by the
+ * market they were fetched in — the grid would keep showing kronor after the
+ * shopper picked dollars. And a completed checkout, because the piece they just
+ * bought is the only one: leaving it in the cache means watching it sit in the
+ * grid, still apparently for sale, immediately after buying it.
+ */
+export function invalidateCatalog(): void {
   _catalog = null;
-});
+}
+
+onMarketChange(invalidateCatalog);
 
 /**
  * Sold stock is not browsable, matching circularfash.com. It stays in the
