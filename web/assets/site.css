@@ -137,7 +137,12 @@ h2{font-weight:600;font-size:clamp(24px,2.8vw,34px);text-transform:uppercase;let
 /* ---------- product cards (Fashionphile style) ---------- */
 .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:36px 22px}
 .card{position:relative;text-align:left}
-.card .frame{aspect-ratio:1/1;border:1px solid var(--line)}
+/* 3:4 is what an iPhone shoots upright, and every product photo in the store is
+   that shape. A square frame letterboxed them: the photo fitted by height and
+   left a white bar down each side, using 75% of the frame width and making the
+   garment look smaller than it is. Matching the frame to the photo fills it
+   edge to edge with nothing cropped. */
+.card .frame{aspect-ratio:3/4;border:1px solid var(--line)}
 .card img{transition:opacity .35s ease}
 .card img.alt{position:absolute;inset:0;opacity:0}
 .card:hover img.alt{opacity:1}
