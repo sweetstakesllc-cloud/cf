@@ -80,15 +80,44 @@ export const border = {
   heavy: 2,
 } as const;
 
-/** Format a price the way the storefront does: "1 700 kr". */
-export function formatSEK(amount: number): string {
+/**
+ * Format a price the way the storefront does.
+ *
+ * The store's own money format is `{{amount_no_decimals}} kr`, so nothing shows
+ * cents — that holds for every market, not just SEK. SEK keeps its Swedish
+ * shape ("1 700 kr"); everything else gets its normal symbol ("$804", "€282").
+ */
+export function formatMoney(amount: number, currency: string = 'SEK'): string {
+  const rounded = Math.round(amount);
+
   // sv-SE groups thousands with a (narrow) no-break space depending on the ICU
   // build; normalize every whitespace run to a plain space so layout is
   // predictable: "1 700 kr".
-  const grouped = Math.round(amount).toLocaleString('sv-SE').replace(/\s/g, ' ');
-  return `${grouped} kr`;
+  if (currency === 'SEK') {
+    return `${rounded.toLocaleString('sv-SE').replace(/\s/g, ' ')} kr`;
+  }
+
+  try {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
+      .format(rounded)
+      .replace(/\s/g, ' ');
+  } catch {
+    // Hermes ships Intl on iOS, but an unknown ISO code still throws. Printing
+    // "804 USD" is worse than a symbol and better than a crash on a price tag.
+    return `${rounded.toLocaleString('en-US')} ${currency}`;
+  }
 }
 
-export const theme = { color, font, weight, type, space, radius, border, formatSEK };
+/** @deprecated Use formatMoney(amount, product.currencyCode). */
+export function formatSEK(amount: number): string {
+  return formatMoney(amount, 'SEK');
+}
+
+export const theme = { color, font, weight, type, space, radius, border, formatMoney, formatSEK };
 export type Theme = typeof theme;
 export default theme;

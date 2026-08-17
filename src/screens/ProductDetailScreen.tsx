@@ -15,7 +15,7 @@ import { useNavigation, useRoute, type RouteProp } from '@react-navigation/nativ
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { color, type, space, border, formatSEK } from '../theme';
+import { color, type, space, border, formatMoney } from '../theme';
 import type { Product } from '../types/product';
 import type { RootStackParamList } from '../navigation/types';
 import { getProduct } from '../data/mockProducts';
@@ -75,7 +75,10 @@ export default function ProductDetailScreen() {
     ? Math.round((1 - product.price / (product.compareAtPrice as number)) * 100)
     : 0;
 
-  const imageH = width * (1100 / 900); // mirrors the 900x1100 source ratio
+  // 3:4 upright — the shape the photos are actually shot in. 1100/900 is 1.222,
+  // which with resizeMode="cover" cropped a band off the top and bottom of every
+  // garment. 4/3 plus "contain" shows the whole piece.
+  const imageH = width * (4 / 3);
 
   const onBuyNow = async () => {
     // Quantity-one items aren't reserved until checkout completes — two people
@@ -118,7 +121,7 @@ export default function ProductDetailScreen() {
                 key={i}
                 source={{ uri }}
                 style={[{ width, height: imageH }, sold && styles.imageSold]}
-                resizeMode="cover"
+                resizeMode="contain"
               />
             ))}
           </ScrollView>
@@ -164,10 +167,10 @@ export default function ProductDetailScreen() {
 
           {/* price row + discount call-out */}
           <View style={styles.priceRow}>
-            <Text style={styles.price}>{formatSEK(product.price)}</Text>
+            <Text style={styles.price}>{formatMoney(product.price, product.currencyCode)}</Text>
             {onSale && (
               <>
-                <Text style={styles.compareAt}>{formatSEK(product.compareAtPrice as number)}</Text>
+                <Text style={styles.compareAt}>{formatMoney(product.compareAtPrice as number, product.currencyCode)}</Text>
                 <View style={styles.discount}>
                   <Text style={styles.discountText}>-{discountPct}%</Text>
                 </View>
@@ -242,14 +245,14 @@ export default function ProductDetailScreen() {
             ]}
             accessibilityRole="button"
             accessibilityState={{ disabled: buying, busy: buying }}
-            accessibilityLabel={`Buy ${product.brand} ${product.title} now for ${formatSEK(product.price)}`}
+            accessibilityLabel={`Buy ${product.brand} ${product.title} now for ${formatMoney(product.price, product.currencyCode)}`}
           >
             {buying ? (
               <ActivityIndicator color={color.onHiVis} />
             ) : (
               <>
                 <Text style={styles.addBtnText}>BUY NOW</Text>
-                <Text style={styles.addBtnPrice}>{formatSEK(product.price)}</Text>
+                <Text style={styles.addBtnPrice}>{formatMoney(product.price, product.currencyCode)}</Text>
               </>
             )}
           </Pressable>

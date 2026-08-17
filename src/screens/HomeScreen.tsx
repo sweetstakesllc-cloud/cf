@@ -16,6 +16,7 @@ import { color, type, space } from '../theme';
 import type { Product, ProductFilter } from '../types/product';
 import type { RootStackParamList } from '../navigation/types';
 import { getNewArrivals, getFacets } from '../data/mockProducts';
+import { onMarketChange } from '../data/market';
 import ProductCard from '../components/ProductCard';
 import Chip from '../components/Chip';
 
@@ -30,22 +31,46 @@ export default function HomeScreen() {
 
   const [products, setProducts] = useState<Product[] | null>(null);
   const [brands, setBrands] = useState<string[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
   const [activeBrand, setActiveBrand] = useState<string | null>(null);
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
 
-  const filter = useMemo<ProductFilter | undefined>(
-    () => (activeBrand ? { brands: [activeBrand] } : undefined),
-    [activeBrand]
-  );
+  // The website splits browse into BRANDS and CATEGORIES; the app had brands
+  // only. Both narrow the same grid and combine, so "Gucci" + "Bags" works.
+  const filter = useMemo<ProductFilter | undefined>(() => {
+    if (!activeBrand && !activeCategory) return undefined;
+    return {
+      ...(activeBrand ? { brands: [activeBrand] } : {}),
+      ...(activeCategory ? { categories: [activeCategory] } : {}),
+    };
+  }, [activeBrand, activeCategory]);
 
   const load = useCallback(async () => {
     const list = await getNewArrivals(filter);
     setProducts(list);
   }, [filter]);
 
-  useEffect(() => {
-    getFacets().then((f) => setBrands(f.brands));
+  const loadFacets = useCallback(() => {
+    getFacets().then((f) => {
+      setBrands(f.brands);
+      setCategories(f.categories);
+    });
   }, []);
+
+  useEffect(loadFacets, [loadFacets]);
+
+  // Prices and stock are per-market, so a country switch has to redraw both the
+  // grid and the facets that were derived from it.
+  useEffect(
+    () =>
+      onMarketChange(() => {
+        setProducts(null);
+        load();
+        loadFacets();
+      }),
+    [load, loadFacets]
+  );
 
   useEffect(() => {
     setProducts(null);
@@ -63,7 +88,8 @@ export default function HomeScreen() {
     [navigation]
   );
 
-  const liveCount = products?.filter((p) => p.availableForSale).length ?? 0;
+  // Browse is in-stock only now, so every row in the grid is live.
+  const liveCount = products?.length ?? 0;
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
@@ -79,7 +105,36 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Brand filter chips */}
+      {/* Category chips */}
+      {categories.length > 0 && (
+        <>
+          <Text style={styles.facetLabel}>CATEGORIES</Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.chips}
+            style={styles.chipScroll}
+            keyboardShouldPersistTaps="handled"
+          >
+            <Chip
+              label="All"
+              selected={activeCategory === null}
+              onPress={() => setActiveCategory(null)}
+            />
+            {categories.map((c) => (
+              <Chip
+                key={c}
+                label={c}
+                selected={activeCategory === c}
+                onPress={() => setActiveCategory((cur) => (cur === c ? null : c))}
+              />
+            ))}
+          </ScrollView>
+        </>
+      )}
+
+      {/* Brand chips */}
+      <Text style={styles.facetLabel}>BRANDS</Text>
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
@@ -149,7 +204,8 @@ const styles = StyleSheet.create({
   // Fixed height + no shrink: a horizontal ScrollView can't derive its height
   // from horizontally-scrolling content on web (react-native-web), so without
   // this the whole chip row collapses to a sliver. Chip ≈ 32px; 48 leaves air.
-  chipScroll: { flexGrow: 0, flexShrink: 0, height: 48, marginBottom: space.sm },
+  chipScroll: { flexGrow: 0, flexShrink: 0, height: 44, marginBottom: space.xs },
+  facetLabel: { ...type.eyebrow, color: color.paperMute, paddingHorizontal: SIDE, marginBottom: space.xs },
   chips: { paddingHorizontal: SIDE, gap: space.sm, alignItems: 'center' },
 
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },

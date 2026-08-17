@@ -23,6 +23,7 @@ import type {
 import { CATALOG } from './catalogSnapshot';
 // Live Storefront read path — used automatically when credentials are present.
 import { shopifyConfigured, fetchProducts, fetchProduct } from './shopify';
+import { onMarketChange } from './market';
 
 /**
  * The single source of truth for "all products". Live Storefront data when the
@@ -43,6 +44,20 @@ async function getCatalog(): Promise<Product[]> {
   }
 }
 
+// Prices are baked into the cached catalog by the market they were fetched in,
+// so switching country has to throw it away and re-ask Shopify. Without this
+// the grid would keep showing kronor after the shopper picked dollars.
+onMarketChange(() => {
+  _catalog = null;
+});
+
+/**
+ * Sold stock is not browsable, matching circularfash.com. It stays in the
+ * catalogue and keeps its product page — Saved still shows it, stamped SOLD,
+ * so a piece you lost is accounted for rather than silently gone.
+ */
+const inStock = (p: Product) => p.availableForSale;
+
 const clone = (p: Product): Product => ({ ...p });
 
 function byNewest(a: Product, b: Product): number {
@@ -53,10 +68,16 @@ function byNewest(a: Product, b: Product): number {
  * Public seam API. Screens use ONLY these.
  * ------------------------------------------------------------------------- */
 
-/** Home grid: freshest first. Optionally narrowed by filter facets. */
+/**
+ * Home grid: freshest first, in stock only. Optionally narrowed by facets.
+ * Pass `inStockOnly: false` explicitly to include sold pieces.
+ */
 export async function getNewArrivals(filter?: ProductFilter): Promise<Product[]> {
-  let list = (await getCatalog()).slice().sort(byNewest);
-  if (filter) list = list.filter((p) => matchesFilter(p, filter));
+  const f: ProductFilter = { inStockOnly: true, ...filter };
+  const list = (await getCatalog())
+    .slice()
+    .sort(byNewest)
+    .filter((p) => matchesFilter(p, f));
   return list.map(clone);
 }
 
@@ -145,7 +166,11 @@ export async function getFacets(): Promise<{
   sizes: string[];
   conditions: Condition[];
 }> {
-  const PRODUCTS = await getCatalog();
+  // Derived from what is actually buyable. Facets taken over the whole
+  // catalogue would offer brands and categories that are 100% sold — every one
+  // a chip that leads to an empty grid. The website hides empty collections for
+  // the same reason.
+  const PRODUCTS = (await getCatalog()).filter(inStock);
   const uniq = (xs: (string | null | undefined)[]) =>
     Array.from(new Set(xs.filter((x): x is string => !!x))).sort();
   return {

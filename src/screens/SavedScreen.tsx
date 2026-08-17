@@ -12,7 +12,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 
-import { color, type, space, border, formatSEK } from '../theme';
+import { color, type, space, border, formatMoney } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { getSaved, type SavedItem, type SavedStatus } from '../data/mockProducts';
 
@@ -110,7 +110,7 @@ function SavedRow({ item, onPress }: { item: SavedItem; onPress: () => void }) {
         <Text style={styles.title} numberOfLines={2}>{product.title}</Text>
 
         <View style={styles.metaRow}>
-          <Text style={styles.price}>{formatSEK(product.price)}</Text>
+          <Text style={styles.price}>{formatMoney(product.price, product.currencyCode)}</Text>
           {!!product.size && <Text style={styles.size}>· {product.size}</Text>}
         </View>
 

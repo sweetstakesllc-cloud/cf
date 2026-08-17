@@ -7,6 +7,7 @@
  */
 
 import { storefront, shopifyConfigured } from './shopifyClient';
+import { getMarket } from './market';
 import type { Product, Condition } from '../types/product';
 
 export { shopifyConfigured };
@@ -14,17 +15,29 @@ export { shopifyConfigured };
 /* ------------------------------ brand/category --------------------------- */
 // The store sets `vendor` to "Circular Fash", so the actual label lives in the
 // title — same parsing the snapshot generator uses.
+// Mirrors the BRANDS menu on circularfash.com, plus the labels that still turn
+// up in titles. Longest first, so "Christian Louboutin" is not shadowed by
+// "Dior" and "Amiri" is not swallowed by "Ami".
 const KNOWN_BRANDS = [
-  'Stone Island', 'C.P. Company', 'Moncler', 'Gucci', 'Off-White', 'Prada',
-  'Canada Goose', 'Louis Vuitton', 'Balenciaga', 'Burberry', 'Dior',
-  'Saint Laurent', 'Bottega Veneta', 'Dsquared2', 'Versace', 'Fendi',
-  'Givenchy', 'Palm Angels', 'Amiri', 'Vivienne Westwood',
-  'Balmain', 'Celine', 'Chanel',
-];
+  'Christian Louboutin', 'Vivienne Westwood', 'Alviero Martini', 'Bottega Veneta',
+  'Philippe Model', 'Giuseppe Zanotti', 'Moose Knuckles', 'Dolce & Gabbana',
+  'Saint Laurent', 'Louis Vuitton', 'Stone Island', 'C.P. Company', 'Canada Goose',
+  'Palm Angels', 'Parajumpers', 'Loro Piana', 'Philipp Plein', 'Jacquemus',
+  'Balenciaga', 'Dsquared2', 'Off-White', 'Louboutin', 'Valentino', 'Burberry',
+  'Givenchy', 'Woolrich', 'Moncler', 'Balmain', 'Versace', 'Lanvin', 'Celine',
+  'Chanel', 'Amiri', 'Gucci', 'Prada', 'Fendi', 'Dior', 'Ami',
+].sort((a, b) => b.length - a.length);
 
 function brandOf(title: string, vendor?: string): string {
   if (vendor && vendor.toLowerCase() !== 'circular fash' && vendor.trim()) return vendor;
-  return KNOWN_BRANDS.find((b) => title.toLowerCase().includes(b.toLowerCase())) || title.split(' ')[0];
+  const hay = title.toLowerCase();
+  // Word-boundary match, or "Ami" hits "Miami" and "Dior" hits nothing useful
+  // inside a longer word. Escaped because of "C.P. Company" and "Dolce & …".
+  const hit = KNOWN_BRANDS.find((b) => {
+    const needle = b.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`(^|[^a-z])${needle}([^a-z]|$)`).test(hay);
+  });
+  return hit || title.split(' ')[0];
 }
 
 function stripBrand(title: string, brand: string): string {
@@ -38,8 +51,11 @@ function stripBrand(title: string, brand: string): string {
 const BAG_MODELS =
   /bag|messenger|pouch|pochette|neverfull|keepall|bandouli|backpack|clutch|wallet|handbag|tote|crossbody|satchel|purse|speedy|jolly|jolicoeur|berkeley|\balma\b/;
 
-function categoryOf(title: string, productType?: string): string | undefined {
-  if (productType && productType.trim()) return productType;
+function categoryOf(title: string, _productType?: string): string | undefined {
+  // `product_type` is NOT a category on this store. Only 7 of 250 products
+  // carry one at all, and every value is a model name — Abbey, Diana, GGBelt,
+  // Jolicoeur. Trusting it put those straight into the category chips as if
+  // they were departments. The title is the honest signal here.
   const s = title.toLowerCase();
   if (/\bbelt\b/.test(s)) return 'Belts';
   if (/sunglass|eyewear|\bglasses\b/.test(s)) return 'Eyewear';
@@ -75,7 +91,7 @@ type GqlProduct = {
   tags?: string[];
   createdAt?: string;
   availableForSale: boolean;
-  priceRange: { minVariantPrice: { amount: string } };
+  priceRange: { minVariantPrice: { amount: string; currencyCode?: string } };
   compareAtPriceRange?: { minVariantPrice: Money };
   images: { edges: { node: { url: string } }[] };
   variants: {
@@ -120,6 +136,9 @@ function mapProduct(n: GqlProduct): Product {
     price,
     compareAtPrice,
     size,
+    // Whatever @inContext resolved to. Prices are already converted, so the
+    // code is only needed to print the right symbol next to them.
+    currencyCode: n.priceRange.minVariantPrice.currencyCode ?? getMarket().currency,
     availableForSale: n.availableForSale,
     isNew,
     condition: conditionFromTags(n.tags ?? []),
@@ -155,8 +174,12 @@ const PRODUCT_FIELDS = `
   }
 `;
 
+// @inContext(country:) is what makes prices arrive in the shopper's currency.
+// Shopify does the conversion and rounding against the market's rules, so the
+// app never converts anything itself — it just prints what it is given.
 const PRODUCTS_QUERY = `
-  query Products($first: Int!, $after: String) {
+  query Products($first: Int!, $after: String, $country: CountryCode)
+  @inContext(country: $country) {
     products(first: $first, after: $after, sortKey: CREATED_AT, reverse: true) {
       pageInfo { hasNextPage endCursor }
       edges { node { ${PRODUCT_FIELDS} } }
@@ -165,7 +188,7 @@ const PRODUCTS_QUERY = `
 `;
 
 const PRODUCT_QUERY = `
-  query Product($id: ID!) {
+  query Product($id: ID!, $country: CountryCode) @inContext(country: $country) {
     node(id: $id) { ... on Product { ${PRODUCT_FIELDS} } }
   }
 `;
@@ -183,9 +206,14 @@ type ProductsPage = {
 // round trips; the `page` guard is just a runaway-loop backstop.
 export async function fetchProducts(): Promise<Product[]> {
   const out: Product[] = [];
+  const country = getMarket().country;
   let after: string | null = null;
   for (let page = 0; page < 40; page++) {
-    const data: ProductsPage = await storefront<ProductsPage>(PRODUCTS_QUERY, { first: 250, after });
+    const data: ProductsPage = await storefront<ProductsPage>(PRODUCTS_QUERY, {
+      first: 250,
+      after,
+      country,
+    });
     out.push(...data.products.edges.map((e) => mapProduct(e.node)));
     if (!data.products.pageInfo.hasNextPage) break;
     after = data.products.pageInfo.endCursor;
@@ -194,6 +222,9 @@ export async function fetchProducts(): Promise<Product[]> {
 }
 
 export async function fetchProduct(id: string): Promise<Product | null> {
-  const data = await storefront<{ node: GqlProduct | null }>(PRODUCT_QUERY, { id });
+  const data = await storefront<{ node: GqlProduct | null }>(PRODUCT_QUERY, {
+    id,
+    country: getMarket().country,
+  });
   return data.node ? mapProduct(data.node) : null;
 }

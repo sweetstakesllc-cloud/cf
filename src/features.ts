@@ -31,10 +31,28 @@ export type FeatureName = keyof typeof features;
 export const links = {
   shop: 'https://circularfash.com/',
   contact: 'https://circularfash.com/pages/contact',
+  about: 'https://circularfash.com/pages/about-us',
+  faq: 'https://circularfash.com/pages/faq',
+  sourcing: 'https://circularfash.com/pages/sourcing-requests',
   shipping: 'https://circularfash.com/policies/shipping-policy',
   returns: 'https://circularfash.com/policies/refund-policy',
   privacy: 'https://circularfash.com/policies/privacy-policy',
   terms: 'https://circularfash.com/policies/terms-of-service',
+  trustpilot: 'https://www.trustpilot.com/review/circularfash.com',
+} as const;
+
+/**
+ * Trustpilot standing, shown on the Account screen.
+ *
+ * Hardcoded on purpose rather than fetched: Trustpilot has no public read API
+ * without a business plan, and their TrustBox widget currently returns an empty
+ * card for this business unit (see web/CLIENT-FEEDBACK-FIXES.md). These are the
+ * real figures as of 2026-08-16 — re-check them when the numbers move, or the
+ * app starts quoting a score the profile disagrees with.
+ */
+export const trustpilot = {
+  score: 4.8,
+  reviews: 98,
 } as const;
 
 export default features;

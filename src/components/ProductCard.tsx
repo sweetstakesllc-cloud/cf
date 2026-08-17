@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
-import { color, type, space, radius, border, formatSEK } from '../theme';
+import { color, type, space, radius, border, formatMoney } from '../theme';
 import type { Product } from '../types/product';
 
 /**
@@ -28,13 +28,13 @@ export default function ProductCard({ product, onPress, hideNew }: Props) {
       onPress={() => onPress?.(product)}
       style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
       accessibilityRole="button"
-      accessibilityLabel={`${product.brand} ${product.title}, ${formatSEK(product.price)}${sold ? ', sold out' : ''}`}
+      accessibilityLabel={`${product.brand} ${product.title}, ${formatMoney(product.price, product.currencyCode)}${sold ? ', sold out' : ''}`}
     >
       <View style={styles.imageWell}>
         <Image
           source={{ uri: hero }}
           style={[styles.image, sold && styles.imageSold]}
-          resizeMode="cover"
+          resizeMode="contain"
         />
 
         {product.isNew && !sold && !hideNew && (
@@ -55,9 +55,9 @@ export default function ProductCard({ product, onPress, hideNew }: Props) {
         <Text style={styles.title} numberOfLines={2}>{product.title}</Text>
 
         <View style={styles.priceRow}>
-          <Text style={styles.price}>{formatSEK(product.price)}</Text>
+          <Text style={styles.price}>{formatMoney(product.price, product.currencyCode)}</Text>
           {onSale && (
-            <Text style={styles.compareAt}>{formatSEK(product.compareAtPrice!)}</Text>
+            <Text style={styles.compareAt}>{formatMoney(product.compareAtPrice!, product.currencyCode)}</Text>
           )}
         </View>
 
@@ -81,9 +81,14 @@ const styles = StyleSheet.create({
   },
   cardPressed: { borderColor: color.lineStrong, opacity: 0.92 },
 
+  // 3:4 is what an iPhone shoots upright, and it is the shape of every photo in
+  // the store. The well used to be 0.82 with resizeMode="cover", which cropped a
+  // sliver off the top and bottom of each garment. Matching the well to the
+  // photo shows all of it — hems and collars included, which is the part a
+  // resale buyer is inspecting. Same change as the website's card frame.
   imageWell: {
-    backgroundColor: color.surfaceAlt,
-    aspectRatio: 0.82,
+    backgroundColor: color.surface,
+    aspectRatio: 3 / 4,
     position: 'relative',
   },
   image: { width: '100%', height: '100%' },

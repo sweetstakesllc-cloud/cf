@@ -13,7 +13,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { color, type, space, border, formatSEK } from '../theme';
+import { color, type, space, border, formatMoney } from '../theme';
 import type { Product } from '../types/product';
 import type { RootStackParamList } from '../navigation/types';
 import { getFacets, getMatchingDrops } from '../data/mockProducts';
@@ -140,7 +140,7 @@ function DropRow({
         <Text style={styles.dropBrand} numberOfLines={1}>{product.brand}</Text>
         <Text style={styles.dropTitle} numberOfLines={1}>{product.title}</Text>
         <View style={styles.dropMeta}>
-          <Text style={styles.dropPrice}>{formatSEK(product.price)}</Text>
+          <Text style={styles.dropPrice}>{formatMoney(product.price, product.currencyCode)}</Text>
           {!!product.size && <Text style={styles.dropSize}>· {product.size}</Text>}
         </View>
       </View>

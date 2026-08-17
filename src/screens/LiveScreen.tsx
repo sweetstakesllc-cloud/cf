@@ -5,7 +5,7 @@ import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
-import { color, type, space, border, formatSEK } from '../theme';
+import { color, type, space, border, formatMoney } from '../theme';
 import type { RootStackParamList } from '../navigation/types';
 import { getLiveShows, type LiveShow } from '../data/mockAccount';
 import ScreenHeader from '../components/ScreenHeader';
@@ -92,7 +92,7 @@ function ShowCard({ show, onOpenProduct }: { show: LiveShow; onOpenProduct: (id:
           {show.featured.map((p) => (
             <Pressable key={p.id} onPress={() => onOpenProduct(p.id)} style={({ pressed }) => [styles.thumbWrap, pressed && { opacity: 0.85 }]}>
               <Image source={{ uri: p.images[0] }} style={styles.thumb} resizeMode="cover" />
-              <Text style={styles.thumbPrice}>{formatSEK(p.price)}</Text>
+              <Text style={styles.thumbPrice}>{formatMoney(p.price, p.currencyCode)}</Text>
             </Pressable>
           ))}
         </ScrollView>

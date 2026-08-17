@@ -1,14 +1,25 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, Pressable, ScrollView, StyleSheet, Linking } from 'react-native';
+import {
+  View,
+  Text,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Linking,
+  Modal,
+  FlatList,
+  ActivityIndicator,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { Ionicons } from '@expo/vector-icons';
 
 import { color, type, space, border } from '../theme';
-import { features, links } from '../features';
+import { features, links, trustpilot } from '../features';
 import type { RootStackParamList } from '../navigation/types';
 import { getLoyalty, getLiveShows, type Loyalty } from '../data/mockAccount';
+import { fetchMarkets, getMarket, setMarket, type Market } from '../data/market';
 import app from '../../app.json';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
@@ -16,11 +27,31 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 /** Any engagement feature on? Then the hub keeps its in-app group. */
 const hasEngagement = features.rewards || features.refer || features.live || features.chat;
 
+/** Trustpilot's own green. Used only for the stars, as their brand asks. */
+const TRUSTPILOT_GREEN = '#00B67A';
+
 export default function AccountScreen() {
   const navigation = useNavigation<Nav>();
   const insets = useSafeAreaInsets();
   const [loyalty, setLoyalty] = useState<Loyalty | null>(null);
   const [liveNow, setLiveNow] = useState(false);
+
+  const [market, setMarketState] = useState<Market>(getMarket());
+  const [markets, setMarkets] = useState<Market[] | null>(null);
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const openMarketPicker = useCallback(() => {
+    setPickerOpen(true);
+    // Loaded on demand, not at launch: most shoppers never open this, and the
+    // list is one more request against the Storefront API.
+    if (!markets) fetchMarkets().then(setMarkets);
+  }, [markets]);
+
+  const chooseMarket = useCallback((next: Market) => {
+    setMarket(next);
+    setMarketState(next);
+    setPickerOpen(false);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
@@ -107,6 +138,42 @@ export default function AccountScreen() {
           </View>
         )}
 
+        {/* What people say. Links out rather than quoting reviews in the app —
+            they are not ours to republish, and a stale quote beside a moving
+            score stops being true. */}
+        <Pressable
+          onPress={() => Linking.openURL(links.trustpilot)}
+          style={({ pressed }) => [styles.trust, pressed && styles.pressed]}
+        >
+          <View style={styles.trustStars}>
+            {[1, 2, 3, 4, 5].map((i) => (
+              <Ionicons
+                key={i}
+                name={i <= Math.round(trustpilot.score) ? 'star' : 'star-outline'}
+                size={16}
+                color={TRUSTPILOT_GREEN}
+              />
+            ))}
+          </View>
+          <Text style={styles.trustScore}>
+            {trustpilot.score} out of 5
+          </Text>
+          <Text style={styles.trustCount}>
+            {trustpilot.reviews} reviews on Trustpilot
+          </Text>
+        </Pressable>
+
+        {/* Market: prices come back from Shopify already converted. */}
+        <View style={styles.group}>
+          <Row
+            icon="globe-outline"
+            label="Country & currency"
+            sub={`${market.name} · ${market.currency}`}
+            onPress={openMarketPicker}
+            last
+          />
+        </View>
+
         {/* Real destinations: the storefront handles orders, support and policy. */}
         <View style={styles.group}>
           <Row
@@ -114,6 +181,27 @@ export default function AccountScreen() {
             label="Shop on circularfash.com"
             sub="The full archive in your browser"
             onPress={() => Linking.openURL(links.shop)}
+            external
+          />
+          <Row
+            icon="help-circle-outline"
+            label="FAQ"
+            sub="Authenticity, shipping, returns, selling"
+            onPress={() => Linking.openURL(links.faq)}
+            external
+          />
+          <Row
+            icon="search-outline"
+            label="Sourcing Requests"
+            sub="Ask us to find a specific piece"
+            onPress={() => Linking.openURL(links.sourcing)}
+            external
+          />
+          <Row
+            icon="information-circle-outline"
+            label="About Us"
+            sub="How Circular Fash works"
+            onPress={() => Linking.openURL(links.about)}
             external
           />
           <Row
@@ -164,6 +252,49 @@ export default function AccountScreen() {
         </Text>
         <Text style={styles.version}>VERSION {app.expo.version}</Text>
       </ScrollView>
+
+      <Modal
+        visible={pickerOpen}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setPickerOpen(false)}
+      >
+        <View style={styles.sheet}>
+          <View style={styles.sheetHead}>
+            <Text style={styles.sheetTitle}>Country & currency</Text>
+            <Pressable onPress={() => setPickerOpen(false)} hitSlop={12}>
+              <Ionicons name="close" size={24} color={color.paper} />
+            </Pressable>
+          </View>
+          <Text style={styles.sheetNote}>
+            Prices are converted by Shopify and charged in the currency you pick.
+          </Text>
+          {markets === null ? (
+            <ActivityIndicator style={{ marginTop: space.xl }} color={color.hiVis} />
+          ) : (
+            <FlatList
+              data={markets}
+              keyExtractor={(m) => m.country}
+              contentContainerStyle={{ paddingBottom: insets.bottom + space.xxxl }}
+              renderItem={({ item }) => {
+                const active = item.country === market.country;
+                return (
+                  <Pressable
+                    onPress={() => chooseMarket(item)}
+                    style={({ pressed }) => [styles.marketRow, pressed && styles.pressed]}
+                  >
+                    <Text style={[styles.marketName, active && styles.marketNameOn]}>
+                      {item.name}
+                    </Text>
+                    <Text style={styles.marketCurrency}>{item.currency}</Text>
+                    {active && <Ionicons name="checkmark" size={18} color={color.paper} />}
+                  </Pressable>
+                );
+              }}
+            />
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -244,6 +375,35 @@ const styles = StyleSheet.create({
   liveBadge: { flexDirection: 'row', alignItems: 'center', gap: 5, borderWidth: border.hairline, borderColor: color.lineStrong, paddingHorizontal: space.sm, paddingVertical: 3 },
   liveDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: color.hiVis },
   liveText: { ...type.eyebrow, color: color.paper },
+
+  trust: {
+    marginTop: space.xl,
+    marginHorizontal: space.lg,
+    borderWidth: border.hairline,
+    borderColor: color.line,
+    backgroundColor: color.surface,
+    padding: space.lg,
+    alignItems: 'center',
+  },
+  trustStars: { flexDirection: 'row', gap: 3 },
+  trustScore: { ...type.title, fontSize: 15, color: color.paper, marginTop: space.sm },
+  trustCount: { ...type.caption, color: color.paperDim, marginTop: 2 },
+
+  sheet: { flex: 1, backgroundColor: color.ink, paddingTop: space.lg },
+  sheetHead: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: space.lg,
+  },
+  sheetTitle: { ...type.hero, fontSize: 22, color: color.paper },
+  sheetNote: { ...type.caption, color: color.paperDim, paddingHorizontal: space.lg, marginTop: space.xs, marginBottom: space.md },
+  marketRow: {
+    flexDirection: 'row', alignItems: 'center', gap: space.md,
+    paddingVertical: space.md, paddingHorizontal: space.lg,
+    borderBottomWidth: border.hairline, borderBottomColor: color.line,
+  },
+  marketName: { ...type.body, color: color.paper, flex: 1 },
+  marketNameOn: { ...type.title, fontSize: 14 },
+  marketCurrency: { ...type.eyebrow, color: color.paperDim },
 
   note: { ...type.caption, color: color.paperDim, paddingHorizontal: space.lg, marginTop: space.xl },
   version: { ...type.eyebrow, color: color.paperMute, paddingHorizontal: space.lg, marginTop: space.md },

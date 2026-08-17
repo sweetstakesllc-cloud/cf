@@ -39,8 +39,10 @@ export type Product = {
   brand: string; // Shopify "vendor"
   title: string;
   images: string[]; // first image is the hero; cards use images[0]
-  price: number; // in SEK
+  price: number; // already in `currencyCode` — Shopify converts, we never do
   compareAtPrice?: number | null; // original price when discounted
+  /** ISO 4217 the price is quoted in, e.g. "SEK", "EUR". Defaults to SEK. */
+  currencyCode?: string;
   size?: string | null;
   availableForSale: boolean;
   isNew?: boolean; // derive from createdAt or a tag
@@ -59,9 +61,14 @@ export type ProductFilter = {
   brands?: string[];
   categories?: string[];
   sizes?: string[];
-  /** Inclusive SEK bounds. */
+  /** Inclusive bounds, in the active market's currency. */
   minPrice?: number;
   maxPrice?: number;
-  /** When true, hide sold pieces. Default surfaces them (SOLD is a flex). */
+  /**
+   * Hide sold pieces. Browse defaults to `true` so the app agrees with
+   * circularfash.com, where sold stock is not listed at all. Pass `false` to
+   * see everything — Saved does, so a piece you lost still shows as SOLD
+   * rather than silently vanishing.
+   */
   inStockOnly?: boolean;
 };
