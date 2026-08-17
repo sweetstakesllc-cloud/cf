@@ -22,6 +22,7 @@ import ProductCard from '../components/ProductCard';
 import TopBar from '../components/TopBar';
 import FilterSheet from '../components/FilterSheet';
 import FeaturedDrop from '../components/FeaturedDrop';
+import BrandRail from '../components/BrandRail';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -35,6 +36,8 @@ export default function HomeScreen() {
   const [products, setProducts] = useState<Product[] | null>(null);
   const [brands, setBrands] = useState<string[]>([]);
   const [categories, setCategories] = useState<string[]>([]);
+  const [brandCounts, setBrandCounts] = useState<Record<string, number>>({});
+  const [totalLive, setTotalLive] = useState(0);
   const [activeBrand, setActiveBrand] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -59,6 +62,8 @@ export default function HomeScreen() {
     getFacets().then((f) => {
       setBrands(f.brands);
       setCategories(f.categories);
+      setBrandCounts(f.brandCounts);
+      setTotalLive(f.total);
     });
   }, []);
 
@@ -161,7 +166,16 @@ export default function HomeScreen() {
           contentContainerStyle={[styles.grid, { paddingBottom: insets.bottom + space.xxxl }]}
           showsVerticalScrollIndicator={false}
           ListHeaderComponent={
-            featured ? <FeaturedDrop product={featured} onPress={openProduct} /> : null
+            <>
+              <BrandRail
+                brands={brands}
+                counts={brandCounts}
+                total={totalLive}
+                active={activeBrand}
+                onPick={setActiveBrand}
+              />
+              {featured ? <FeaturedDrop product={featured} onPress={openProduct} /> : null}
+            </>
           }
           renderItem={({ item }) => (
             <View style={styles.cell}>

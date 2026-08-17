@@ -165,6 +165,10 @@ export async function getFacets(): Promise<{
   categories: string[];
   sizes: string[];
   conditions: Condition[];
+  /** How many buyable pieces sit behind each brand / category. */
+  brandCounts: Record<string, number>;
+  categoryCounts: Record<string, number>;
+  total: number;
 }> {
   // Derived from what is actually buyable. Facets taken over the whole
   // catalogue would offer brands and categories that are 100% sold — every one
@@ -173,11 +177,25 @@ export async function getFacets(): Promise<{
   const PRODUCTS = (await getCatalog()).filter(inStock);
   const uniq = (xs: (string | null | undefined)[]) =>
     Array.from(new Set(xs.filter((x): x is string => !!x))).sort();
+  const tally = (xs: (string | null | undefined)[]) =>
+    xs.reduce<Record<string, number>>((acc, x) => {
+      if (x) acc[x] = (acc[x] ?? 0) + 1;
+      return acc;
+    }, {});
+
+  const brandCounts = tally(PRODUCTS.map((p) => p.brand));
   return {
-    brands: uniq(PRODUCTS.map((p) => p.brand)),
+    // Brands lead by depth, not alphabet: "what do they actually have" is
+    // answered by Moncler 56 before it is answered by Ami 1.
+    brands: uniq(PRODUCTS.map((p) => p.brand)).sort(
+      (a, b) => (brandCounts[b] ?? 0) - (brandCounts[a] ?? 0) || a.localeCompare(b)
+    ),
     categories: uniq(PRODUCTS.map((p) => p.category)),
     sizes: uniq(PRODUCTS.map((p) => p.size ?? undefined)),
     conditions: ['Excellent', 'Very Good', 'Good', 'Fair'],
+    brandCounts,
+    categoryCounts: tally(PRODUCTS.map((p) => p.category)),
+    total: PRODUCTS.length,
   };
 }
 
