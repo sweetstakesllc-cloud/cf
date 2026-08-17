@@ -5,12 +5,13 @@ import {
   FlatList,
   StyleSheet,
   ActivityIndicator,
-  ScrollView,
+  Pressable,
   RefreshControl,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
+import { Ionicons } from '@expo/vector-icons';
 
 import { color, type, space } from '../theme';
 import type { Product, ProductFilter } from '../types/product';
@@ -18,8 +19,8 @@ import type { RootStackParamList } from '../navigation/types';
 import { getNewArrivals, getFacets } from '../data/mockProducts';
 import { onMarketChange } from '../data/market';
 import ProductCard from '../components/ProductCard';
-import Chip from '../components/Chip';
 import TopBar from '../components/TopBar';
+import FilterSheet from '../components/FilterSheet';
 
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
@@ -36,6 +37,7 @@ export default function HomeScreen() {
   const [activeBrand, setActiveBrand] = useState<string | null>(null);
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [filterOpen, setFilterOpen] = useState(false);
 
   // The website splits browse into BRANDS and CATEGORIES; the app had brands
   // only. Both narrow the same grid and combine, so "Gucci" + "Bags" works.
@@ -91,71 +93,51 @@ export default function HomeScreen() {
 
   // Browse is in-stock only now, so every row in the grid is live.
   const liveCount = products?.length ?? 0;
+  const activeCount = (activeCategory ? 1 : 0) + (activeBrand ? 1 : 0);
 
   return (
     <View style={[styles.screen, { paddingTop: insets.top }]}>
       {/* Live drop + Trustpilot, as across the top of the website */}
       <TopBar />
 
-      {/* Header */}
+      {/* Header. The wordmark lives in the bar above; repeating it here just
+          pushed the stock down. */}
       <View style={styles.header}>
-        <View>
-          <Text style={styles.eyebrow}>CIRCULAR FASH</Text>
-          <Text style={styles.hero}>New In</Text>
-        </View>
+        <Text style={styles.hero}>New In</Text>
         <View style={styles.countWrap}>
           <Text style={styles.countNum}>{String(liveCount).padStart(2, '0')}</Text>
           <Text style={styles.countLabel}>LIVE</Text>
         </View>
       </View>
 
-      {/* Category chips */}
-      {categories.length > 0 && (
-        <>
-          <Text style={styles.facetLabel}>CATEGORIES</Text>
-          <ScrollView
-            horizontal
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={styles.chips}
-            style={styles.chipScroll}
-            keyboardShouldPersistTaps="handled"
-          >
-            <Chip
-              label="All"
-              selected={activeCategory === null}
-              onPress={() => setActiveCategory(null)}
-            />
-            {categories.map((c) => (
-              <Chip
-                key={c}
-                label={c}
-                selected={activeCategory === c}
-                onPress={() => setActiveCategory((cur) => (cur === c ? null : c))}
-              />
-            ))}
-          </ScrollView>
-        </>
-      )}
+      {/* One filter row, the shape the website's collection pages use. */}
+      <View style={styles.filterRow}>
+        <Pressable
+          onPress={() => setFilterOpen(true)}
+          style={({ pressed }) => [styles.filterBtn, pressed && styles.pressed]}
+          accessibilityLabel="Filter by category and brand"
+        >
+          <Ionicons name="options-outline" size={17} color={color.paper} />
+          <Text style={styles.filterText}>FILTER</Text>
+          {activeCount > 0 && (
+            <View style={styles.filterBadge}>
+              <Text style={styles.filterBadgeText}>{activeCount}</Text>
+            </View>
+          )}
+        </Pressable>
 
-      {/* Brand chips */}
-      <Text style={styles.facetLabel}>BRANDS</Text>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.chips}
-        style={styles.chipScroll}
-        keyboardShouldPersistTaps="handled"
-      >
-        <Chip label="All" selected={activeBrand === null} onPress={() => setActiveBrand(null)} />
-        {brands.map((b) => (
-          <Chip
-            key={b}
-            label={b}
-            selected={activeBrand === b}
-            onPress={() => setActiveBrand((cur) => (cur === b ? null : b))}
-          />
-        ))}
-      </ScrollView>
+        {activeCount > 0 && (
+          <Pressable
+            onPress={() => {
+              setActiveCategory(null);
+              setActiveBrand(null);
+            }}
+            style={({ pressed }) => [pressed && styles.pressed]}
+          >
+            <Text style={styles.clearText}>CLEAR</Text>
+          </Pressable>
+        )}
+      </View>
 
       {products === null ? (
         <View style={styles.loading}>
@@ -184,6 +166,17 @@ export default function HomeScreen() {
           }
         />
       )}
+
+      <FilterSheet
+        visible={filterOpen}
+        categories={categories}
+        brands={brands}
+        activeCategory={activeCategory}
+        activeBrand={activeBrand}
+        onPickCategory={setActiveCategory}
+        onPickBrand={setActiveBrand}
+        onClose={() => setFilterOpen(false)}
+      />
     </View>
   );
 }
@@ -196,21 +189,27 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     paddingHorizontal: SIDE,
-    paddingTop: space.md,
-    paddingBottom: space.md,
+    paddingTop: space.sm,
+    paddingBottom: space.sm,
   },
-  eyebrow: { ...type.eyebrow, color: color.paperDim },
-  hero: { ...type.hero, color: color.paper, marginTop: space.xs },
+  hero: { ...type.hero, color: color.paper },
   countWrap: { alignItems: 'flex-end' },
   countNum: { ...type.price, fontSize: 22, lineHeight: 24, color: color.hiVis },
   countLabel: { ...type.eyebrow, color: color.paperDim, marginTop: 2 },
 
-  // Fixed height + no shrink: a horizontal ScrollView can't derive its height
-  // from horizontally-scrolling content on web (react-native-web), so without
-  // this the whole chip row collapses to a sliver. Chip ≈ 32px; 48 leaves air.
-  chipScroll: { flexGrow: 0, flexShrink: 0, height: 44, marginBottom: space.xs },
-  facetLabel: { ...type.eyebrow, color: color.paperMute, paddingHorizontal: SIDE, marginBottom: space.xs },
-  chips: { paddingHorizontal: SIDE, gap: space.sm, alignItems: 'center' },
+  pressed: { opacity: 0.6 },
+  filterRow: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    paddingHorizontal: SIDE, paddingBottom: space.sm,
+  },
+  filterBtn: { flexDirection: 'row', alignItems: 'center', gap: space.xs },
+  filterText: { ...type.eyebrow, color: color.paper },
+  filterBadge: {
+    minWidth: 16, height: 16, borderRadius: 8, backgroundColor: color.hiVis,
+    alignItems: 'center', justifyContent: 'center', paddingHorizontal: 4, marginLeft: 2,
+  },
+  filterBadgeText: { ...type.eyebrow, fontSize: 9, color: color.onHiVis },
+  clearText: { ...type.eyebrow, color: color.paperDim, textDecorationLine: 'underline' },
 
   loading: { flex: 1, alignItems: 'center', justifyContent: 'center' },
 
