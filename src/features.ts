@@ -57,17 +57,4 @@ export const trustpilot = {
   reviews: 98,
 } as const;
 
-/**
- * The three things About Us says the business takes seriously — Authenticity,
- * Quality, Sustainability — compressed to fit a phone.
- *
- * There is deliberately no strapline here. The one lifted off the About page
- * read as marketing prose the moment it sat above real stock. Three words that
- * are each a claim about process survive that; a sentence about how you would
- * never notice does not.
- */
-export const brand = {
-  pillars: ['AUTHENTICATED', 'INSPECTED', 'CIRCULAR'],
-} as const;
-
 export default features;

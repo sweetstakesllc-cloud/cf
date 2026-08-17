@@ -1,8 +1,6 @@
 import React from 'react';
 import { View, Text, Image, Pressable, StyleSheet } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
 import { color, type, space, border, formatMoney } from '../theme';
-import { brand } from '../features';
 import type { Product } from '../types/product';
 
 /**
@@ -26,15 +24,6 @@ type Props = {
 export default function FeaturedDrop({ product, onPress }: Props) {
   return (
     <View style={styles.wrap}>
-      <View style={styles.pillars}>
-        {brand.pillars.map((p) => (
-          <View key={p} style={styles.pillar}>
-            <Ionicons name="checkmark" size={11} color={color.paper} />
-            <Text style={styles.pillarText}>{p}</Text>
-          </View>
-        ))}
-      </View>
-
       <Pressable
         onPress={() => onPress(product)}
         style={({ pressed }) => [styles.card, pressed && styles.pressed]}
@@ -71,10 +60,6 @@ export default function FeaturedDrop({ product, onPress }: Props) {
 const styles = StyleSheet.create({
   wrap: { marginBottom: space.md },
   pressed: { opacity: 0.92 },
-
-  pillars: { flexDirection: 'row', gap: space.md, marginBottom: space.md, flexWrap: 'wrap' },
-  pillar: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  pillarText: { ...type.eyebrow, fontSize: 9.5, color: color.paper },
 
   card: {
     borderWidth: border.hairline,
