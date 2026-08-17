@@ -26,8 +26,6 @@ type Props = {
 export default function FeaturedDrop({ product, onPress }: Props) {
   return (
     <View style={styles.wrap}>
-      <Text style={styles.line}>{brand.line}</Text>
-
       <View style={styles.pillars}>
         {brand.pillars.map((p) => (
           <View key={p} style={styles.pillar}>
@@ -73,8 +71,6 @@ export default function FeaturedDrop({ product, onPress }: Props) {
 const styles = StyleSheet.create({
   wrap: { marginBottom: space.md },
   pressed: { opacity: 0.92 },
-
-  line: { ...type.body, color: color.paperDim, marginBottom: space.md, maxWidth: 460 },
 
   pillars: { flexDirection: 'row', gap: space.md, marginBottom: space.md, flexWrap: 'wrap' },
   pillar: { flexDirection: 'row', alignItems: 'center', gap: 3 },

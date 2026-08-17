@@ -58,18 +58,15 @@ export const trustpilot = {
 } as const;
 
 /**
- * What the app says it is, in the shop's own words.
+ * The three things About Us says the business takes seriously — Authenticity,
+ * Quality, Sustainability — compressed to fit a phone.
  *
- * Lifted from About Us on circularfash.com rather than written fresh — the line
- * is theirs ("No one would notice it is pre-owned") and the three pillars are
- * the three things that page says the business takes seriously. Guessed brand
- * copy is exactly what makes an app feel like a wrapper, so this stays in one
- * place and gets replaced wholesale when there is a better line, not reworded
- * in five screens.
+ * There is deliberately no strapline here. The one lifted off the About page
+ * read as marketing prose the moment it sat above real stock. Three words that
+ * are each a claim about process survive that; a sentence about how you would
+ * never notice does not.
  */
 export const brand = {
-  line: 'Handpicked and authenticated. No one would notice it is pre-owned.',
-  /** Authenticity, Quality, Sustainability — compressed to fit a phone. */
   pillars: ['AUTHENTICATED', 'INSPECTED', 'CIRCULAR'],
 } as const;
 
