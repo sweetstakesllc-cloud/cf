@@ -15,8 +15,21 @@
     <div class="wrap util-in">
       <a href="#footer-newsletter">{{ section.settings.util_left_label }}</a>
       <div class="util-right">
+        {%- comment -%}
+          The live line was plain text, so "Live on TikTok" announced a live
+          sale and then gave you nowhere to go. It keeps the .muted styling
+          either way — .util .muted wins over .util a in site.css, so it stays
+          lowercase and soft rather than turning into another uppercase nav
+          link — and only becomes clickable when a URL is set.
+        {%- endcomment -%}
         {%- if section.settings.live_line != blank -%}
-          <span class="muted">{{ section.settings.live_line }}</span>
+          {%- if section.settings.live_link != blank -%}
+            <a class="muted" href="{{ section.settings.live_link }}" target="_blank" rel="noopener">
+              {{- section.settings.live_line -}}
+            </a>
+          {%- else -%}
+            <span class="muted">{{ section.settings.live_line }}</span>
+          {%- endif -%}
         {%- endif -%}
         <a href="{{ section.settings.sell_link }}">{{ section.settings.sell_label }}</a>
         {%- if shop.customer_accounts_enabled -%}
@@ -159,6 +172,7 @@
     { "type": "link_list", "id": "menu", "label": "Menu", "default": "main-menu" },
     { "type": "text", "id": "util_left_label", "label": "Utility bar left link", "default": "Join Our Newsletter" },
     { "type": "text", "id": "live_line", "label": "Live line (leave blank to hide)", "default": "Live on TikTok" },
+    { "type": "url", "id": "live_link", "label": "Live line link", "info": "Where the live line goes — the TikTok profile. Leave blank for plain text." },
     { "type": "text", "id": "sell_label", "label": "Sell link label", "default": "Sell Now" },
     { "type": "url", "id": "sell_link", "label": "Sell link" },
     { "type": "text", "id": "region_line", "label": "Region line", "default": "Sweden · SEK kr" }

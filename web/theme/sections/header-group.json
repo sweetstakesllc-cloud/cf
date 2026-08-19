@@ -11,9 +11,12 @@
         "live_line": "Live on TikTok",
         "sell_label": "Sell Now",
         "sell_link": "/pages/sell-to-us-1",
-        "region_line": "Sweden · SEK kr"
+        "region_line": "Sweden \u00b7 SEK kr",
+        "live_link": "https://www.tiktok.com/@circularfash"
       }
     }
   },
-  "order": ["header"]
+  "order": [
+    "header"
+  ]
 }
