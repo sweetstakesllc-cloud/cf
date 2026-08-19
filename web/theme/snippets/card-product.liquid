@@ -113,7 +113,7 @@
         {%- if sizes.size > 0 -%}
           <div class="csize">{{ sizes | join: ' · ' }}</div>
         {%- else -%}
-          <div class="csize">&nbsp;</div>
+          <div class="csize csize--empty">&nbsp;</div>
         {%- endif -%}
         <div class="price">{{ price | money }}</div>
       </div>

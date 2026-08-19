@@ -490,7 +490,7 @@
    by the shop front and the category grids, so both move together rather than
    disagreeing about where a product name sits. */
 .cf .card-info{text-align:center}
-.cf .card-info .pname,.cf .card-info .csize,.cf .card-info .price{text-align:center}
+.cf .card-info,.cf .card-info .pname,.cf .card-info .csize,.cf .card-info .price{text-align:center}
 .cf .card-info .price{justify-content:center}
 
 /* card images: keep full image visible in the square frame (no crop),
@@ -588,7 +588,16 @@
 }
 
 /* size line on product cards */
-.cf .card-info .csize{font-size:12px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--text-soft);margin-bottom:6px}
+/* The size is a spec, not another line of the title. It sat directly under the
+   product name at a HEAVIER weight (600 against the name's 400) and only 2px
+   smaller, so the two read as one block of text. A bordered chip is
+   unmistakably a different kind of information, and matches the size tag on the
+   iOS product card. Pieces with no size (bags, wallets) get the same chip with
+   a transparent border and text, rather than a separate spacer rule: an empty
+   div collapsed to 0 height and knocked the prices in a row out of line by
+   25px. Same box, guaranteed same height. */
+.cf .card-info .csize{display:inline-block;font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:var(--text);border:1px solid var(--line);padding:2px 9px;margin:2px 0 9px;line-height:1.7}
+.cf .card-info .csize--empty{border-color:transparent;color:transparent;user-select:none}
 
 /* "Shop All" button under a homepage product grid */
 .cf .cf-grid-cta{display:flex;justify-content:center;margin-top:clamp(34px,5vw,54px)}
