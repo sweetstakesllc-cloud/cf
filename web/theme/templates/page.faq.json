@@ -26,7 +26,7 @@
           "type": "qa",
           "settings": {
             "question": "What condition are the items in?",
-            "answer": "<p>Everything is pre-owned and inspected in person — front, back and sleeves — then cleaned according to the care label. Flaws are photographed rather than hidden, so the condition on the listing is the condition in the box.</p>",
+            "answer": "<p>Everything is pre-owned and inspected in person (front, back and sleeves), then cleaned according to the care label. Flaws are photographed rather than hidden, so the condition on the listing is the condition in the box.</p>",
             "open": false
           }
         },
@@ -74,7 +74,7 @@
           "type": "qa",
           "settings": {
             "question": "Can I return an item?",
-            "answer": "<p>Within the European Union, yes. You have 14 days from receiving your item to request a return, and it must come back unworn, with tags attached and in its original packaging, with proof of purchase. Returns from outside the EU are not accepted.</p><p>Email <a href=\"mailto:Info@circularfash.com\">Info@circularfash.com</a> to start a return — items sent back without prior authorisation cannot be accepted.</p>",
+            "answer": "<p>Within the European Union, yes. You have 14 days from receiving your item to request a return, and it must come back unworn, with tags attached and in its original packaging, with proof of purchase. Returns from outside the EU are not accepted.</p><p>Email <a href=\"mailto:Info@circularfash.com\">Info@circularfash.com</a> to start a return. Items sent back without prior authorisation cannot be accepted.</p>",
             "open": false
           }
         },
