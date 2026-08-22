@@ -391,6 +391,11 @@
      appeared in landscape. The newsletter link goes: the same signup sits in the
      footer, and a jump-link to it is the least useful thing in the bar. */
   .cf .util-left{display:none}
+  /* .util-in is space-between across two children. With the left link gone
+     there is only one child left, and space-between packs a lone item to the
+     START — so SELL NOW, SIGN IN and the currency picker all slid to the left
+     edge. Pin the remaining group to the right. */
+  .cf .util-in{justify-content:flex-end}
   .cf .foot-grid{grid-template-columns:1fr}
   .cf .pagination .step{padding:0 12px}
   /* Tighten the wordmark so "Cart (0)" keeps to one line at 375px. */
