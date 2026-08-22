@@ -393,9 +393,11 @@
   .cf .util-left{display:none}
   /* .util-in is space-between across two children. With the left link gone
      there is only one child left, and space-between packs a lone item to the
-     START — so SELL NOW, SIGN IN and the currency picker all slid to the left
-     edge. Pin the remaining group to the right. */
-  .cf .util-in{justify-content:flex-end}
+     START — so the whole group sat at the left edge. Let the group fill the row
+     instead; the picker alone is pushed right (see .cf-locale in the generator
+     extras). Pinning the whole group right was wrong: SELL NOW and SIGN IN
+     belong where the newsletter link used to be. */
+  .cf .util-right{flex:1}
   .cf .foot-grid{grid-template-columns:1fr}
   .cf .pagination .step{padding:0 12px}
   /* Tighten the wordmark so "Cart (0)" keeps to one line at 375px. */
@@ -463,6 +465,9 @@
   /* "Sweden | SEK kr" -> "SEK kr". The currency is what is being checked; the
      country name is 50px of the width and none of the answer. */
   .cf .util .cf-locale .cf-locale-country{display:none}
+  /* Only the picker goes right. SELL NOW and SIGN IN stay left, where the
+     newsletter link used to sit. */
+  .cf .util .cf-locale{margin-left:auto}
   .cf .util .cf-locale .localization-form__select{font-size:11px;letter-spacing:.02em}
   .cf .util .cf-locale .disclosure__list-wrapper{position:fixed;top:auto;left:0;right:0;width:100%}
 }
