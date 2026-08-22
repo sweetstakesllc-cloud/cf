@@ -434,6 +434,13 @@
    positions the caret absolutely, on top of the label. Flatten both. */
 .cf .util .cf-locale .localization-form__select{padding:0;margin:0;min-height:0;height:auto;line-height:1;background:none;border:0;display:flex;align-items:center;gap:6px;font-size:12px;letter-spacing:.08em;font-weight:400;text-transform:none;color:var(--text-soft)}
 .cf .util .cf-locale .localization-form__select:hover{color:var(--text);text-decoration:underline;text-underline-offset:3px}
+/* Refresh draws a box around this control with ::before/::after — a 1px border
+   the width of the label — which is its "selected" treatment in a footer
+   column. In the utility bar it just looks like the picker is stuck in a
+   pressed state. The element's own computed styles are clean, so the box only
+   shows up if you go looking at the pseudo-elements. */
+.cf .util .cf-locale .localization-form__select::before,
+.cf .util .cf-locale .localization-form__select::after{content:none;display:none}
 .cf .util .cf-locale .localization-form__select .svg-wrapper,.cf .util .cf-locale .localization-form__select svg{position:static;width:10px;height:10px;margin:0;transform:none}
 /* Refresh opens this panel upward (bottom:12px) because it lives in the footer
    there. In the utility bar that puts it off the top of the page, so flip it to
