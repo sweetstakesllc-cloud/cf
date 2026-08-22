@@ -380,6 +380,11 @@ footer a:hover{color:var(--text);text-decoration:underline;text-underline-offset
 @media(max-width:640px){
   .grid{grid-template-columns:repeat(2,1fr);gap:28px 14px}
   .util .muted{display:none}
+  /* The bar needs ~499px of content and a phone gives it 390, so the last item
+     on the right — the currency picker — was pushed off screen entirely and only
+     appeared in landscape. The newsletter link goes: the same signup sits in the
+     footer, and a jump-link to it is the least useful thing in the bar. */
+  .util-left{display:none}
   .foot-grid{grid-template-columns:1fr}
   .pagination .step{padding:0 12px}
   /* Tighten the wordmark so "Cart (0)" keeps to one line at 375px. */

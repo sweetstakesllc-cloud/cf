@@ -34,7 +34,11 @@
     aria-describedby="{{ localPosition }}Label"
   >
     <span>
-      {{- localization.country.name }} |
+      {%- comment -%}
+        Country name is its own element so a narrow screen can drop it and keep
+        the currency, which is the part a shopper is actually checking.
+      {%- endcomment -%}
+      <span class="cf-locale-country">{{- localization.country.name }} | </span>
       {{ localization.country.currency.iso_code }}
       {{ localization.country.currency.symbol -}}
     </span>

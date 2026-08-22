@@ -91,6 +91,9 @@ const extras = `
    alongside SELL NOW and SIGN IN at 375px */
 @media(max-width:640px){
   .cf .util-right{gap:13px}
+  /* "Sweden | SEK kr" -> "SEK kr". The currency is what is being checked; the
+     country name is 50px of the width and none of the answer. */
+  .cf .util .cf-locale .cf-locale-country{display:none}
   .cf .util .cf-locale .localization-form__select{font-size:11px;letter-spacing:.02em}
   .cf .util .cf-locale .disclosure__list-wrapper{position:fixed;top:auto;left:0;right:0;width:100%}
 }
