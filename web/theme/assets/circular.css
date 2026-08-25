@@ -488,6 +488,9 @@
 .button,.shopify-challenge__button,.customer button{text-transform:uppercase;letter-spacing:.16em;font-size:12.5px;font-weight:600}
 .title,.title-wrapper-with-link .title{text-transform:uppercase;letter-spacing:.06em}
 
+/* One line each, so a long grade cannot stagger the prices across a row. */
+.cf .card-info .cond,.cf .card-info .retail-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
 /* product page (PDP) */
 /* Condition + est. retail, matching the measurement rows they sit under. */
 .cf-spec{margin:0 0 4px;font-size:15px}

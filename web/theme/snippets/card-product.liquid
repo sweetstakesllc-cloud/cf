@@ -6,9 +6,10 @@
   The previous customized card is preserved at
   snippets/WISHLIST_HERO_BKP_card-product-pre-cf.liquid.
 
-  The condition line and the "Est. retail / % below retail" line were both
-  removed 2026-08-08 at the client's request; restore from git history if
-  ever wanted again.
+  The condition line and the "Est. retail / % below retail" line were removed
+  2026-08-08 at the client's request and restored 2026-08-25 at the client's
+  request. The retail figure comes from the custom.retail_price metafield, not
+  compare_at_price — see the comment beside it for why that distinction matters.
 {% endcomment %}
 
 {%- if card_product and card_product != empty -%}
@@ -115,7 +116,62 @@
         {%- else -%}
           <div class="csize csize--empty">&nbsp;</div>
         {%- endif -%}
+
+        {%- comment -%}
+          Condition and "Est. retail / % below retail", restored. Both were on
+          this card until 2026-08-08.
+
+          The saving is measured against the retail metafield, NOT compare_at:
+          they are different numbers and compare_at badly undersells. A Moncler
+          Maya is 5 800 with compare_at 7 000, but retail is 18 000 — "17%
+          off" against "68% below retail" for the same jacket.
+
+          Empty rows are held open so prices stay on one line across a row,
+          the same reason the size chip has a spacer.
+        {%- endcomment -%}
+        {%- liquid
+          assign cond = card_product.metafields.custom.condition.value.name.value
+          assign retail_raw = card_product.metafields.custom.retail_price.value
+          assign price_kr = price | divided_by: 100
+          assign show_retail = false
+          if retail_raw != blank
+            assign retail_num = retail_raw | plus: 0
+            assign retail_round = retail_num | round
+            if retail_round > 0 and price_kr < retail_round
+              assign saved = retail_round | minus: price_kr
+              assign pct = saved | times: 100 | divided_by: retail_round | round
+              if pct > 0
+                assign show_retail = true
+              endif
+            endif
+          endif
+        -%}
+
+        {%- comment -%}
+          No "Condition:" prefix on the card. At two columns on a phone the
+          card is ~175px and "Condition: 10/10 - New with Tags" wraps to two
+          lines, while a shorter grade stays on one, which staggers the prices
+          across a row. The grade reads as a grade without being labelled, and
+          the product page carries the labelled version. Fashionphile prints
+          the bare grade on its cards for the same reason.
+        {%- endcomment -%}
+        {%- if cond != blank -%}
+          <div class="cond">{{ cond }}</div>
+        {%- else -%}
+          <div class="cond">&nbsp;</div>
+        {%- endif -%}
+
         <div class="price">{{ price | money }}</div>
+
+        {%- if show_retail -%}
+          <div class="retail-line">
+            Est. retail
+            <span data-retail-sek="{{ retail_round }}">{{ retail_round }} SEK</span>
+            · <b>{{ pct }}% below retail</b>
+          </div>
+        {%- else -%}
+          <div class="retail-line">&nbsp;</div>
+        {%- endif -%}
       </div>
     </a>
   </div>
