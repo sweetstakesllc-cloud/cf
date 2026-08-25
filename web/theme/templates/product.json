@@ -64,7 +64,7 @@
           "type": "text",
           "settings": {
             "alignment": "center",
-            "text": "Shipping calculated at checkout.",
+            "text": "Shipping\u00a0calculated at checkout.",
             "text_style": "uppercase"
           }
         },
@@ -109,7 +109,8 @@
             "alignment": "center",
             "text": "{{ product.metafields.custom.condition.value.name.value }}",
             "text_style": "body"
-          }
+          },
+          "disabled": true
         },
         "description": {
           "type": "description",
@@ -201,7 +202,7 @@
           "name": "Retail Price",
           "settings": {
             "alignment": "center",
-            "custom_liquid": "{% comment %}\n  CONFIGURATION:\n  1. We assume your metafield namespace is 'custom'.\n     If you created it differently, change 'custom' to 'my_fields' or your specific namespace.\n  2. Exchange rates set for Jan 2026.\n{% endcomment %}\n\n{% assign retail_price_sek = product.metafields.custom.retail_price.value %}\n\n{% if retail_price_sek != blank %}\n    <p style=\"margin-bottom: 5px;\"><strong>Retail Price:</strong></p>\n\n  <div class=\"retail-price-display\" style=\"margin-top: 10px; font-size: 0.6em; opacity: 0.8;\">\n\n    \n    <span style=\"margin-right: 5px;\">\n      {{ retail_price_sek }} SEK\n    </span>\n\n    {% comment %} Exchange Rates (Hardcoded) {% endcomment %}\n    {% assign rate_eur = 0.094 %}\n    {% assign rate_gbp = 0.082 %}\n    {% assign rate_usd = 0.110 %}\n\n    {% assign price_eur = retail_price_sek | times: rate_eur | round %}\n    <span style=\"margin-right: 5px;\">\n      |&nbsp; €{{ price_eur }} EUR\n    </span>\n\n    {% assign price_gbp = retail_price_sek | times: rate_gbp | round %}\n    <span style=\"margin-right: 5px;\">\n      |&nbsp; £{{ price_gbp }} GBP\n    </span>\n\n    {% assign price_usd = retail_price_sek | times: rate_usd | round %}\n    <span>\n      |&nbsp; ${{ price_usd }} USD\n    </span>\n  </div>\n{% endif %}"
+            "custom_liquid": "{% comment %}\n  Condition and estimated retail, as two centred spec rows matching the\n  measurement rows above them.\n\n  The old version printed the raw metafield (\"3000.0 SEK\") and then converted it\n  with exchange rates hardcoded in January 2026. Those rates drift, and the shop\n  now has a real currency switcher, so a stale EUR figure sitting next to a live\n  one is worse than no figure. The value is rendered in SEK and converted at\n  runtime with Shopify.currency.rate, which is the same rate the shopper is\n  actually being charged at. No JS, no conversion: it stays SEK and stays true.\n{% endcomment %}\n\n{%- assign cond = product.metafields.custom.condition.value.name.value -%}\n{%- assign retail = product.metafields.custom.retail_price.value -%}\n\n{%- if cond != blank -%}\n  <p class=\"cf-spec\"><strong>Condition:</strong> {{ cond }}</p>\n{%- endif -%}\n\n{%- if retail != blank -%}\n  {%- assign retail_round = retail | round -%}\n  <p class=\"cf-spec cf-retail\">\n    <strong>Est. retail price:</strong>\n    <span class=\"cf-retail-value\" data-retail-sek=\"{{ retail_round }}\">{{ retail_round }} SEK</span>\n  </p>\n{%- endif -%}"
           }
         },
         "custom_liquid_GHKJhf": {
@@ -209,8 +210,9 @@
           "name": "Cost",
           "settings": {
             "alignment": "center",
-            "custom_liquid": "{% comment %} \n  We pull the cost from the first available variant. \n{% endcomment %}\n{% assign cost_price_sek = product.selected_or_first_available_variant.inventory_item.unit_cost %}\n\n{% if cost_price_sek != blank %}\n  <p style=\"margin-bottom: 5px;\"><strong>Cost per Item:</strong></p>\n\n  <div class=\"cost-price-display\" style=\"margin-top: 10px; font-size: 0.6em; opacity: 0.8;\">\n    <span style=\"margin-right: 5px;\">\n      {{ cost_price_sek | money_without_currency }} SEK\n    </span>\n\n    {% comment %} Exchange Rates {% endcomment %}\n    {% assign rate_eur = 0.094 %}\n    {% assign rate_gbp = 0.082 %}\n    {% assign rate_usd = 0.110 %}\n\n    {% comment %} \n      Note: We convert to a number using | plus: 0 to ensure math works \n    {% endcomment %}\n    {% assign raw_cost = cost_price_sek | plus: 0 %}\n\n    {% assign cost_eur = raw_cost | times: rate_eur | round: 2 %}\n    <span style=\"margin-right: 5px;\">\n      |&nbsp; €{{ cost_eur }} EUR\n    </span>\n\n    {% assign cost_gbp = raw_cost | times: rate_gbp | round: 2 %}\n    <span style=\"margin-right: 5px;\">\n      |&nbsp; £{{ cost_gbp }} GBP\n    </span>\n\n    {% assign cost_usd = raw_cost | times: rate_usd | round: 2 %}\n    <span>\n      |&nbsp; ${{ cost_usd }} USD\n    </span>\n  </div>\n{% endif %}"
-          }
+            "custom_liquid": "{% comment %} \n  We pull the cost from the first available variant. \n{% endcomment %}\n{% assign cost_price_sek = product.selected_or_first_available_variant.inventory_item.unit_cost %}\n\n{% if cost_price_sek != blank %}\n  <p style=\"margin-bottom: 5px;\"><strong>Cost per Item:</strong></p>\n\n  <div class=\"cost-price-display\" style=\"margin-top: 10px; font-size: 0.6em; opacity: 0.8;\">\n    <span style=\"margin-right: 5px;\">\n      {{ cost_price_sek | money_without_currency }} SEK\n    </span>\n\n    {% comment %} Exchange Rates {% endcomment %}\n    {% assign rate_eur = 0.094 %}\n    {% assign rate_gbp = 0.082 %}\n    {% assign rate_usd = 0.110 %}\n\n    {% comment %} \n      Note: We convert to a number using | plus: 0 to ensure math works \n    {% endcomment %}\n    {% assign raw_cost = cost_price_sek | plus: 0 %}\n\n    {% assign cost_eur = raw_cost | times: rate_eur | round: 2 %}\n    <span style=\"margin-right: 5px;\">\n      |&nbsp; \u20ac{{ cost_eur }} EUR\n    </span>\n\n    {% assign cost_gbp = raw_cost | times: rate_gbp | round: 2 %}\n    <span style=\"margin-right: 5px;\">\n      |&nbsp; \u00a3{{ cost_gbp }} GBP\n    </span>\n\n    {% assign cost_usd = raw_cost | times: rate_usd | round: 2 %}\n    <span>\n      |&nbsp; ${{ cost_usd }} USD\n    </span>\n  </div>\n{% endif %}"
+          },
+          "disabled": true
         },
         "custom_liquid_TtrxLt": {
           "type": "custom_liquid",
@@ -239,7 +241,7 @@
           "name": "CF trust block",
           "settings": {
             "alignment": "center",
-            "custom_liquid": "<div class='cf-trust'><span class='cf-tick'>✓</span><div><h4>Authenticated by Circular Fash</h4><p>Every item is inspected and verified by our experts before listing. If it isn't genuine, it isn't here. <a href='/pages/authenticity'>Our process</a></p></div></div>"
+            "custom_liquid": "<div class='cf-trust'><span class='cf-tick'>\u2713</span><div><h4>Authenticated by Circular Fash</h4><p>Every item is inspected and verified by our experts before listing. If it isn't genuine, it isn't here. <a href='/pages/authenticity'>Our process</a></p></div></div>"
           }
         }
       },
@@ -335,7 +337,7 @@
           "settings": {
             "heading": "Authenticity",
             "icon": "check_mark",
-            "row_content": "<p><strong>At Circular Fash, authenticity is more than a promise. It’s our mission.</strong></p><p>We are passionately committed to offering only genuine pre-owned designer pieces. Every item in our collection undergoes a meticulous, multi-step authentication process to ensure it meets the highest standards of quality and legitimacy.</p><p><strong>Expert Authentication</strong><br/>Our team of trained specialists, experts in luxury fashion, carefully inspects each item. From stitching and materials to logos, tags, and serial numbers, every detail is thoroughly examined to confirm authenticity.</p><p><strong>Trusted Sourcing</strong><br/>At Circular Fash, we collaborate exclusively with reputable resellers and verified sources known for their integrity and consistent track records with genuine designer goods. Our strict sourcing policies guarantee that only authentic pieces make it into our inventory.</p><p><strong>Customer Confidence</strong><br/>Your trust is our priority. That’s why every purchase is backed by our authenticity guarantee. If any item is ever discovered to be counterfeit, we offer a full refund, no questions asked.</p><p>When you choose Circular Fash, you’re not just embracing sustainable fashion. You are investing in verified luxury, responsible choices, and total peace of mind.</p>",
+            "row_content": "<p><strong>At Circular Fash, authenticity is more than a promise. It\u2019s our mission.</strong></p><p>We are passionately committed to offering only genuine pre-owned designer pieces. Every item in our collection undergoes a meticulous, multi-step authentication process to ensure it meets the highest standards of quality and legitimacy.</p><p><strong>Expert Authentication</strong><br/>Our team of trained specialists, experts in luxury fashion, carefully inspects each item. From stitching and materials to logos, tags, and serial numbers, every detail is thoroughly examined to confirm authenticity.</p><p><strong>Trusted Sourcing</strong><br/>At Circular Fash, we collaborate exclusively with reputable resellers and verified sources known for their integrity and consistent track records with genuine designer goods. Our strict sourcing policies guarantee that only authentic pieces make it into our inventory.</p><p><strong>Customer Confidence</strong><br/>Your trust is our priority. That\u2019s why every purchase is backed by our authenticity guarantee. If any item is ever discovered to be counterfeit, we offer a full refund, no questions asked.</p><p>When you choose Circular Fash, you\u2019re not just embracing sustainable fashion. You are investing in verified luxury, responsible choices, and total peace of mind.</p>",
             "page": ""
           }
         },
@@ -344,7 +346,7 @@
           "settings": {
             "heading": "Refresh",
             "icon": "washing",
-            "row_content": "<p><strong>Our Process – Refreshing Every Piece </strong></p><p>At <strong>Circularfash</strong>, we carefully ensure that every item feels fresh and well-cared-for before it’s listed for sale. When a piece arrives, we first inspect it thoroughly for any damage, wear, or stains 🔍.</p><p>Next, we clean each item according to its material and needs. We use professional steaming to remove unwanted odors and refresh both the inside and outside of the garment 🌬️. Steaming also helps reduce bacteria, leaving your pre-owned designer pieces feeling revitalized. If necessary, items are machine-washed or spot-cleaned for the best results 🧼.</p><p>Every jacket, sweatshirt, t-shirt, hat, shoes, or other designer item goes through this process before being showcased on our webshop. This ensures that every piece you purchase from <strong>Circular Fash</strong> is carefully inspected, professionally refreshed, and ready for its next chapter ✨.</p>",
+            "row_content": "<p><strong>Our Process \u2013 Refreshing Every Piece </strong></p><p>At\u00a0<strong>Circularfash</strong>, we carefully ensure that every item feels fresh and well-cared-for before it\u2019s listed for sale. When a piece arrives, we first inspect it thoroughly for any damage, wear, or stains \ud83d\udd0d.</p><p>Next, we clean each item according to its material and needs. We use professional steaming to remove unwanted odors and refresh both the inside and outside of the garment \ud83c\udf2c\ufe0f. Steaming also helps reduce bacteria, leaving your pre-owned designer pieces feeling revitalized. If necessary, items are machine-washed or spot-cleaned for the best results \ud83e\uddfc.</p><p>Every jacket, sweatshirt, t-shirt, hat, shoes, or other designer item goes through this process before being showcased on our webshop. This ensures that every piece you purchase from\u00a0<strong>Circular Fash</strong>\u00a0is carefully inspected, professionally refreshed, and ready for its next chapter \u2728.</p>",
             "page": ""
           }
         },
@@ -353,7 +355,7 @@
           "settings": {
             "heading": "Shipping & Delivery Time",
             "icon": "box",
-            "row_content": "<p>At <strong>Circular Fash</strong>, we’re committed to delivering your favorite pieces quickly, safely, and hassle-free, no matter where you are in the world.</p><p><strong>🇸🇪 Free Shipping in Sweden</strong><br/>Spend over <strong>2500 SEK</strong> and enjoy <strong>free tracked shipping</strong> right to your door.</p><p><strong>🚚 Fast Domestic Delivery (Sweden):</strong></p><ul><li><strong>Free Tracked Delivery:</strong> Get your order in <strong>1–2 working days</strong></li></ul><p><strong>🌍 Worldwide Shipping</strong></p><ul><li>We ship globally using Postnord international and domestic.</li><li><strong>No customs fees</strong> – international customers can shop with confidence!</li><li>Shipping costs are calculated at checkout based on your location.</li></ul><p><strong>📦 Same-Day Dispatch</strong><br/>Place your order before 3:30 PM<strong> (CET)</strong> and we’ll ship it out the <strong>same day</strong>, Monday to Friday.</p><p>Enjoy a smooth, stylish, and stress-free delivery experience with Circular Fash. Your next designer piece is just a click away.</p>",
+            "row_content": "<p>At\u00a0<strong>Circular Fash</strong>, we\u2019re committed to delivering your favorite pieces quickly, safely, and hassle-free, no matter where you are in the world.</p><p><strong>\ud83c\uddf8\ud83c\uddea Free Shipping in Sweden</strong><br/>Spend over\u00a0<strong>2500 SEK</strong>\u00a0and enjoy\u00a0<strong>free tracked shipping</strong>\u00a0right to your door.</p><p><strong>\ud83d\ude9a Fast Domestic Delivery (Sweden):</strong></p><ul><li><strong>Free Tracked Delivery:</strong>\u00a0Get your order in\u00a0<strong>1\u20132 working days</strong></li></ul><p><strong>\ud83c\udf0d Worldwide Shipping</strong></p><ul><li>We ship globally using\u00a0Postnord international and domestic.</li><li><strong>No customs fees</strong>\u00a0\u2013 international customers can shop with confidence!</li><li>Shipping costs are calculated at checkout based on your location.</li></ul><p><strong>\ud83d\udce6 Same-Day Dispatch</strong><br/>Place your order before\u00a03:30 PM<strong> (CET)</strong>\u00a0and we\u2019ll ship it out the\u00a0<strong>same day</strong>, Monday to Friday.</p><p>Enjoy a smooth, stylish, and stress-free delivery experience with Circular Fash. Your next designer piece is just a click away.</p>",
             "page": ""
           }
         }

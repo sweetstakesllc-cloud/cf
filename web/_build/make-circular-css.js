@@ -125,6 +125,10 @@ const extras = `
 .title,.title-wrapper-with-link .title{text-transform:uppercase;letter-spacing:.06em}
 
 /* product page (PDP) */
+/* Condition + est. retail, matching the measurement rows they sit under. */
+.cf-spec{margin:0 0 4px;font-size:15px}
+.cf-spec strong{font-weight:700}
+.cf-retail .cf-retail-value{white-space:nowrap}
 .product__title>h1,.product__title>h2{font-size:clamp(21px,2.1vw,27px);font-weight:600;letter-spacing:.04em;line-height:1.25;text-transform:none}
 .product__info-container .price .price-item{font-size:26px;font-weight:700}
 .product__info-container .price{margin-top:6px}

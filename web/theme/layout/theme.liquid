@@ -348,6 +348,34 @@
       <link rel="icon" type="image/png" href="{{ settings.favicon | image_url: width: 32, height: 32 }}&v=2">
       <link rel="apple-touch-icon" href="{{ settings.favicon | image_url: width: 180, height: 180 }}&v=2">
     {%- endif -%}
+    <script>
+      // Est. retail price is stored as a plain SEK number in a metafield, so it
+      // cannot ride Shopify's own price conversion. Convert it with the rate
+      // Shopify reports for the active market, which is the rate the shopper is
+      // being charged at. Without JS the SEK figure stands, correctly labelled.
+      document.addEventListener('DOMContentLoaded', function () {
+        var cur = window.Shopify && window.Shopify.currency;
+        var active = (cur && cur.active) || 'SEK';
+        var rate = parseFloat((cur && cur.rate) || '1') || 1;
+        document.querySelectorAll('[data-retail-sek]').forEach(function (el) {
+          var sek = parseFloat(el.getAttribute('data-retail-sek'));
+          if (!sek || !isFinite(sek)) return;
+          var amount = Math.round(sek * rate);
+          try {
+            if (active === 'SEK') {
+              // Match how the store writes its own prices: "3 000 SEK".
+              el.textContent =
+                amount.toLocaleString('sv-SE').replace(/\s/g, ' ') + ' SEK';
+            } else {
+              el.textContent = new Intl.NumberFormat('en-US', {
+                style: 'currency', currency: active,
+                minimumFractionDigits: 0, maximumFractionDigits: 0
+              }).format(amount);
+            }
+          } catch (e) { /* unknown ISO code: leave the SEK figure alone */ }
+        });
+      });
+    </script>
   </head>
 
   <body class="gradient{% if settings.animations_hover_elements != 'none' %} animate--hover-{{ settings.animations_hover_elements }}{% endif %}">
