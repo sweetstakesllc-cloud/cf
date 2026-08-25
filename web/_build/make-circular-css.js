@@ -128,6 +128,8 @@ const extras = `
 .cf .card-info .cond,.cf .card-info .retail-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 
 /* product page (PDP) */
+.cf-klarna{display:flex;align-items:center;justify-content:center;gap:9px;margin:14px 0 2px;font-size:13px;color:var(--text-soft)}
+.cf-klarna .cf-klarna-mark{width:42px;height:auto;display:block}
 /* Condition + est. retail, matching the measurement rows they sit under. */
 .cf-spec{margin:0 0 4px;font-size:15px}
 .cf-spec strong{font-weight:700}

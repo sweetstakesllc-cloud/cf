@@ -234,7 +234,8 @@
           "type": "quantity_selector",
           "settings": {
             "alignment": "center"
-          }
+          },
+          "disabled": true
         },
         "cf_trust": {
           "type": "custom_liquid",
@@ -242,6 +243,13 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "<div class='cf-trust'><span class='cf-tick'>\u2713</span><div><h4>Authenticated by Circular Fash</h4><p>Every item is inspected and verified by our experts before listing. If it isn't genuine, it isn't here. <a href='/pages/authenticity'>Our process</a></p></div></div>"
+          }
+        },
+        "cf_klarna": {
+          "type": "custom_liquid",
+          "settings": {
+            "alignment": "center",
+            "custom_liquid": "{% comment %}\n  Klarna reassurance beside the buy button.\n\n  Gated on shop.enabled_payment_types so the badge cannot outlive the payment\n  method: if Klarna is ever switched off in Shopify, this disappears with it\n  rather than advertising something checkout will not offer. The mark comes\n  from Shopify's own payment_type_svg_tag, so it is the licensed asset and\n  stays correct if Klarna restyles it.\n\n  Deliberately says only that Klarna is available. Instalment counts and\n  interest terms vary by market and by the merchant's Klarna agreement, and\n  stating them here would be a claim we cannot verify from the theme.\n{% endcomment %}\n{%- if shop.enabled_payment_types contains 'klarna' -%}\n  <div class=\"cf-klarna\">\n    {{ 'klarna' | payment_type_svg_tag: class: 'cf-klarna-mark' }}\n    <span>Pay with Klarna at checkout</span>\n  </div>\n{%- endif -%}"
           }
         }
       },
@@ -254,6 +262,7 @@
         "text_UyGmcN",
         "custom_liquid_rUQcmx",
         "buy_buttons_hHpYzf",
+        "cf_klarna",
         "cf_trust",
         "inventory_r3dwMW",
         "variant_picker",
