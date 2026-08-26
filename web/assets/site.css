@@ -384,6 +384,14 @@ footer a:hover{color:var(--text);text-decoration:underline;text-underline-offset
      on the right — the currency picker — was pushed off screen entirely and only
      appeared in landscape. The newsletter link goes: the same signup sits in the
      footer, and a jump-link to it is the least useful thing in the bar. */
+  /* Ten top-level items wrap to about three rows on a 390px phone — roughly
+     135px of menu before any product. Desktop spacing is generous because
+     there is room for it; a phone has none. Tightening type and padding here
+     gets it to two rows without touching the menu itself. This is mitigation:
+     the real answer for ten items on a phone is a drawer. */
+  nav.cats{gap:2px}
+  nav.cats .top{font-size:11px;letter-spacing:.06em;padding:9px 8px}
+
   .util-left{display:none}
   /* .util-in is space-between across two children. With the left link gone
      there is only one child left, and space-between packs a lone item to the
