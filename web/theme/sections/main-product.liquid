@@ -668,7 +668,19 @@
                 %}
 
               {%- when 'variant_picker' -%}
-                {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id %}
+                {%- comment -%}
+                  Only when there is something to choose. Refresh gates this on
+                  has_only_default_variant, but these products carry a real
+                  "Size" option holding exactly one value, so the guard passes
+                  and the picker draws a navy button and a colour swatch that
+                  cannot be clicked to any effect — decoration that reads as a
+                  broken control. 208 of 217 in-stock pieces are one of one.
+                  Their size and colour are in the spec table instead; the 9
+                  with a genuine choice still get the picker.
+                {%- endcomment -%}
+                {%- if product.variants.size > 1 -%}
+                  {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id %}
+                {%- endif -%}
               {%- when 'buy_buttons' -%}
                 {%- render 'buy-buttons',
                   block: block,
