@@ -124,8 +124,17 @@ const extras = `
 .button,.shopify-challenge__button,.customer button{text-transform:uppercase;letter-spacing:.16em;font-size:12.5px;font-weight:600}
 .title,.title-wrapper-with-link .title{text-transform:uppercase;letter-spacing:.06em}
 
-/* One line each, so a long grade cannot stagger the prices across a row. */
+/* One line each on wide screens, so a long grade cannot stagger the prices
+   across a row. NOTE this is why the grid tracks are minmax(0,1fr) rather than
+   1fr: 1fr floors at min-content, and a line that cannot break makes
+   min-content the width of the whole string, which pushed the second column
+   clean off a phone screen. */
 .cf .card-info .cond,.cf .card-info .retail-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:640px){
+  /* Two columns on a phone leaves ~170px a card. Truncating there would eat
+     "· 75% below retail", which is the line's whole point, so let it wrap. */
+  .cf .card-info .cond,.cf .card-info .retail-line{white-space:normal;overflow:visible;text-overflow:clip}
+}
 
 /* product page (PDP) */
 .cf-klarna{display:flex;align-items:center;justify-content:center;gap:9px;margin:14px 0 2px;font-size:13px;color:var(--text-soft)}

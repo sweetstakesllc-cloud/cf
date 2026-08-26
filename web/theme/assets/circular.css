@@ -141,7 +141,7 @@
 .cf .filters.bar .fset.right{justify-content:flex-end}
 
 /* ---------- product cards (Fashionphile style) ---------- */
-.cf .grid{display:grid;grid-template-columns:repeat(4,1fr);gap:36px 22px}
+.cf .grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:36px 22px}
 .cf .card{position:relative;text-align:left}
 /* 3:4 is what an iPhone shoots upright, and every product photo in the store is
    that shape. A square frame letterboxed them: the photo fitted by height and
@@ -348,7 +348,7 @@
 
 /* ---------- responsive ---------- */
 @media(max-width:1080px){
-  .cf .grid{grid-template-columns:repeat(3,1fr)}
+  .cf .grid{grid-template-columns:repeat(3,minmax(0,1fr))}
   .cf .pdp{grid-template-columns:1fr 1fr;gap:32px}
 }
 @media(max-width:960px){
@@ -384,7 +384,7 @@
   .cf .summary{position:static}
 }
 @media(max-width:640px){
-  .cf .grid{grid-template-columns:repeat(2,1fr);gap:28px 14px}
+  .cf .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:28px 14px}
   .cf .util .muted{display:none}
   /* The bar needs ~499px of content and a phone gives it 390, so the last item
      on the right — the currency picker — was pushed off screen entirely and only
@@ -496,8 +496,17 @@
 .button,.shopify-challenge__button,.customer button{text-transform:uppercase;letter-spacing:.16em;font-size:12.5px;font-weight:600}
 .title,.title-wrapper-with-link .title{text-transform:uppercase;letter-spacing:.06em}
 
-/* One line each, so a long grade cannot stagger the prices across a row. */
+/* One line each on wide screens, so a long grade cannot stagger the prices
+   across a row. NOTE this is why the grid tracks are minmax(0,1fr) rather than
+   1fr: 1fr floors at min-content, and a line that cannot break makes
+   min-content the width of the whole string, which pushed the second column
+   clean off a phone screen. */
 .cf .card-info .cond,.cf .card-info .retail-line{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+@media(max-width:640px){
+  /* Two columns on a phone leaves ~170px a card. Truncating there would eat
+     "· 75% below retail", which is the line's whole point, so let it wrap. */
+  .cf .card-info .cond,.cf .card-info .retail-line{white-space:normal;overflow:visible;text-overflow:clip}
+}
 
 /* product page (PDP) */
 .cf-klarna{display:flex;align-items:center;justify-content:center;gap:9px;margin:14px 0 2px;font-size:13px;color:var(--text-soft)}
