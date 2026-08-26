@@ -689,17 +689,20 @@
                   section_id: section.id,
                   show_pickup_availability: true
                 -%}
-              {% comment %} --- VISUAL PAYMENT ICONS START --- {% endcomment %}
-              {% unless shop.enabled_payment_types == empty %}
-                <div style="margin-top: 0rem; margin-bottom: 0rem;">
-                  <div style="display: flex; flex-wrap: wrap; gap: 1px; align-items: center; justify-content: center;">
-                    {%- for type in shop.enabled_payment_types -%}
-                      {{ type | payment_type_svg_tag: class: 'icon icon--full-color', style: 'width: 38px;' }}
-                    {%- endfor -%}
-                  </div>
-                </div>
-              {% endunless %}
-              {% comment %} --- VISUAL PAYMENT ICONS END --- {% endcomment %}
+              {%- comment -%}
+                The full payment-icon wall used to render here: fourteen marks
+                (Amex, Apple Pay, Bancontact, blik, Google Pay, wero, Klarna,
+                Maestro, Mastercard, MobilePay, PayPal, Shop Pay, UnionPay,
+                Visa) stacked under the buy button. Removed at the client's
+                request in favour of the single Klarna line, which is the
+                cf_klarna block in templates/product.json.
+
+                Note this is now the ONLY payment mark on the site: the CF
+                footer never carried the row, so a shopper sees no Visa or
+                Apple Pay signal until checkout. That is the client's call, not
+                an oversight — but if card reassurance is ever wanted back, the
+                footer is the place for it, not under the buy button.
+              {%- endcomment -%}
               {%- when 'rating' -%}
                 {%- if product.metafields.reviews.rating.value != blank -%}
                   <div class="rating-wrapper" style="display: flex;">
