@@ -111,10 +111,14 @@
           Held open with a spacer when a piece has no size (bags, wallets) so
           prices stay on one line across the row.
         {%- endcomment -%}
+        {%- comment -%}
+          No placeholder when a piece has no size. Bags and wallets were
+          holding open an invisible chip, a condition row and a retail row, so
+          a card with none of the three carried three empty lines of nothing.
+          The rows simply close up now.
+        {%- endcomment -%}
         {%- if sizes.size > 0 -%}
           <div class="csize">{{ sizes | join: ' · ' }}</div>
-        {%- else -%}
-          <div class="csize csize--empty">&nbsp;</div>
         {%- endif -%}
 
         {%- comment -%}
@@ -157,8 +161,6 @@
         {%- endcomment -%}
         {%- if cond != blank -%}
           <div class="cond">{{ cond }}</div>
-        {%- else -%}
-          <div class="cond">&nbsp;</div>
         {%- endif -%}
 
         <div class="price">{{ price | money }}</div>
@@ -169,8 +171,6 @@
             <span data-retail-sek="{{ retail_round }}">{{ retail_round }} SEK</span>
             · <b>{{ pct }}% below retail</b>
           </div>
-        {%- else -%}
-          <div class="retail-line">&nbsp;</div>
         {%- endif -%}
       </div>
     </a>

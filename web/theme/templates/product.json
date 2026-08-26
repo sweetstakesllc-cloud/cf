@@ -124,7 +124,8 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %} 1. Get the value safely (handles both 'Decimal' and 'Text' types) {% endcomment %}\n{% assign raw_pit = product.metafields.custom.pit.value | default: product.metafields.custom.pit %}\n\n{% if raw_pit != blank %}\n  \n  {% comment %} Ensure it is treated as a number {% endcomment %}\n  {% assign pit_num = raw_pit | plus: 0 %}\n\n  {% comment %} --- LOGIC FOR CM --- {% endcomment %}\n  {% comment %} Check if dividing by 1 leaves a remainder. If 0, it's a whole number. {% endcomment %}\n  {% assign cm_remainder = pit_num | modulo: 1 %}\n  \n  {% if cm_remainder == 0 %}\n    {% assign display_cm = pit_num | round %} {% comment %} Turns 50.0 into 50 {% endcomment %}\n  {% else %}\n    {% assign display_cm = pit_num %}         {% comment %} Keeps 50.5 as 50.5 {% endcomment %}\n  {% endif %}\n\n  {% comment %} --- LOGIC FOR INCHES --- {% endcomment %}\n  {% assign inches_num = pit_num | divided_by: 2.54 | round: 1 %}\n  {% assign in_remainder = inches_num | modulo: 1 %}\n\n  {% if in_remainder == 0 %}\n    {% assign display_in = inches_num | round %}\n  {% else %}\n    {% assign display_in = inches_num %}\n  {% endif %}\n\n  <div class=\"product-measurement\"><strong>Pit to Pit:</strong> {{ display_cm }} cm / {{ display_in }} Inches\n  </div>\n\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_CbfXRg": {
           "type": "custom_liquid",
@@ -132,7 +133,8 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %} --- CHEST MEASUREMENT (SMART FORMATTING) --- {% endcomment %}\n\n{% comment %} 1. Get the value safely (handles both 'Decimal' and 'Text' types) {% endcomment %}\n{% assign raw_chest = product.metafields.custom.chest.value | default: product.metafields.custom.chest %}\n\n{% if raw_chest != blank %}\n  \n  {% comment %} Ensure it is treated as a number {% endcomment %}\n  {% assign chest_num = raw_chest | plus: 0 %}\n\n  {% comment %} --- LOGIC FOR CM --- {% endcomment %}\n  {% comment %} Check if dividing by 1 leaves a remainder. If 0, it's a whole number. {% endcomment %}\n  {% assign cm_remainder = chest_num | modulo: 1 %}\n  \n  {% if cm_remainder == 0 %}\n    {% assign display_cm = chest_num | round %} {% comment %} Turns 40.0 into 40 {% endcomment %}\n  {% else %}\n    {% assign display_cm = chest_num %}         {% comment %} Keeps 40.5 as 40.5 {% endcomment %}\n  {% endif %}\n\n  {% comment %} --- LOGIC FOR INCHES --- {% endcomment %}\n  {% assign inches_num = chest_num | divided_by: 2.54 | round: 1 %}\n  {% assign in_remainder = inches_num | modulo: 1 %}\n\n  {% if in_remainder == 0 %}\n    {% assign display_in = inches_num | round %}\n  {% else %}\n    {% assign display_in = inches_num %}\n  {% endif %}\n\n  <div class=\"product-measurement\">\n    <strong>Chest:</strong> {{ display_cm }} cm / {{ display_in }} Inches\n  </div>\n\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_p4tRmc": {
           "type": "custom_liquid",
@@ -140,7 +142,8 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %} --- WAIST MEASUREMENT --- {% endcomment %}\n\n{% comment %} 1. Get the value safely {% endcomment %}\n{% assign raw_waist = product.metafields.custom.waist.value | default: product.metafields.custom.waist %}\n\n{% if raw_waist != blank %}\n  \n  {% comment %} Ensure it is treated as a number {% endcomment %}\n  {% assign waist_num = raw_waist | plus: 0 %}\n\n  {% comment %} --- LOGIC FOR CM --- {% endcomment %}\n  {% assign cm_remainder = waist_num | modulo: 1 %}\n  \n  {% if cm_remainder == 0 %}\n    {% assign display_cm = waist_num | round %}\n  {% else %}\n    {% assign display_cm = waist_num %}\n  {% endif %}\n\n  {% comment %} --- LOGIC FOR INCHES --- {% endcomment %}\n  {% assign inches_num = waist_num | divided_by: 2.54 | round: 1 %}\n  {% assign in_remainder = inches_num | modulo: 1 %}\n\n  {% if in_remainder == 0 %}\n    {% assign display_in = inches_num | round %}\n  {% else %}\n    {% assign display_in = inches_num %}\n  {% endif %}\n\n  <div class=\"product-measurement\">\n    <strong>Waist:</strong> {{ display_cm }} cm / {{ display_in }} Inches\n  </div>\n\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_QJT3yb": {
           "type": "custom_liquid",
@@ -148,7 +151,8 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %} --- HEIGHT MEASUREMENT --- {% endcomment %}\n\n{% comment %} 1. Get the value safely {% endcomment %}\n{% assign raw_height = product.metafields.custom.height.value | default: product.metafields.custom.height %}\n\n{% if raw_height != blank %}\n  \n  {% comment %} Ensure it is treated as a number {% endcomment %}\n  {% assign height_num = raw_height | plus: 0 %}\n\n  {% comment %} --- LOGIC FOR CM --- {% endcomment %}\n  {% assign cm_remainder = height_num | modulo: 1 %}\n  \n  {% if cm_remainder == 0 %}\n    {% assign display_cm = height_num | round %}\n  {% else %}\n    {% assign display_cm = height_num %}\n  {% endif %}\n\n  {% comment %} --- LOGIC FOR INCHES --- {% endcomment %}\n  {% assign inches_num = height_num | divided_by: 2.54 | round: 1 %}\n  {% assign in_remainder = inches_num | modulo: 1 %}\n\n  {% if in_remainder == 0 %}\n    {% assign display_in = inches_num | round %}\n  {% else %}\n    {% assign display_in = inches_num %}\n  {% endif %}\n\n  <div class=\"product-measurement\">\n    <strong>Height:</strong> {{ display_cm }} cm / {{ display_in }} Inches\n  </div>\n\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_HJU6MW": {
           "type": "custom_liquid",
@@ -156,7 +160,8 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %} --- WIDTH MEASUREMENT --- {% endcomment %}\n\n{% comment %} 1. Get the value safely {% endcomment %}\n{% assign raw_width = product.metafields.custom.width.value | default: product.metafields.custom.width %}\n\n{% if raw_width != blank %}\n  \n  {% comment %} Ensure it is treated as a number {% endcomment %}\n  {% assign width_num = raw_width | plus: 0 %}\n\n  {% comment %} --- LOGIC FOR CM --- {% endcomment %}\n  {% assign cm_remainder = width_num | modulo: 1 %}\n  \n  {% if cm_remainder == 0 %}\n    {% assign display_cm = width_num | round %}\n  {% else %}\n    {% assign display_cm = width_num %}\n  {% endif %}\n\n  {% comment %} --- LOGIC FOR INCHES --- {% endcomment %}\n  {% assign inches_num = width_num | divided_by: 2.54 | round: 1 %}\n  {% assign in_remainder = inches_num | modulo: 1 %}\n\n  {% if in_remainder == 0 %}\n    {% assign display_in = inches_num | round %}\n  {% else %}\n    {% assign display_in = inches_num %}\n  {% endif %}\n\n  <div class=\"product-measurement\">\n    <strong>Width:</strong> {{ display_cm }} cm / {{ display_in }} Inches\n  </div>\n\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_DaiUpT": {
           "type": "custom_liquid",
@@ -164,7 +169,8 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %} \n  1. Assign the metafield to a variable. \n  Replace 'custom' and 'shoulder' with your actual namespace and key.\n{% endcomment %}\n{% assign shoulder_cm = product.metafields.custom.shoulder %}\n\n{% comment %} \n  2. Check if the variable is not empty AND not equal to 0.\n  Note: 'plus: 0' ensures we treat the value as a number for the check.\n{% endcomment %}\n{% if shoulder_cm != blank and shoulder_cm != 0 %}\n  <div class=\"product-measurement-shoulder\">\n    <strong>Shoulder:</strong> \n    {{ shoulder_cm }} cm / {{ shoulder_cm | times: 0.393701 | round: 2 }} Inches\n  </div>\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_7ahmEP": {
           "type": "custom_liquid",
@@ -172,7 +178,8 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %} --- LENGTH MEASUREMENT --- {% endcomment %}\n\n{% comment %} 1. Get the value safely {% endcomment %}\n{% assign raw_length = product.metafields.custom.length.value | default: product.metafields.custom.length %}\n\n{% if raw_length != blank %}\n  \n  {% comment %} Ensure it is treated as a number {% endcomment %}\n  {% assign length_num = raw_length | plus: 0 %}\n\n  {% comment %} --- LOGIC FOR CM --- {% endcomment %}\n  {% assign cm_remainder = length_num | modulo: 1 %}\n  \n  {% if cm_remainder == 0 %}\n    {% assign display_cm = length_num | round %}\n  {% else %}\n    {% assign display_cm = length_num %}\n  {% endif %}\n\n  {% comment %} --- LOGIC FOR INCHES --- {% endcomment %}\n  {% assign inches_num = length_num | divided_by: 2.54 | round: 1 %}\n  {% assign in_remainder = inches_num | modulo: 1 %}\n\n  {% if in_remainder == 0 %}\n    {% assign display_in = inches_num | round %}\n  {% else %}\n    {% assign display_in = inches_num %}\n  {% endif %}\n\n  <div class=\"product-measurement\">\n    <strong>Length:</strong> {{ display_cm }} cm / {{ display_in }} Inches\n  </div>\n\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_Ww7nJd": {
           "type": "custom_liquid",
@@ -180,14 +187,16 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %} --- INNER LEG MEASUREMENT --- {% endcomment %}\n\n{% comment %} 1. Get the value safely {% endcomment %}\n{% assign raw_innerleg = product.metafields.custom.innerleg.value | default: product.metafields.custom.innerleg %}\n\n{% if raw_innerleg != blank %}\n  \n  {% comment %} Ensure it is treated as a number {% endcomment %}\n  {% assign innerleg_num = raw_innerleg | plus: 0 %}\n\n  {% comment %} --- LOGIC FOR CM --- {% endcomment %}\n  {% assign cm_remainder = innerleg_num | modulo: 1 %}\n  \n  {% if cm_remainder == 0 %}\n    {% assign display_cm = innerleg_num | round %}\n  {% else %}\n    {% assign display_cm = innerleg_num %}\n  {% endif %}\n\n  {% comment %} --- LOGIC FOR INCHES --- {% endcomment %}\n  {% assign inches_num = innerleg_num | divided_by: 2.54 | round: 1 %}\n  {% assign in_remainder = inches_num | modulo: 1 %}\n\n  {% if in_remainder == 0 %}\n    {% assign display_in = inches_num | round %}\n  {% else %}\n    {% assign display_in = inches_num %}\n  {% endif %}\n\n  <div class=\"product-measurement\">\n    <strong>Inner Leg:</strong> {{ display_cm }} cm / {{ display_in }} Inches\n  </div>\n\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_bQTwEi": {
           "type": "custom_liquid",
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %} --- INSOLE MEASUREMENT --- {% endcomment %}\n\n{% comment %} 1. Get the value safely from the insole metafield {% endcomment %}\n{% assign raw_insole = product.metafields.custom.insole.value | default: product.metafields.custom.insole %}\n\n{% if raw_insole != blank %}\n  \n  {% comment %} Ensure it is treated as a number {% endcomment %}\n  {% assign insole_num = raw_insole | plus: 0 %}\n\n  {% comment %} --- LOGIC FOR CM --- {% endcomment %}\n  {% assign cm_remainder = insole_num | modulo: 1 %}\n  \n  {% if cm_remainder == 0 %}\n    {% assign display_cm = insole_num | round %}\n  {% else %}\n    {% assign display_cm = insole_num %}\n  {% endif %}\n\n  {% comment %} --- LOGIC FOR INCHES (Length / 2.54) --- {% endcomment %}\n  {% assign inches_num = insole_num | divided_by: 2.54 | round: 1 %}\n  {% assign in_remainder = inches_num | modulo: 1 %}\n\n  {% if in_remainder == 0 %}\n    {% assign display_in = inches_num | round %}\n  {% else %}\n    {% assign display_in = inches_num %}\n  {% endif %}\n\n  <div class=\"product-measurement\">\n    <strong>Insole Measurement:</strong> {{ display_cm }} cm / {{ display_in }} Inches\n  </div>\n\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_MieL6J": {
           "type": "custom_liquid",
@@ -195,7 +204,8 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% if product.metafields.custom.made_in != blank %}\n  <div class=\"product-made-in-wrapper\" style=\"margin: 0 0;\">\n    <span class=\"label\">Made in </span>\n    <span class=\"value\">{{ product.metafields.custom.made_in }}</span>\n  </div>\n{% endif %}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_9PUt66": {
           "type": "custom_liquid",
@@ -203,7 +213,8 @@
           "settings": {
             "alignment": "center",
             "custom_liquid": "{% comment %}\n  Condition and estimated retail, as two centred spec rows matching the\n  measurement rows above them.\n\n  The old version printed the raw metafield (\"3000.0 SEK\") and then converted it\n  with exchange rates hardcoded in January 2026. Those rates drift, and the shop\n  now has a real currency switcher, so a stale EUR figure sitting next to a live\n  one is worse than no figure. The value is rendered in SEK and converted at\n  runtime with Shopify.currency.rate, which is the same rate the shopper is\n  actually being charged at. No JS, no conversion: it stays SEK and stays true.\n{% endcomment %}\n\n{%- assign cond = product.metafields.custom.condition.value.name.value -%}\n{%- assign retail = product.metafields.custom.retail_price.value -%}\n\n{%- if cond != blank -%}\n  <p class=\"cf-spec\"><strong>Condition:</strong> {{ cond }}</p>\n{%- endif -%}\n\n{%- if retail != blank -%}\n  {%- assign retail_round = retail | round -%}\n  <p class=\"cf-spec cf-retail\">\n    <strong>Est. retail price:</strong>\n    <span class=\"cf-retail-value\" data-retail-sek=\"{{ retail_round }}\">{{ retail_round }} SEK</span>\n  </p>\n{%- endif -%}"
-          }
+          },
+          "disabled": true
         },
         "custom_liquid_GHKJhf": {
           "type": "custom_liquid",
@@ -228,7 +239,8 @@
           "settings": {
             "alignment": "center",
             "text_style": "body"
-          }
+          },
+          "disabled": true
         },
         "quantity_selector": {
           "type": "quantity_selector",
@@ -251,6 +263,13 @@
             "alignment": "center",
             "custom_liquid": "{% comment %}\n  Klarna reassurance beside the buy button.\n\n  Gated on shop.enabled_payment_types so the badge cannot outlive the payment\n  method: if Klarna is ever switched off in Shopify, this disappears with it\n  rather than advertising something checkout will not offer. The mark comes\n  from Shopify's own payment_type_svg_tag, so it is the licensed asset and\n  stays correct if Klarna restyles it.\n\n  Deliberately says only that Klarna is available. Instalment counts and\n  interest terms vary by market and by the merchant's Klarna agreement, and\n  stating them here would be a claim we cannot verify from the theme.\n{% endcomment %}\n{%- if shop.enabled_payment_types contains 'klarna' -%}\n  <div class=\"cf-klarna\">\n    {{ 'klarna' | payment_type_svg_tag: class: 'cf-klarna-mark' }}\n    <span>Pay with Klarna at checkout</span>\n  </div>\n{%- endif -%}"
           }
+        },
+        "cf_specs": {
+          "type": "custom_liquid",
+          "settings": {
+            "alignment": "center",
+            "custom_liquid": "{% comment %}\n  One spec table, replacing thirteen separate blocks that each printed a\n  sentence. Measurements, condition, retail, origin and item id were rendered\n  as loose lines of running text with bold labels, so the page read as a\n  paragraph pile rather than a product record. A luxury resale page lives on\n  this being scannable.\n\n  Metafields are read by bracket lookup so the labels and keys stay in one\n  list. cm/inch handling is the same as the blocks it replaces: whole numbers\n  lose their .0, halves keep it.\n{% endcomment %}\n\n{%- liquid\n  assign m_keys   = 'pit,chest,waist,shoulder,length,width,height,innerleg,insole' | split: ','\n  assign m_labels = 'Pit to pit,Chest,Waist,Shoulder,Length,Width,Height,Inner leg,Insole' | split: ','\n  assign rows = ''\n-%}\n\n<dl class=\"cf-specs\">\n  {%- assign cond = product.metafields.custom.condition.value.name.value -%}\n  {%- if cond != blank -%}\n    <div class=\"cf-specs__row\"><dt>Condition</dt><dd>{{ cond }}</dd></div>\n  {%- endif -%}\n\n  {%- comment -%}\n    Options are listed only when there is nothing to choose. Most pieces are\n    one of one, so the size belongs in the record; but 9 in-stock products have\n    several buyable variants, and for those the picker above owns the choice.\n    Printing a fixed \"Size L\" beside a picker offering M and L is worse than\n    saying nothing.\n  {%- endcomment -%}\n  {%- if product.variants.size == 1 -%}\n    {%- for opt in product.options_with_values -%}\n      {%- if opt.name != 'Title' -%}\n        <div class=\"cf-specs__row\"><dt>{{ opt.name }}</dt><dd>{{ opt.selected_value }}</dd></div>\n      {%- endif -%}\n    {%- endfor -%}\n  {%- endif -%}\n\n  {%- for key in m_keys -%}\n    {%- assign raw_val = product.metafields.custom[key].value | default: product.metafields.custom[key] -%}\n    {%- if raw_val != blank -%}\n      {%- liquid\n        assign num = raw_val | plus: 0\n        assign cm_rem = num | modulo: 1\n        if cm_rem == 0\n          assign cm = num | round\n        else\n          assign cm = num\n        endif\n        assign inch = num | divided_by: 2.54 | round: 1\n        assign in_rem = inch | modulo: 1\n        if in_rem == 0\n          assign inch = inch | round\n        endif\n      -%}\n      <div class=\"cf-specs__row\">\n        <dt>{{ m_labels[forloop.index0] }}</dt>\n        <dd>{{ cm }} cm <span class=\"cf-specs__alt\">/ {{ inch }} in</span></dd>\n      </div>\n    {%- endif -%}\n  {%- endfor -%}\n\n  {%- if product.metafields.custom.made_in != blank -%}\n    <div class=\"cf-specs__row\"><dt>Made in</dt><dd>{{ product.metafields.custom.made_in }}</dd></div>\n  {%- endif -%}\n\n  {%- assign retail_raw = product.metafields.custom.retail_price.value -%}\n  {%- if retail_raw != blank -%}\n    {%- assign retail_round = retail_raw | plus: 0 | round -%}\n    <div class=\"cf-specs__row\">\n      <dt>Est. retail price</dt>\n      <dd><span data-retail-sek=\"{{ retail_round }}\">{{ retail_round }} SEK</span></dd>\n    </div>\n  {%- endif -%}\n\n  {%- comment -%} The item id is written into the description, not a field. {%- endcomment -%}\n  {%- if product.description contains 'ID: ' -%}\n    {%- assign after = product.description | split: 'ID: cf' | last -%}\n    {%- assign item_id = after | split: ' ' | first | remove: '.' | remove: ',' | remove: '<' | strip -%}\n    {%- if item_id != blank -%}\n      <div class=\"cf-specs__row\"><dt>Item</dt><dd>cf{{ item_id }}</dd></div>\n    {%- endif -%}\n  {%- endif -%}\n</dl>"
+          }
         }
       },
       "block_order": [
@@ -268,6 +287,7 @@
         "variant_picker",
         "vendor",
         "description",
+        "cf_specs",
         "custom_liquid_DG4QKB",
         "custom_liquid_CbfXRg",
         "custom_liquid_p4tRmc",

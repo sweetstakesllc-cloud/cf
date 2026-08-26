@@ -134,7 +134,21 @@ const extras = `
 .cf-spec{margin:0 0 4px;font-size:15px}
 .cf-spec strong{font-weight:700}
 .cf-retail .cf-retail-value{white-space:nowrap}
-.product__title>h1,.product__title>h2{font-size:clamp(21px,2.1vw,27px);font-weight:600;letter-spacing:.04em;line-height:1.25;text-transform:none}
+.product__title>h1,.product__title>h2{font-size:clamp(21px,2.1vw,27px);font-weight:600;letter-spacing:.04em;line-height:1.25;text-transform:none;color:var(--text)}
+
+/* Spec table. A block of records, not a paragraph pile: label left, value
+   right, hairline between. The block is centred in the column but reads left
+   to right inside itself, which is how a spec is read. */
+.cf-specs{max-width:340px;margin:22px auto 4px;text-align:left}
+.cf-specs__row{display:flex;align-items:baseline;justify-content:space-between;gap:18px;padding:9px 0;border-bottom:1px solid var(--line);font-size:13.5px}
+.cf-specs__row:last-child{border-bottom:0}
+.cf-specs dt{color:var(--text-soft);white-space:nowrap}
+.cf-specs dd{margin:0;color:var(--text);text-align:right}
+.cf-specs__alt{color:var(--text-soft)}
+
+/* The description is free text written per product; it sits above the record
+   with a rule so the two are not read as one list. */
+.product__description{border-top:1px solid var(--line);padding-top:16px;margin-top:18px;color:var(--text-soft);font-size:14px}
 .product__info-container .price .price-item{font-size:26px;font-weight:700}
 .product__info-container .price{margin-top:6px}
 /* the whole info column is centred (every block's alignment setting in
