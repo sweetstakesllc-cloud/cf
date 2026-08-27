@@ -1,0 +1,68 @@
+{%- comment -%}
+  Makes multi-word search behave as AND instead of OR.
+
+  Shopify's storefront search ORs the terms, so "louis vuitton chelsea" returns
+  every product matching ANY word — 78 results, with the one Chelsea Bag sixth,
+  behind every Keepall and Neverfull we have ever listed. Searching for a model
+  is the normal way to look for a piece in resale, and it was the one thing the
+  search could not do.
+
+  There is no form field for the operator, so the terms are joined before
+  submit: each word becomes its own AND clause, and each is given the same
+  trailing wildcard the "options[prefix]=last" hidden field used to provide, so
+  "chels" still finds "Chelsea".
+
+    louis vuitton chelsea  ->  louis* AND vuitton* AND chelsea*
+
+  Quoted phrases are passed through untouched, so "keepall 55" still works as
+  an exact phrase. A single word is left alone: it needs no operator, and
+  rewriting it would only make the box in the URL bar look strange.
+
+  This runs on submit rather than on the results page because search.results is
+  already resolved by the time a section renders — the query has to be right
+  before it reaches Shopify.
+{%- endcomment -%}
+<script>
+  (function () {
+    var FIELDS = 'title,product_type,variants.title,vendor,tag';
+
+    function toAnd(raw) {
+      var q = (raw || '').trim();
+      if (!q) return q;
+      // Leave quoted phrases and anything already using operators alone.
+      if (q.indexOf('"') !== -1 || /\b(AND|OR|NOT)\b/.test(q)) return q;
+      var words = q.split(/\s+/).filter(Boolean);
+      if (words.length < 2) return q;
+      return words
+        .map(function (w) {
+          // Shopify's query syntax treats these as operators.
+          var safe = w.replace(/[():*]/g, '');
+          return safe ? safe + '*' : '';
+        })
+        .filter(Boolean)
+        .join(' AND ');
+    }
+
+    document.addEventListener('submit', function (event) {
+      var form = event.target;
+      if (!form || form.getAttribute('action') !== '{{ routes.search_url }}') return;
+      var input = form.querySelector('input[name="q"]');
+      if (!input) return;
+      var rewritten = toAnd(input.value);
+      if (rewritten === input.value) return;
+      input.value = rewritten;
+      // The prefix option appends its own wildcard; ours are already explicit,
+      // and both together produce "chelsea**", which matches nothing.
+      var prefix = form.querySelector('input[name="options[prefix]"]');
+      if (prefix) prefix.remove();
+      var fields = form.querySelector('input[name="options[fields]"]');
+      if (!fields) {
+        fields = document.createElement('input');
+        fields.type = 'hidden';
+        fields.name = 'options[fields]';
+        form.appendChild(fields);
+      }
+      fields.value = FIELDS;
+    }, true);
+  })();
+</script>
