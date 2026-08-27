@@ -545,7 +545,13 @@
 .cf-cond__steps{display:flex;gap:6px}
 .cf-cond__step{flex:1;min-width:0}
 .cf-cond__seg{display:block;height:4px;border-radius:2px;background:var(--line)}
-.cf-cond__name{display:block;margin-top:8px;font-size:10px;letter-spacing:.04em;color:var(--text-soft);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-cond__name{display:block;margin-top:8px;font-size:10px;line-height:1.25;letter-spacing:.02em;color:var(--text-soft);text-align:center;hyphens:none}
+/* "Very good" is the widest label and a fifth of 340px is about 62px, so with
+   nowrap it truncated to "Very…" and the scale read as if a step were missing.
+   Let it wrap to two lines instead; the row is given a fixed height so a
+   wrapping label does not shunt the one beside it out of line. */
+.cf-cond__steps{align-items:start}
+.cf-cond__name{min-height:2.5em}
 .cf-cond__step.is-on .cf-cond__seg{background:var(--cf-cond,#1B7F4B)}
 .cf-cond__step.is-on .cf-cond__name{color:var(--text);font-weight:700}
 
