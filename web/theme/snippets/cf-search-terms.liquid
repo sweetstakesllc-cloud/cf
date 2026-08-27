@@ -1,0 +1,21 @@
+{%- comment -%}
+  The search terms as the shopper typed them.
+
+  snippets/cf-search-and.liquid rewrites a multi-word query into Shopify's
+  query syntax before submitting, so search.terms comes back as
+  "louis* AND vuitton* AND chelsea*". That is what actually got searched, but
+  it is not what anyone typed, and echoing it into the search box and the
+  "results for…" heading reads as if the site is broken.
+
+  Undo the rewrite for display only: drop the AND joins and the trailing
+  wildcards. The query itself is untouched.
+
+  Assigns: cf_terms
+{%- endcomment -%}
+{%- liquid
+  assign cf_terms = search.terms
+  if cf_terms contains ' AND '
+    assign cf_terms = cf_terms | replace: ' AND ', ' '
+  endif
+  assign cf_terms = cf_terms | replace: '*', ''
+-%}

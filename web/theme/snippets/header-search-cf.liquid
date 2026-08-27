@@ -1,3 +1,4 @@
+{%- render 'cf-search-terms' -%}
 {% comment %}
   CF search modal: Refresh's header-search with a text trigger instead of
   icons, plus popular-search suggestion links under the input. Keeps the
@@ -37,7 +38,7 @@
               id="{{ input_id }}"
               type="search"
               name="q"
-              value="{{ search.terms | escape }}"
+              value="{{ cf_terms | escape }}"
               placeholder="{{ 'general.search.search' | t }}"
               {%- if settings.predictive_search_enabled -%}
                 role="combobox"
@@ -56,7 +57,7 @@
             <input type="hidden" name="options[prefix]" value="last">
             <button
               type="reset"
-              class="reset__button field__button{% if search.terms == blank %} hidden{% endif %}"
+              class="reset__button field__button{% if cf_terms == blank %} hidden{% endif %}"
               aria-label="{{ 'general.search.reset' | t }}"
             >
               <span class="svg-wrapper">
