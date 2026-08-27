@@ -155,23 +155,36 @@ const extras = `
 .cf-specs dd{margin:0;color:var(--text);text-align:right}
 .cf-specs__alt{color:var(--text-soft)}
 
-/* Condition scale. A filled track under the grade, with the five steps named
-   beneath it, so "8/10" is read in context instead of as a bare number. */
-.cf-specs__row--cond{border-bottom:0;padding-bottom:2px}
-.cf-cond__grade{color:var(--text-soft)}
-.cf-cond{max-width:340px;margin:0 auto 14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
-.cf-cond__track{position:relative;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
-.cf-cond__fill{position:absolute;inset:0 auto 0 0;background:var(--cf-cond,#1F1F1F);border-radius:2px}
-/* Graded rather than one flat accent: the colour has to say the same thing the
-   position does, or 9/10 and 4/10 look alike. Tones are darkened from the
-   usual web defaults so they sit against a white page and near-black type
-   without turning into a traffic light. */
-.cf-cond--high{--cf-cond:#1B7F4B}
-.cf-cond--good{--cf-cond:#4C9A2A}
-.cf-cond--mid{--cf-cond:#C98A12}
-.cf-cond--low{--cf-cond:#B4451F}
-.cf-cond__grade{color:var(--cf-cond,var(--text-soft))}
-.cf-specs__row--cond .cf-cond__grade{font-weight:600}
+/* Certified Authentic pill. Was a bordered panel with a heading and two lines
+   of body copy, carrying more weight than the price for a claim true of every
+   item here. */
+.cf-badge{display:inline-flex;align-items:center;gap:7px;background:var(--surface);border-radius:999px;padding:6px 14px 6px 8px;font-size:12.5px;font-weight:600;color:var(--text);text-decoration:none;margin-bottom:14px}
+.cf-badge__tick{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;background:var(--text);color:#fff;font-size:10px;line-height:1}
+.cf-badge:hover{background:#EFEFEF}
+
+/* "68% Off Est. Retail 18 000 SEK", under the price. */
+.cf-saving{margin:4px 0 0;font-size:14px;color:var(--text-soft)}
+.cf-saving strong{color:var(--text);font-weight:700}
+
+/* Condition: five named steps with the current one marked. A progress bar
+   implied a percentage; condition is a band, not a quantity. */
+.cf-cond{max-width:340px;margin:26px auto 4px;padding-top:20px;border-top:1px solid var(--line);text-align:left}
+.cf-cond__title{font-size:16px;font-weight:600;margin:0 0 16px;color:var(--text);text-transform:none;letter-spacing:0}
+.cf-cond__steps{display:flex;gap:6px}
+.cf-cond__step{flex:1;min-width:0}
+.cf-cond__seg{display:block;height:4px;border-radius:2px;background:var(--line)}
+.cf-cond__name{display:block;margin-top:8px;font-size:10px;letter-spacing:.04em;color:var(--text-soft);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cf-cond__step.is-on .cf-cond__seg{background:var(--cf-cond,#1B7F4B)}
+.cf-cond__step.is-on .cf-cond__name{color:var(--text);font-weight:700}
+
+/* Graded colour: green near mint through to rust, so the marked step says the
+   same thing its position does. Darkened from the usual web defaults to sit on
+   a white page without turning into a traffic light. */
+.cf-cond__step:nth-child(1).is-on .cf-cond__seg{--cf-cond:#1B7F4B}
+.cf-cond__step:nth-child(2).is-on .cf-cond__seg{--cf-cond:#2E8B4F}
+.cf-cond__step:nth-child(3).is-on .cf-cond__seg{--cf-cond:#4C9A2A}
+.cf-cond__step:nth-child(4).is-on .cf-cond__seg{--cf-cond:#C98A12}
+.cf-cond__step:nth-child(5).is-on .cf-cond__seg{--cf-cond:#B4451F}
 .cf-cond__scale{display:flex;justify-content:space-between;margin-top:7px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft)}
 .cf-cond__scale span{flex:1;text-align:center}
 .cf-cond__scale span:first-child{text-align:left}

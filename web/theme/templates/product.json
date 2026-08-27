@@ -64,7 +64,7 @@
           "type": "text",
           "settings": {
             "alignment": "center",
-            "text": "Shipping\u00a0calculated at checkout.",
+            "text": "Free EU shipping over 2 000 kr \u00b7 14-day returns",
             "text_style": "uppercase"
           }
         },
@@ -81,7 +81,7 @@
           "type": "buy_buttons",
           "settings": {
             "alignment": "center",
-            "show_dynamic_checkout": true,
+            "show_dynamic_checkout": false,
             "show_gift_card_recipient": false
           }
         },
@@ -254,7 +254,7 @@
           "name": "CF trust block",
           "settings": {
             "alignment": "center",
-            "custom_liquid": "<div class='cf-trust'><span class='cf-tick'>\u2713</span><div><h4>Authenticated by Circular Fash</h4><p>Every item is inspected and verified by our experts before listing. If it isn't genuine, it isn't here. <a href='/pages/authenticity'>Our process</a></p></div></div>"
+            "custom_liquid": "{%- comment -%}\n  Authenticity as a small badge above the brand, not a bordered panel.\n\n  It was a grey box with a heading and two lines of body copy sitting between\n  the buy button and the stock line \u2014 more visual weight than the price, for a\n  claim that is true of every item in the shop. A pill states it once and gets\n  out of the way. The explanation still exists, one tap away, on the\n  authenticity page.\n{%- endcomment -%}\n<a class=\"cf-badge\" href=\"/pages/authenticity\">\n  <span class=\"cf-badge__tick\" aria-hidden=\"true\">&#10003;</span>\n  Certified Authentic\n</a>"
           }
         },
         "cf_klarna": {
@@ -268,41 +268,31 @@
           "type": "custom_liquid",
           "settings": {
             "alignment": "center",
-            "custom_liquid": "{% comment %}\n  One spec table, replacing thirteen separate blocks that each printed a\n  sentence. Measurements, condition, retail, origin and item id were rendered\n  as loose lines of running text with bold labels, so the page read as a\n  paragraph pile rather than a product record. A luxury resale page lives on\n  this being scannable.\n\n  Metafields are read by bracket lookup so the labels and keys stay in one\n  list. cm/inch handling is the same as the blocks it replaces: whole numbers\n  lose their .0, halves keep it.\n{% endcomment %}\n\n{%- liquid\n  assign m_keys   = 'pit,chest,waist,shoulder,length,width,height,innerleg,insole' | split: ','\n  assign m_labels = 'Pit to pit,Chest,Waist,Shoulder,Length,Width,Height,Inner leg,Insole' | split: ','\n  assign rows = ''\n-%}\n\n<dl class=\"cf-specs\">\n  {%- comment -%}\n    Condition as a scale rather than a line of text, so the grade is read at a\n    glance and in context: 8/10 means little until you can see it sits between\n    New and Good. The grades run on a 1-10 scale (\"8/10 - Very Good\n    Condition\"), and the number is parsed out of the label to place the marker.\n\n    If a grade ever arrives without a leading number the row falls back to\n    plain text, so an unexpected value degrades to what was here before rather\n    than drawing a marker in the wrong place.\n  {%- endcomment -%}\n  {%- assign cond = product.metafields.custom.condition.value.name.value -%}\n  {%- if cond != blank -%}\n    {%- liquid\n      assign grade = cond | split: '/' | first | strip\n      assign grade_num = grade | plus: 0\n      assign label = cond\n      if cond contains '-'\n        assign label = cond | split: '-' | last | strip\n      endif\n      assign pct = 0\n      if grade_num > 0 and grade_num <= 10\n        assign pct = grade_num | times: 10\n      endif\n\n      comment\n        Colour by grade rather than one flat accent. The bar is a scale, so the\n        colour should carry the same meaning the position does: green near\n        mint, amber mid, red for the worn end. A single accent would look\n        identical at 9/10 and 4/10, which is the one thing this control exists\n        to distinguish.\n      endcomment\n      assign cond_tone = 'mid'\n      if grade_num >= 9\n        assign cond_tone = 'high'\n      elsif grade_num >= 7\n        assign cond_tone = 'good'\n      elsif grade_num >= 5\n        assign cond_tone = 'mid'\n      else\n        assign cond_tone = 'low'\n      endif\n    -%}\n    <div class=\"cf-specs__row cf-specs__row--cond cf-cond--{{ cond_tone }}\">\n      <dt>Condition</dt>\n      <dd>{{ label }}{% if grade_num > 0 %} <span class=\"cf-cond__grade\">{{ grade_num }}/10</span>{% endif %}</dd>\n    </div>\n    {%- if pct > 0 -%}\n      <div class=\"cf-cond cf-cond--{{ cond_tone }}\" role=\"img\" aria-label=\"Condition {{ grade_num }} out of 10, {{ label }}\">\n        <div class=\"cf-cond__track\"><span class=\"cf-cond__fill\" style=\"width:{{ pct }}%\"></span></div>\n        <div class=\"cf-cond__scale\" aria-hidden=\"true\">\n          <span>Fair</span><span>Good</span><span>Very good</span><span>Excellent</span><span>New</span>\n        </div>\n      </div>\n    {%- endif -%}\n  {%- endif -%}\n\n  {%- comment -%}\n    Options are listed only when there is nothing to choose. Most pieces are\n    one of one, so the size belongs in the record; but 9 in-stock products have\n    several buyable variants, and for those the picker above owns the choice.\n    Printing a fixed \"Size L\" beside a picker offering M and L is worse than\n    saying nothing.\n  {%- endcomment -%}\n  {%- if product.variants.size == 1 -%}\n    {%- for opt in product.options_with_values -%}\n      {%- if opt.name != 'Title' -%}\n        <div class=\"cf-specs__row\"><dt>{{ opt.name }}</dt><dd>{{ opt.selected_value }}</dd></div>\n      {%- endif -%}\n    {%- endfor -%}\n  {%- endif -%}\n\n  {%- for key in m_keys -%}\n    {%- assign raw_val = product.metafields.custom[key].value | default: product.metafields.custom[key] -%}\n    {%- if raw_val != blank -%}\n      {%- liquid\n        assign num = raw_val | plus: 0\n        assign cm_rem = num | modulo: 1\n        if cm_rem == 0\n          assign cm = num | round\n        else\n          assign cm = num\n        endif\n        assign inch = num | divided_by: 2.54 | round: 1\n        assign in_rem = inch | modulo: 1\n        if in_rem == 0\n          assign inch = inch | round\n        endif\n      -%}\n      <div class=\"cf-specs__row\">\n        <dt>{{ m_labels[forloop.index0] }}</dt>\n        <dd>{{ cm }} cm <span class=\"cf-specs__alt\">/ {{ inch }} in</span></dd>\n      </div>\n    {%- endif -%}\n  {%- endfor -%}\n\n  {%- if product.metafields.custom.made_in != blank -%}\n    <div class=\"cf-specs__row\"><dt>Made in</dt><dd>{{ product.metafields.custom.made_in }}</dd></div>\n  {%- endif -%}\n\n  {%- assign retail_raw = product.metafields.custom.retail_price.value -%}\n  {%- if retail_raw != blank -%}\n    {%- assign retail_round = retail_raw | plus: 0 | round -%}\n    <div class=\"cf-specs__row\">\n      <dt>Est. retail price</dt>\n      <dd><span data-retail-sek=\"{{ retail_round }}\">{{ retail_round }} SEK</span></dd>\n    </div>\n  {%- endif -%}\n\n  {%- comment -%} The item id is written into the description, not a field. {%- endcomment -%}\n  {%- if product.description contains 'ID: ' -%}\n    {%- assign after = product.description | split: 'ID: cf' | last -%}\n    {%- assign item_id = after | split: ' ' | first | remove: '.' | remove: ',' | remove: '<' | strip -%}\n    {%- if item_id != blank -%}\n      <div class=\"cf-specs__row\"><dt>Item</dt><dd>cf{{ item_id }}</dd></div>\n    {%- endif -%}\n  {%- endif -%}\n</dl>"
+            "custom_liquid": "{% comment %}\n  One spec table, replacing thirteen separate blocks that each printed a\n  sentence. Measurements, condition, retail, origin and item id were rendered\n  as loose lines of running text with bold labels, so the page read as a\n  paragraph pile rather than a product record. A luxury resale page lives on\n  this being scannable.\n\n  Metafields are read by bracket lookup so the labels and keys stay in one\n  list. cm/inch handling is the same as the blocks it replaces: whole numbers\n  lose their .0, halves keep it.\n{% endcomment %}\n\n{%- liquid\n  assign m_keys   = 'pit,chest,waist,shoulder,length,width,height,innerleg,insole' | split: ','\n  assign m_labels = 'Pit to pit,Chest,Waist,Shoulder,Length,Width,Height,Inner leg,Insole' | split: ','\n  assign rows = ''\n-%}\n\n  {%- comment -%}\n  Condition as a five-step scale with the current grade marked, the way the\n  reference reads it: a heading naming the grade, then a track of five\n  segments with a marker on the one that applies. The previous version was a\n  progress bar, which implied a percentage \u2014 condition is a band, not a\n  quantity.\n\n  Grades run 1-10 (\"8/10 - Very Good Condition\"); the number is parsed out to\n  choose the band. Anything unparseable falls back to plain text rather than\n  marking the wrong step.\n{%- endcomment -%}\n{%- assign cond = product.metafields.custom.condition.value.name.value -%}\n{%- if cond != blank -%}\n  {%- liquid\n    assign grade_num = cond | split: '/' | first | strip | plus: 0\n    assign label = cond\n    if cond contains '-'\n      assign label = cond | split: '-' | last | strip\n    endif\n    comment\n      Five bands, best first, matching the reference's New -> Fair run.\n    endcomment\n    assign band = 0\n    if grade_num >= 10\n      assign band = 1\n    elsif grade_num >= 9\n      assign band = 2\n    elsif grade_num >= 7\n      assign band = 3\n    elsif grade_num >= 5\n      assign band = 4\n    elsif grade_num > 0\n      assign band = 5\n    endif\n  -%}\n\n  {%- if band > 0 -%}\n    <div class=\"cf-cond\">\n      <h2 class=\"cf-cond__title\">Condition: {{ label }}</h2>\n      <div class=\"cf-cond__steps\" role=\"img\"\n           aria-label=\"Condition {{ grade_num }} out of 10, {{ label }}\">\n        {%- assign names = 'New,Excellent,Very good,Good,Fair' | split: ',' -%}\n        {%- for n in names -%}\n          {%- assign i = forloop.index -%}\n          <div class=\"cf-cond__step{% if i == band %} is-on{% endif %}\">\n            <span class=\"cf-cond__seg\"></span>\n            <span class=\"cf-cond__name\">{{ n }}</span>\n          </div>\n        {%- endfor -%}\n      </div>\n    </div>\n  {%- else -%}\n    <div class=\"cf-specs__row\"><dt>Condition</dt><dd>{{ cond }}</dd></div>\n  {%- endif -%}\n{%- endif -%}\n\n<dl class=\"cf-specs\">\n\n\n  {%- comment -%}\n    Options are listed only when there is nothing to choose. Most pieces are\n    one of one, so the size belongs in the record; but 9 in-stock products have\n    several buyable variants, and for those the picker above owns the choice.\n    Printing a fixed \"Size L\" beside a picker offering M and L is worse than\n    saying nothing.\n  {%- endcomment -%}\n  {%- if product.variants.size == 1 -%}\n    {%- for opt in product.options_with_values -%}\n      {%- if opt.name != 'Title' -%}\n        <div class=\"cf-specs__row\"><dt>{{ opt.name }}</dt><dd>{{ opt.selected_value }}</dd></div>\n      {%- endif -%}\n    {%- endfor -%}\n  {%- endif -%}\n\n  {%- for key in m_keys -%}\n    {%- assign raw_val = product.metafields.custom[key].value | default: product.metafields.custom[key] -%}\n    {%- if raw_val != blank -%}\n      {%- liquid\n        assign num = raw_val | plus: 0\n        assign cm_rem = num | modulo: 1\n        if cm_rem == 0\n          assign cm = num | round\n        else\n          assign cm = num\n        endif\n        assign inch = num | divided_by: 2.54 | round: 1\n        assign in_rem = inch | modulo: 1\n        if in_rem == 0\n          assign inch = inch | round\n        endif\n      -%}\n      <div class=\"cf-specs__row\">\n        <dt>{{ m_labels[forloop.index0] }}</dt>\n        <dd>{{ cm }} cm <span class=\"cf-specs__alt\">/ {{ inch }} in</span></dd>\n      </div>\n    {%- endif -%}\n  {%- endfor -%}\n\n  {%- if product.metafields.custom.made_in != blank -%}\n    <div class=\"cf-specs__row\"><dt>Made in</dt><dd>{{ product.metafields.custom.made_in }}</dd></div>\n  {%- endif -%}\n\n  {%- assign retail_raw = product.metafields.custom.retail_price.value -%}\n  {%- if retail_raw != blank -%}\n    {%- assign retail_round = retail_raw | plus: 0 | round -%}\n    <div class=\"cf-specs__row\">\n      <dt>Est. retail price</dt>\n      <dd><span data-retail-sek=\"{{ retail_round }}\">{{ retail_round }} SEK</span></dd>\n    </div>\n  {%- endif -%}\n\n  {%- comment -%} The item id is written into the description, not a field. {%- endcomment -%}\n  {%- if product.description contains 'ID: ' -%}\n    {%- assign after = product.description | split: 'ID: cf' | last -%}\n    {%- assign item_id = after | split: ' ' | first | remove: '.' | remove: ',' | remove: '<' | strip -%}\n    {%- if item_id != blank -%}\n      <div class=\"cf-specs__row\"><dt>Item</dt><dd>cf{{ item_id }}</dd></div>\n    {%- endif -%}\n  {%- endif -%}\n</dl>"
+          }
+        },
+        "cf_saving": {
+          "type": "custom_liquid",
+          "settings": {
+            "alignment": "center",
+            "custom_liquid": "{%- comment -%}\n  \"68% Off Est. Retail 18 000 SEK\", directly under the price.\n\n  The saving used to sit in the spec table far down the page, which is the\n  wrong place for the number that justifies the price. Measured against the\n  retail metafield rather than compare_at \u2014 they are different figures and\n  compare_at understates badly (Moncler Maya: 17% off vs 68% below retail).\n{%- endcomment -%}\n{%- liquid\n  assign retail_raw = product.metafields.custom.retail_price.value\n  assign price_kr = product.selected_or_first_available_variant.price | divided_by: 100\n  assign show = false\n  if retail_raw != blank\n    assign retail_round = retail_raw | plus: 0 | round\n    if retail_round > 0 and price_kr < retail_round\n      assign saved = retail_round | minus: price_kr\n      assign pct = saved | times: 100 | divided_by: retail_round | round\n      if pct > 0\n        assign show = true\n      endif\n    endif\n  endif\n-%}\n{%- if show -%}\n  <p class=\"cf-saving\">\n    <strong>{{ pct }}% Off</strong> Est. Retail\n    <span data-retail-sek=\"{{ retail_round }}\">{{ retail_round }} SEK</span>\n  </p>\n{%- endif -%}"
           }
         }
       },
       "block_order": [
-        "custom_liquid_XaYLH6",
-        "title",
+        "cf_trust",
         "brand_icons_ckxhHm",
+        "title",
         "rating",
         "price",
-        "text_UyGmcN",
-        "custom_liquid_rUQcmx",
-        "buy_buttons_hHpYzf",
+        "cf_saving",
         "cf_klarna",
-        "cf_trust",
+        "buy_buttons_hHpYzf",
+        "text_UyGmcN",
         "inventory_r3dwMW",
         "variant_picker",
-        "vendor",
-        "description",
         "cf_specs",
-        "custom_liquid_DG4QKB",
-        "custom_liquid_CbfXRg",
-        "custom_liquid_p4tRmc",
-        "custom_liquid_QJT3yb",
-        "custom_liquid_HJU6MW",
-        "custom_liquid_DaiUpT",
-        "custom_liquid_7ahmEP",
-        "custom_liquid_Ww7nJd",
-        "custom_liquid_bQTwEi",
-        "custom_liquid_MieL6J",
-        "custom_liquid_9PUt66",
-        "custom_liquid_GHKJhf",
-        "custom_liquid_TtrxLt",
-        "sku_ereHMA",
-        "quantity_selector"
+        "description"
       ],
       "custom_css": [
         "h1 {font-size: 25px;}"
