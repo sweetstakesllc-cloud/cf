@@ -161,7 +161,17 @@ const extras = `
 .cf-cond__grade{color:var(--text-soft)}
 .cf-cond{max-width:340px;margin:0 auto 14px;padding-bottom:12px;border-bottom:1px solid var(--line)}
 .cf-cond__track{position:relative;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
-.cf-cond__fill{position:absolute;inset:0 auto 0 0;background:var(--text);border-radius:2px}
+.cf-cond__fill{position:absolute;inset:0 auto 0 0;background:var(--cf-cond,#1F1F1F);border-radius:2px}
+/* Graded rather than one flat accent: the colour has to say the same thing the
+   position does, or 9/10 and 4/10 look alike. Tones are darkened from the
+   usual web defaults so they sit against a white page and near-black type
+   without turning into a traffic light. */
+.cf-cond--high{--cf-cond:#1B7F4B}
+.cf-cond--good{--cf-cond:#4C9A2A}
+.cf-cond--mid{--cf-cond:#C98A12}
+.cf-cond--low{--cf-cond:#B4451F}
+.cf-cond__grade{color:var(--cf-cond,var(--text-soft))}
+.cf-specs__row--cond .cf-cond__grade{font-weight:600}
 .cf-cond__scale{display:flex;justify-content:space-between;margin-top:7px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft)}
 .cf-cond__scale span{flex:1;text-align:center}
 .cf-cond__scale span:first-child{text-align:left}
