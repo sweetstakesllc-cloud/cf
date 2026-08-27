@@ -180,17 +180,17 @@ const extras = `
    wrapping label does not shunt the one beside it out of line. */
 .cf-cond__steps{align-items:start}
 .cf-cond__name{min-height:2.5em}
-.cf-cond__step.is-on .cf-cond__seg{background:var(--cf-cond,#1B7F4B)}
 .cf-cond__step.is-on .cf-cond__name{color:var(--text);font-weight:700}
 
-/* Graded colour: green near mint through to rust, so the marked step says the
-   same thing its position does. Darkened from the usual web defaults to sit on
-   a white page without turning into a traffic light. */
-.cf-cond__step:nth-child(1).is-on .cf-cond__seg{--cf-cond:#1B7F4B}
-.cf-cond__step:nth-child(2).is-on .cf-cond__seg{--cf-cond:#2E8B4F}
-.cf-cond__step:nth-child(3).is-on .cf-cond__seg{--cf-cond:#4C9A2A}
-.cf-cond__step:nth-child(4).is-on .cf-cond__seg{--cf-cond:#C98A12}
-.cf-cond__step:nth-child(5).is-on .cf-cond__seg{--cf-cond:#B4451F}
+/* One green at every step, not a gradient down to rust.
+
+   Grading the colour meant a piece listed Good or Fair was marked in amber or
+   rust — the shop flagging its own stock as a warning on the page where it is
+   trying to sell it. The step position already carries the grade; the colour
+   only needs to say "this is the one". Green reads as verified rather than
+   cautionary, which is the right tone for stock that has been inspected and
+   authenticated. */
+.cf-cond__step.is-on .cf-cond__seg{background:#1B7F4B}
 .cf-cond__scale{display:flex;justify-content:space-between;margin-top:7px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft)}
 .cf-cond__scale span{flex:1;text-align:center}
 .cf-cond__scale span:first-child{text-align:left}
