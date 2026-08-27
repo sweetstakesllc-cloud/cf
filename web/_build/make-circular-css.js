@@ -170,31 +170,20 @@ const extras = `
    implied a percentage; condition is a band, not a quantity. */
 .cf-cond{max-width:340px;margin:26px auto 4px;padding-top:20px;border-top:1px solid var(--line);text-align:left}
 .cf-cond__title{font-size:16px;font-weight:600;margin:0 0 16px;color:var(--text);text-transform:none;letter-spacing:0}
-.cf-cond__steps{display:flex;gap:10px}
-.cf-cond__step{flex:1;min-width:0}
+/* A grid, not flex. Every column is exactly 1/5 of the row and cannot be
+   widened by its contents — with flex, a label longer than its share pushed
+   into the next step, which is how "Excellent" and "Very" ended up printed
+   side by side as if they were one word.
+
+   The labels are also allowed to wrap on their own now: a forced break put
+   "good" on a second line while its neighbours stayed on one, which was what
+   made the row look staggered. minmax(0,1fr) is the part that actually holds
+   the columns in place. */
+.cf-cond__steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));column-gap:8px}
+.cf-cond__step{min-width:0}
 .cf-cond__seg{display:block;height:4px;border-radius:2px;background:var(--line)}
-.cf-cond__name{display:block;margin-top:9px;font-size:10px;line-height:1.3;letter-spacing:.02em;color:var(--text-soft);text-align:center;hyphens:none;padding:0 2px}
-/* "Excellent" and "Very good" are both ~47px in a 63px step, so with a 6px gap
-   only about 14px separated them and the row read as one run of words. Wider
-   gap, a little padding inside each label, and "Very good" broken onto two
-   lines with an explicit <br> rather than left to wrap wherever it lands. */
-
-/* "Very good" is the widest label and a fifth of 340px is about 62px, so with
-   nowrap it truncated to "Very…" and the scale read as if a step were missing.
-   Let it wrap to two lines instead; the row is given a fixed height so a
-   wrapping label does not shunt the one beside it out of line. */
-.cf-cond__steps{align-items:start}
-.cf-cond__name{min-height:2.5em}
+.cf-cond__name{display:block;margin-top:9px;font-size:10px;line-height:1.3;letter-spacing:0;color:var(--text-soft);text-align:center;overflow-wrap:anywhere}
 .cf-cond__step.is-on .cf-cond__name{color:var(--text);font-weight:700}
-
-/* One green at every step, not a gradient down to rust.
-
-   Grading the colour meant a piece listed Good or Fair was marked in amber or
-   rust — the shop flagging its own stock as a warning on the page where it is
-   trying to sell it. The step position already carries the grade; the colour
-   only needs to say "this is the one". Green reads as verified rather than
-   cautionary, which is the right tone for stock that has been inspected and
-   authenticated. */
 .cf-cond__step.is-on .cf-cond__seg{background:#1B7F4B}
 .cf-cond__scale{display:flex;justify-content:space-between;margin-top:7px;font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--text-soft)}
 .cf-cond__scale span{flex:1;text-align:center}
