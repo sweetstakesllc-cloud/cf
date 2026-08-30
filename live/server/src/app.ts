@@ -17,6 +17,6 @@ export function buildApp(deps: Deps): FastifyInstance {
   const app = Fastify({ logger: deps.config.env !== 'test' });
   app.register(cookie, { secret: deps.config.cookieSecret });
   app.get('/healthz', async () => ({ ok: true }));
-  registerAuth(app, deps.pool, deps.mailer, now);
+  registerAuth(app, deps.pool, deps.mailer, now, deps.config.env);
   return app;
 }

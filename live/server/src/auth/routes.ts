@@ -1,6 +1,7 @@
 import type { FastifyInstance, preHandlerHookHandler } from 'fastify';
 import type pg from 'pg';
 import { z } from 'zod';
+import type { Config } from '../config.js';
 import type { Mailer } from '../mailer.js';
 import { requestOtp, verifyOtp } from './otp.js';
 import { createSession, getSession, destroySession, SESSION_TTL_MS } from './session.js';
@@ -14,9 +15,11 @@ const COOKIE = 'cf_session';
 const emailSchema = z.object({ email: z.string().email().transform(e => e.toLowerCase()) });
 const verifySchema = emailSchema.extend({ code: z.string().regex(/^\d{6}$/) });
 
-export function registerAuth(app: FastifyInstance, pool: pg.Pool, mailer: Mailer, now: () => Date): void {
+export function registerAuth(
+  app: FastifyInstance, pool: pg.Pool, mailer: Mailer, now: () => Date, env: Config['env'],
+): void {
   const cookieOpts = {
-    httpOnly: true, sameSite: 'lax' as const, path: '/', secure: process.env.NODE_ENV === 'production',
+    httpOnly: true, sameSite: 'lax' as const, path: '/', secure: env === 'production',
     maxAge: SESSION_TTL_MS / 1000,
   };
 

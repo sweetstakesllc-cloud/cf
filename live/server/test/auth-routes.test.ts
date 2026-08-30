@@ -41,6 +41,18 @@ describe('auth flow', () => {
     expect(rows[0].email).toBe('a@b.se');
   });
 
+  it('sets the cf_session cookie with the expected attributes', async () => {
+    await app.inject({ method: 'POST', url: '/auth/request-code', payload: { email: 'a@b.se' } });
+    const code = sent.at(-1)!.code;
+    const res = await app.inject({ method: 'POST', url: '/auth/verify', payload: { email: 'a@b.se', code } });
+    const c = res.cookies.find(ck => ck.name === 'cf_session')!;
+    expect(c.httpOnly).toBe(true);
+    expect(c.sameSite).toBe('Lax');
+    expect(c.path).toBe('/');
+    expect(c.maxAge).toBe(2592000);
+    expect(c.secure).toBeFalsy();
+  });
+
   it('verify with a wrong code is 401 and sets no cookie', async () => {
     await app.inject({ method: 'POST', url: '/auth/request-code', payload: { email: 'a@b.se' } });
     const res = await app.inject({ method: 'POST', url: '/auth/verify', payload: { email: 'a@b.se', code: '000000' } });
