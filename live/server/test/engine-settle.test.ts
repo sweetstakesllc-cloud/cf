@@ -103,4 +103,18 @@ describe('secondChance', () => {
     await settleDueAuctions(pool, gateway, at(40_000));
     await expect(secondChance(pool, gateway, itemId, at(50_000))).rejects.toThrow('no_underbidder');
   });
+
+  it('does not re-award a prior failed charger even if they are the remaining underbidder', { timeout: 30000 }, async () => {
+    const { itemId } = await wonAuction(); // anna 120000 over erik 100000
+    gateway.failNextCharge = true;
+    await settleDueAuctions(pool, gateway, at(40_000)); // anna declined → payment_failed
+    gateway.failNextCharge = true;
+    const events = await secondChance(pool, gateway, itemId, at(50_000)); // erik awarded, also declines
+    expect(events.map(e => e.type)).toEqual(['second_chance', 'charge_failed']);
+    const { rows } = await pool.query(`SELECT state FROM stream_items WHERE id=$1`, [itemId]);
+    expect(rows[0].state).toBe('payment_failed');
+    // Only anna and erik ever bid, and both have now failed a charge on this item — no valid
+    // underbidder remains, so secondChance must refuse rather than re-award anna again.
+    await expect(secondChance(pool, gateway, itemId, at(60_000))).rejects.toThrow('no_underbidder');
+  });
 });

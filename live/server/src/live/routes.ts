@@ -4,7 +4,7 @@ import { z } from 'zod';
 import type { PaymentGateway } from '../billing/gateway.js';
 import { getPublicState, placeBid, buyNow } from './engine.js';
 
-const bidSchema = z.object({ itemId: z.string().uuid(), amountOre: z.number().int().positive() });
+const bidSchema = z.object({ itemId: z.string().uuid(), amountOre: z.number().int().positive().max(100_000_000) });
 const buySchema = z.object({ itemId: z.string().uuid() });
 
 export function registerLive(app: FastifyInstance, pool: pg.Pool, gateway: PaymentGateway, now: () => Date): void {

@@ -77,8 +77,9 @@ export async function pinItem(pool: pg.Pool, itemId: string, now: () => Date): P
     await client.query('BEGIN');
     const open = await client.query(`SELECT id FROM stream_items WHERE state='auction_open' FOR UPDATE`);
     if (open.rows.length > 0) throw new Error('auction_in_progress');
-    const item = await client.query(`SELECT id, stream_id, title FROM stream_items WHERE id=$1 FOR UPDATE`, [itemId]);
+    const item = await client.query(`SELECT id, stream_id, title, state FROM stream_items WHERE id=$1 FOR UPDATE`, [itemId]);
     if (!item.rows[0]) throw new Error('not_found');
+    if (!['queued', 'pinned'].includes(item.rows[0].state)) throw new Error('cannot_pin');
     await client.query(`UPDATE stream_items SET state='queued' WHERE state='pinned' AND id <> $1`, [itemId]);
     await client.query(`UPDATE stream_items SET state='pinned', pinned_at=$2 WHERE id=$1`, [itemId, now()]);
     const ev = await logEvent(client, item.rows[0].stream_id, 'item_pinned', { itemId, title: item.rows[0].title });
@@ -264,6 +265,7 @@ export async function secondChance(pool: pg.Pool, gateway: PaymentGateway, itemI
     const under = await client.query(
       `SELECT customer_id, amount_ore FROM bids
        WHERE item_id=$1 AND customer_id <> $2
+       AND customer_id NOT IN (SELECT customer_id FROM charges WHERE item_id=$1 AND status='failed')
        ORDER BY amount_ore DESC, created_at ASC LIMIT 1`,
       [itemId, item.winner_id]);
     if (!under.rows[0]) throw new Error('no_underbidder');

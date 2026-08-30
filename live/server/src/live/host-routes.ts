@@ -6,11 +6,13 @@ import {
   createStream, endStream, addItem, pinItem, openAuction, extendAuction,
   passItem, secondChance, getPublicState,
 } from './engine.js';
+import { chargeWinner } from './charge.js';
 import { HOST_HTML } from './host-page.js';
 
 const ERROR_STATUS: Record<string, number> = {
   stream_already_live: 409, auction_in_progress: 409, cannot_open: 409, not_open: 409,
   cannot_pass: 409, cannot_second_chance: 409, no_underbidder: 409, invalid_item: 400, not_found: 404,
+  cannot_pin: 409, not_won: 409,
 };
 
 function mapEngineError(reply: FastifyReply, err: unknown): FastifyReply {
@@ -109,6 +111,16 @@ export function registerHost(
       if (!p.success) return reply.code(400).send({ error: 'bad_request' });
       try {
         const events = await secondChance(pool, gateway, p.data.id, now);
+        await broadcast();
+        return { ok: true, charged: events.some(e => e.type === 'item_charged') };
+      } catch (err) { return mapEngineError(reply, err); }
+    });
+
+    host.post('/host/items/:id/retry-charge', async (request, reply) => {
+      const p = idParam.safeParse(request.params);
+      if (!p.success) return reply.code(400).send({ error: 'bad_request' });
+      try {
+        const events = await chargeWinner(pool, gateway, p.data.id, now);
         await broadcast();
         return { ok: true, charged: events.some(e => e.type === 'item_charged') };
       } catch (err) { return mapEngineError(reply, err); }

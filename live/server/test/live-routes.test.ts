@@ -74,6 +74,17 @@ describe('POST /live/bid', () => {
     expect(low.statusCode).toBe(409);
     expect(low.json()).toEqual({ error: 'too_low' });
   });
+
+  it('rejects bids above the 1,000,000 kr cap with 400', async () => {
+    const itemId = await openAuctionItem();
+    const token = await login();
+    const res = await app.inject({
+      method: 'POST', url: '/live/bid', cookies: { cf_session: token },
+      payload: { itemId, amountOre: 100_000_001 },
+    });
+    expect(res.statusCode).toBe(400);
+    expect(res.json()).toEqual({ error: 'bad_request' });
+  });
 });
 
 describe('POST /live/buy', () => {

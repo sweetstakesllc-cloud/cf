@@ -83,4 +83,11 @@ describe('streams and items', () => {
     const state = await getPublicState(pool);
     expect(state.pinned!.itemId).toBe(a.itemId);
   });
+
+  it('refuses to re-pin an item that is already charged', async () => {
+    const { streamId } = await createStream(pool, 'S');
+    const a = await addItem(pool, streamId, { title: 'A', mode: 'auction', startingBidOre: 1000 });
+    await pool.query(`UPDATE stream_items SET state='charged' WHERE id=$1`, [a.itemId]);
+    await expect(pinItem(pool, a.itemId, now)).rejects.toThrow('cannot_pin');
+  });
 });

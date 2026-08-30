@@ -142,6 +142,35 @@ describe('host flow', () => {
     const sc2 = await app.inject({ method: 'POST', url: `/host/items/${itemId}/second-chance`, headers: auth });
     expect(sc2.statusCode).toBe(409);
   });
+
+  it('retry-charge recovers an item stranded in won by a non-card gateway error', async () => {
+    const s = await app.inject({ method: 'POST', url: '/host/streams', headers: auth, payload: { title: 'S' } });
+    const { streamId } = s.json();
+    const i = await app.inject({ method: 'POST', url: '/host/items', headers: auth,
+      payload: { streamId, title: 'Jackie', mode: 'auction', startingBidOre: 100000 } });
+    const { itemId } = i.json();
+
+    const { rows } = await pool.query(
+      `INSERT INTO customers (email, bid_ready, stripe_customer_id, default_payment_method_id)
+       VALUES ('anna@x.se', true, 'cus_anna', 'pm_anna') RETURNING id`);
+    // Manufacture an item stranded in 'won' — as if settle's post-commit charge step threw
+    // (Stripe timeout, etc.) before it could transition the row to charged/payment_failed.
+    await pool.query(
+      `UPDATE stream_items SET state='won', winner_id=$1, winning_amount_ore=90000 WHERE id=$2`,
+      [rows[0].id, itemId]);
+
+    const retry = await app.inject({ method: 'POST', url: `/host/items/${itemId}/retry-charge`, headers: auth });
+    expect(retry.statusCode).toBe(200);
+    expect(retry.json()).toEqual({ ok: true, charged: true });
+
+    const st = await app.inject({ method: 'GET', url: '/host/state', headers: auth });
+    expect(st.json().pinned.state).toBe('charged');
+    expect(st.json().pinned.chargeStatus).toBe('succeeded');
+
+    const retry2 = await app.inject({ method: 'POST', url: `/host/items/${itemId}/retry-charge`, headers: auth });
+    expect(retry2.statusCode).toBe(409);
+    expect(retry2.json()).toEqual({ error: 'not_won' });
+  });
 });
 
 describe('GET /host', () => {
