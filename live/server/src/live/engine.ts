@@ -115,3 +115,106 @@ export async function getPublicState(pool: pg.Pool): Promise<PublicState> {
     queueLength: q.rows[0].n,
   };
 }
+
+export type BidRejection = 'not_bid_ready' | 'not_open' | 'too_low' | 'ended';
+
+export async function openAuction(pool: pg.Pool, itemId: string, durationMs: number, now: () => Date): Promise<EngineEvent[]> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const open = await client.query(`SELECT id FROM stream_items WHERE state='auction_open' FOR UPDATE`);
+    if (open.rows.length > 0) throw new Error('auction_in_progress');
+    const { rows } = await client.query(`SELECT * FROM stream_items WHERE id=$1 FOR UPDATE`, [itemId]);
+    const item = rows[0];
+    if (!item || item.state !== 'pinned' || item.mode !== 'auction') throw new Error('cannot_open');
+    const endsAt = new Date(now().getTime() + durationMs);
+    await client.query(
+      `UPDATE stream_items SET state='auction_open', current_bid_ore=NULL, current_bidder_id=NULL, ends_at=$2 WHERE id=$1`,
+      [itemId, endsAt]);
+    const ev = await logEvent(client, item.stream_id, 'auction_opened',
+      { itemId, startingBidOre: item.starting_bid_ore, endsAt: endsAt.toISOString() });
+    await client.query('COMMIT');
+    return [ev];
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function placeBid(
+  pool: pg.Pool, itemId: string, bidder: { customerId: string; bidReady: boolean }, amountOre: number, now: () => Date,
+): Promise<{ ok: true; amountOre: number; endsAt: string; events: EngineEvent[] } | { ok: false; reason: BidRejection }> {
+  if (!bidder.bidReady) return { ok: false, reason: 'not_bid_ready' };
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(`SELECT * FROM stream_items WHERE id=$1 FOR UPDATE`, [itemId]);
+    const item = rows[0];
+    if (!item || item.state !== 'auction_open') { await client.query('ROLLBACK'); return { ok: false, reason: 'not_open' }; }
+    const t = now();
+    if (new Date(item.ends_at) <= t) { await client.query('ROLLBACK'); return { ok: false, reason: 'ended' }; }
+    const minAcceptable = item.current_bid_ore != null
+      ? item.current_bid_ore + item.min_increment_ore
+      : item.starting_bid_ore;
+    if (amountOre < minAcceptable) { await client.query('ROLLBACK'); return { ok: false, reason: 'too_low' }; }
+    await client.query(`INSERT INTO bids (item_id, customer_id, amount_ore, created_at) VALUES ($1, $2, $3, $4)`,
+      [itemId, bidder.customerId, amountOre, t]);
+    let endsAt = new Date(item.ends_at);
+    if (endsAt.getTime() - t.getTime() < SOFT_CLOSE_MS) endsAt = new Date(t.getTime() + SOFT_CLOSE_MS);
+    await client.query(
+      `UPDATE stream_items SET current_bid_ore=$2, current_bidder_id=$3, ends_at=$4 WHERE id=$1`,
+      [itemId, amountOre, bidder.customerId, endsAt]);
+    const email = await client.query(`SELECT email FROM customers WHERE id=$1`, [bidder.customerId]);
+    const ev = await logEvent(client, item.stream_id, 'bid_placed',
+      { itemId, amountOre, bidderMasked: maskEmail(email.rows[0].email), endsAt: endsAt.toISOString() });
+    await client.query('COMMIT');
+    return { ok: true, amountOre, endsAt: endsAt.toISOString(), events: [ev] };
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function extendAuction(pool: pg.Pool, itemId: string, extraMs: number, now: () => Date): Promise<EngineEvent[]> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(`SELECT * FROM stream_items WHERE id=$1 FOR UPDATE`, [itemId]);
+    const item = rows[0];
+    if (!item || item.state !== 'auction_open') throw new Error('not_open');
+    const base = Math.max(new Date(item.ends_at).getTime(), now().getTime());
+    const endsAt = new Date(base + extraMs);
+    await client.query(`UPDATE stream_items SET ends_at=$2 WHERE id=$1`, [itemId, endsAt]);
+    const ev = await logEvent(client, item.stream_id, 'auction_extended', { itemId, endsAt: endsAt.toISOString() });
+    await client.query('COMMIT');
+    return [ev];
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
+
+export async function passItem(pool: pg.Pool, itemId: string, now: () => Date): Promise<EngineEvent[]> {
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(`SELECT * FROM stream_items WHERE id=$1 FOR UPDATE`, [itemId]);
+    const item = rows[0];
+    if (!item || !['pinned', 'auction_open', 'payment_failed'].includes(item.state)) throw new Error('cannot_pass');
+    await client.query(`UPDATE stream_items SET state='passed' WHERE id=$1`, [itemId]);
+    const ev = await logEvent(client, item.stream_id, 'item_passed', { itemId });
+    await client.query('COMMIT');
+    return [ev];
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+}
