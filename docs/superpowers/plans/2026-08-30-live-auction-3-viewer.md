@@ -46,9 +46,9 @@ live/server/
 
 ### Task 2: Playback URL through the stack
 
-- [ ] **Test:** engine — `createStream` accepts an optional playback URL and `getPublicState().stream.playbackUrl` returns it (null when absent). host routes — `POST /host/streams` passes `playbackUrl` through.
-- [ ] **Implement:** migration `005-playback-url.sql` (`ALTER TABLE streams ADD COLUMN playback_url text`); `createStream(pool, title, playbackUrl?)`; include in `PublicState.stream`; zod-validate `playbackUrl: z.string().url().optional()` on the host route; playback URL input on the host console's New-stream flow.
-- [ ] **Commit** `feat(live): stream playback URL for the viewer player`
+- [x] **Test:** engine — `createStream` accepts an optional playback URL and `getPublicState().stream.playbackUrl` returns it (null when absent). host routes — `POST /host/streams` passes `playbackUrl` through.
+- [x] **Implement:** migration `005-playback-url.sql` (`ALTER TABLE streams ADD COLUMN playback_url text`); `createStream(pool, title, playbackUrl?)`; include in `PublicState.stream`; zod-validate `playbackUrl: z.string().url().optional()` on the host route; playback URL input on the host console's New-stream flow.
+- [x] **Commit** `feat(live): stream playback URL for the viewer player`
 
 ### Task 3: Current bidder in public state
 

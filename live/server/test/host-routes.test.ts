@@ -181,3 +181,19 @@ describe('GET /host', () => {
     expect(res.body).toContain('Circular Fash');
   });
 });
+
+describe('POST /host/streams playbackUrl', () => {
+  it('threads the playback URL through to public state', async () => {
+    const s = await app.inject({ method: 'POST', url: '/host/streams', headers: auth,
+      payload: { title: 'S', playbackUrl: 'https://stream.mux.com/abc.m3u8' } });
+    expect(s.statusCode).toBe(201);
+    const state = await app.inject({ method: 'GET', url: '/live/state' });
+    expect(state.json().stream.playbackUrl).toBe('https://stream.mux.com/abc.m3u8');
+  });
+
+  it('rejects a non-URL playbackUrl', async () => {
+    const s = await app.inject({ method: 'POST', url: '/host/streams', headers: auth,
+      payload: { title: 'S', playbackUrl: 'not-a-url' } });
+    expect(s.statusCode).toBe(400);
+  });
+});

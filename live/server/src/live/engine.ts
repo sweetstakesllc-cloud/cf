@@ -5,7 +5,7 @@ import type { PaymentGateway } from '../billing/gateway.js';
 export const SOFT_CLOSE_MS = 10_000;
 export type EngineEvent = { type: string; payload: Record<string, unknown> };
 export type PublicState = {
-  stream: { id: string; title: string; status: 'live' | 'ended' } | null;
+  stream: { id: string; title: string; status: 'live' | 'ended'; playbackUrl: string | null } | null;
   pinned: null | {
     itemId: string; title: string; imageUrl: string | null; mode: 'auction' | 'buy_now';
     state: string; startingBidOre: number | null; minIncrementOre: number;
@@ -25,14 +25,15 @@ async function logEvent(q: pg.PoolClient | pg.Pool, streamId: string | null, typ
   return { type, payload };
 }
 
-export async function createStream(pool: pg.Pool, title: string): Promise<{ streamId: string }> {
+export async function createStream(pool: pg.Pool, title: string, playbackUrl?: string): Promise<{ streamId: string }> {
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
     await client.query(`SELECT pg_advisory_xact_lock(hashtext('streams'))`);
     const live = await client.query(`SELECT id FROM streams WHERE status='live'`);
     if (live.rows.length > 0) throw new Error('stream_already_live');
-    const { rows } = await client.query(`INSERT INTO streams (title) VALUES ($1) RETURNING id`, [title]);
+    const { rows } = await client.query(
+      `INSERT INTO streams (title, playback_url) VALUES ($1, $2) RETURNING id`, [title, playbackUrl ?? null]);
     await logEvent(client, rows[0].id, 'stream_created', { title });
     await client.query('COMMIT');
     return { streamId: rows[0].id };
@@ -94,7 +95,7 @@ export async function pinItem(pool: pg.Pool, itemId: string, now: () => Date): P
 }
 
 export async function getPublicState(pool: pg.Pool): Promise<PublicState> {
-  const stream = await pool.query(`SELECT id, title, status FROM streams WHERE status='live' LIMIT 1`);
+  const stream = await pool.query(`SELECT id, title, status, playback_url FROM streams WHERE status='live' LIMIT 1`);
   if (!stream.rows[0]) return { stream: null, pinned: null, queueLength: 0 };
   const s = stream.rows[0];
   const item = await pool.query(
@@ -106,7 +107,7 @@ export async function getPublicState(pool: pg.Pool): Promise<PublicState> {
   const q = await pool.query(`SELECT count(*)::int AS n FROM stream_items WHERE stream_id=$1 AND state='queued'`, [s.id]);
   const r = item.rows[0];
   return {
-    stream: { id: s.id, title: s.title, status: s.status },
+    stream: { id: s.id, title: s.title, status: s.status, playbackUrl: s.playback_url },
     pinned: r ? {
       itemId: r.id, title: r.title, imageUrl: r.image_url, mode: r.mode, state: r.state,
       startingBidOre: r.starting_bid_ore, minIncrementOre: r.min_increment_ore,

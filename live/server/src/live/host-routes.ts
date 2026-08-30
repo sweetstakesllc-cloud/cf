@@ -39,10 +39,10 @@ export function registerHost(
     host.addHook('preHandler', requireHost);
 
     host.post('/host/streams', async (request, reply) => {
-      const parsed = z.object({ title: z.string().min(1) }).safeParse(request.body);
+      const parsed = z.object({ title: z.string().min(1), playbackUrl: z.string().url().optional() }).safeParse(request.body);
       if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
       try {
-        const { streamId } = await createStream(pool, parsed.data.title);
+        const { streamId } = await createStream(pool, parsed.data.title, parsed.data.playbackUrl);
         await broadcast();
         return reply.code(201).send({ streamId });
       } catch (err) { return mapEngineError(reply, err); }

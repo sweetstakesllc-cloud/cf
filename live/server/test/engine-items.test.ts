@@ -91,3 +91,17 @@ describe('streams and items', () => {
     await expect(pinItem(pool, a.itemId, now)).rejects.toThrow('cannot_pin');
   });
 });
+
+describe('stream playback url', () => {
+  it('is stored on create and surfaces in public state', async () => {
+    await createStream(pool, 'S', 'https://stream.mux.com/abc.m3u8');
+    const state = await getPublicState(pool);
+    expect(state.stream!.playbackUrl).toBe('https://stream.mux.com/abc.m3u8');
+  });
+
+  it('is null when the stream was created without one', async () => {
+    await createStream(pool, 'S');
+    const state = await getPublicState(pool);
+    expect(state.stream!.playbackUrl).toBeNull();
+  });
+});

@@ -252,7 +252,8 @@ export const HOST_HTML = `<!doctype html>
   document.getElementById('newStreamBtn').addEventListener('click', async function () {
     var title = prompt('Stream title');
     if (!title) return;
-    try { await api('/host/streams', 'POST', { title: title }); fetchState(); } catch (e) { /* alerted */ }
+    var playbackUrl = prompt('Playback URL (Mux HLS .m3u8, blank for none)', '') || undefined;
+    try { await api('/host/streams', 'POST', { title: title, playbackUrl: playbackUrl }); fetchState(); } catch (e) { /* alerted */ }
   });
 
   document.getElementById('endStreamBtn').addEventListener('click', async function () {
