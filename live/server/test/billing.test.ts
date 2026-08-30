@@ -93,3 +93,38 @@ describe('POST /webhooks/stripe', () => {
     expect(res.statusCode).toBe(200);
   });
 });
+
+describe('chargeSavedCard (fake)', () => {
+  it('records the charge with its idempotency key and succeeds', async () => {
+    const res = await gateway.chargeSavedCard({
+      gatewayCustomerId: 'cus_fake_1', paymentMethodId: 'pm_1',
+      amountOre: 420000, description: 'LV Alma PM', idempotencyKey: 'item-1-w-1-420000',
+    });
+    expect(res.status).toBe('succeeded');
+    expect(gateway.charges).toHaveLength(1);
+    expect(gateway.charges[0]!.idempotencyKey).toBe('item-1-w-1-420000');
+  });
+
+  it('is idempotent: same key returns the first result without a second charge', async () => {
+    const first = await gateway.chargeSavedCard({
+      gatewayCustomerId: 'c', paymentMethodId: 'p', amountOre: 100,
+      description: 'x', idempotencyKey: 'k1',
+    });
+    const second = await gateway.chargeSavedCard({
+      gatewayCustomerId: 'c', paymentMethodId: 'p', amountOre: 100,
+      description: 'x', idempotencyKey: 'k1',
+    });
+    expect(second).toEqual(first);
+    expect(gateway.charges).toHaveLength(1);
+  });
+
+  it('failNextCharge produces a failed result once', async () => {
+    gateway.failNextCharge = true;
+    const res = await gateway.chargeSavedCard({
+      gatewayCustomerId: 'c', paymentMethodId: 'p', amountOre: 100,
+      description: 'x', idempotencyKey: 'k2',
+    });
+    expect(res).toEqual({ status: 'failed', failureReason: 'card_declined' });
+    expect(gateway.failNextCharge).toBe(false);
+  });
+});

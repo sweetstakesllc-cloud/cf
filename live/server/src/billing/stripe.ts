@@ -1,5 +1,5 @@
 import Stripe from 'stripe';
-import type { PaymentGateway, WebhookEvent } from './gateway.js';
+import type { PaymentGateway, WebhookEvent, ChargeResult } from './gateway.js';
 
 export class StripeGateway implements PaymentGateway {
   private stripe: Stripe;
@@ -34,5 +34,34 @@ export class StripeGateway implements PaymentGateway {
       };
     }
     return { type: 'ignored' };
+  }
+
+  async chargeSavedCard(input: {
+    gatewayCustomerId: string;
+    paymentMethodId: string;
+    amountOre: number;
+    description: string;
+    idempotencyKey: string;
+  }): Promise<ChargeResult> {
+    try {
+      const pi = await this.stripe.paymentIntents.create(
+        {
+          amount: input.amountOre,
+          currency: 'sek',
+          customer: input.gatewayCustomerId,
+          payment_method: input.paymentMethodId,
+          off_session: true,
+          confirm: true,
+          description: input.description,
+        },
+        { idempotencyKey: input.idempotencyKey }
+      );
+      return { status: 'succeeded', paymentIntentId: pi.id };
+    } catch (err) {
+      if (err instanceof Stripe.errors.StripeCardError) {
+        return { status: 'failed', failureReason: err.code ?? 'card_declined' };
+      }
+      throw err;
+    }
   }
 }
