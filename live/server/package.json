@@ -3,10 +3,10 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "tsx watch src/index.ts",
+    "dev": "tsx watch --env-file=.env src/index.ts",
     "test": "vitest run",
     "tsc": "tsc --noEmit",
-    "migrate": "tsx scripts/migrate.ts"
+    "migrate": "tsx --env-file=.env scripts/migrate.ts"
   },
   "dependencies": {
     "@fastify/cookie": "^11.1.2",
