@@ -31,6 +31,16 @@ describe('requestOtp', () => {
     for (let i = 0; i < 3; i++) expect((await requestOtp(pool, 'a@b.se', mailer, now)).ok).toBe(true);
     expect(await requestOtp(pool, 'a@b.se', mailer, now)).toEqual({ ok: false, reason: 'rate_limited' });
   });
+
+  it('serializes concurrent requests so the rate limit holds under a race', async () => {
+    const { mailer } = capturingMailer();
+    const results = await Promise.all(
+      Array.from({ length: 6 }, () => requestOtp(pool, 'a@b.se', mailer, now)),
+    );
+    expect(results.filter((r) => r.ok).length).toBe(3);
+    const { rows } = await pool.query(`SELECT count(*)::int AS n FROM otp_codes WHERE email='a@b.se'`);
+    expect(rows[0].n).toBe(3);
+  });
 });
 
 describe('verifyOtp', () => {

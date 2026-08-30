@@ -18,6 +18,11 @@ if (gateway instanceof FakePaymentGateway && config.env === 'production') {
   throw new Error('STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET are required in production');
 }
 
-const app = buildApp({ config, pool, mailer: new ConsoleMailer(), gateway });
+const mailer = new ConsoleMailer();
+if (config.env === 'production') {
+  throw new Error('A real Mailer is required in production (ConsoleMailer prints OTP codes to stdout)');
+}
+
+const app = buildApp({ config, pool, mailer, gateway });
 await app.listen({ port: config.port, host: '0.0.0.0' });
 console.log(`cf-live-server on :${config.port} (stripe: ${gateway instanceof StripeGateway ? 'live' : 'fake'})`);
