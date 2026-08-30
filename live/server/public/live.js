@@ -68,6 +68,10 @@
       '</div>' +
       '<div class="cfl-feedwrap">' +
         '<div class="cfl-feed"></div>' +
+        '<div class="cfl-send">' +
+          '<input maxlength="280" placeholder="Say something…" aria-label="Chat message">' +
+          '<button>Send</button>' +
+        '</div>' +
         '<div class="cfl-card">' +
           '<div class="cfl-item">' +
             '<img class="cfl-thumb empty" alt="">' +
@@ -524,6 +528,23 @@
       })();
     });
   }
+
+  // ---------- chat send ----------
+  var sendInput = $('.cfl-send input');
+  var sendBtn = $('.cfl-send button');
+
+  function sendChat() {
+    var text = sendInput.value.trim();
+    if (!text) return;
+    if (!me) { openAuthModal(); return; }
+    if (!ws || ws.readyState !== 1) { toast('Reconnecting — try again'); return; }
+    ws.send(JSON.stringify({ type: 'chat', text: text }));
+    sendInput.value = '';
+  }
+  sendBtn.addEventListener('click', sendChat);
+  sendInput.addEventListener('keydown', function (ev) {
+    if (ev.key === 'Enter') { ev.preventDefault(); sendChat(); }
+  });
 
   // ---------- me ----------
   function fetchMe() {

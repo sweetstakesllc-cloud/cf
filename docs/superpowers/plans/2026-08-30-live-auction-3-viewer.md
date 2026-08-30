@@ -82,13 +82,13 @@ live/server/
 
 ### Task 7: Widget — sign-in and get-bid-ready flows
 
-- [ ] **Implement:** tapping BID unauthenticated opens the email→code modal (`/auth/request-code`, `/auth/verify`, then `/auth/me`); authenticated-but-not-bid-ready opens the bid-ready modal: `POST /billing/setup-intent` → if `stripePublishableKey` configured, lazy-load Stripe.js, mount Payment Element, `confirmSetup({redirect:'if_required'})`, then poll `/auth/me` (2s, max 30s) until `bidReady` flips (the webhook writes it); no key → explanatory dev panel. All fetches `credentials:'include'`. Modal chrome matches the brand rules (sharp corners, uppercase labels, single accent reserved for the primary action).
-- [ ] **Commit** `feat(live): viewer sign-in and bid-ready flows`
+- [x] **Implement:** tapping BID unauthenticated opens the email→code modal (`/auth/request-code`, `/auth/verify`, then `/auth/me`); authenticated-but-not-bid-ready opens the bid-ready modal: `POST /billing/setup-intent` → if `stripePublishableKey` configured, lazy-load Stripe.js, mount Payment Element, `confirmSetup({redirect:'if_required'})`, then poll `/auth/me` (2s, max 30s) until `bidReady` flips (the webhook writes it); no key → explanatory dev panel. All fetches `credentials:'include'`. Modal chrome matches the brand rules (sharp corners, uppercase labels, single accent reserved for the primary action).
+- [x] **Commit** `feat(live): viewer sign-in and bid-ready flows`
 
 ### Task 8: Widget — chat
 
-- [ ] **Implement:** chat feed (last 200 lines, auto-scroll pinned to bottom unless the user scrolled up), send box (signed-in only; else it opens the sign-in modal), 280-char counter, `slow_down`/`muted`/`too_long` error toasts, viewer count chip, bid-ticker lines styled distinctly from chat lines.
-- [ ] **Commit** `feat(live): viewer chat`
+- [x] **Implement:** chat feed (last 200 lines, auto-scroll pinned to bottom unless the user scrolled up), send box (signed-in only; else it opens the sign-in modal), 280-char counter, `slow_down`/`muted`/`too_long` error toasts, viewer count chip, bid-ticker lines styled distinctly from chat lines.
+- [x] **Commit** `feat(live): viewer chat`
 
 ### Task 9: README + scripted dry run
 
