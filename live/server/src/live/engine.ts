@@ -282,3 +282,37 @@ export async function secondChance(pool: pg.Pool, gateway: PaymentGateway, itemI
   events.push(...await chargeWinner(pool, gateway, itemId, now));
   return events;
 }
+
+export type BuyRejection = 'not_bid_ready' | 'not_available';
+
+export async function buyNow(
+  pool: pg.Pool, gateway: PaymentGateway, itemId: string,
+  buyer: { customerId: string; bidReady: boolean }, now: () => Date,
+): Promise<{ ok: true; charged: boolean; events: EngineEvent[] } | { ok: false; reason: BuyRejection }> {
+  if (!buyer.bidReady) return { ok: false, reason: 'not_bid_ready' };
+  const events: EngineEvent[] = [];
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(`SELECT * FROM stream_items WHERE id=$1 FOR UPDATE`, [itemId]);
+    const item = rows[0];
+    if (!item || item.state !== 'pinned' || item.mode !== 'buy_now') {
+      await client.query('ROLLBACK');
+      return { ok: false, reason: 'not_available' };
+    }
+    await client.query(
+      `UPDATE stream_items SET state='won', winner_id=$2, winning_amount_ore=buy_now_price_ore WHERE id=$1`,
+      [itemId, buyer.customerId]);
+    events.push(await logEvent(client, item.stream_id, 'item_claimed',
+      { itemId, amountOre: item.buy_now_price_ore }));
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+  const chargeEvents = await chargeWinner(pool, gateway, itemId, now);
+  events.push(...chargeEvents);
+  return { ok: true, charged: chargeEvents.some(e => e.type === 'item_charged'), events };
+}
