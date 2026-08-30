@@ -221,9 +221,11 @@
     itemTitleEl.textContent = p.title;
 
     var isAuction = p.mode === 'auction';
-    var priceOre = isAuction ? (p.currentBidOre != null ? p.currentBidOre : p.startingBidOre) : p.buyNowPriceOre;
+    var priceOre = p.winner ? p.winner.amountOre
+      : isAuction ? (p.currentBidOre != null ? p.currentBidOre : p.startingBidOre) : p.buyNowPriceOre;
     priceEl.textContent = fmtKr(priceOre || 0);
-    priceLabelEl.textContent = isAuction ? (p.currentBidOre != null ? 'Current bid' : 'Starting bid') : 'Buy now';
+    priceLabelEl.textContent = p.winner ? 'Sold for'
+      : isAuction ? (p.currentBidOre != null ? 'Current bid' : 'Starting bid') : 'Buy now';
 
     timerEl.hidden = p.state !== 'auction_open';
 

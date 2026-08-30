@@ -43,5 +43,42 @@ OTP codes print to the console, cards never leave your machine.
 4. Viewers never touch `/host/*`. They read `GET /live/state` for a snapshot,
    connect to `/live/ws` for realtime `state` / `chat` / `viewers` / `error`
    messages, and post bids/purchases with `POST /live/bid` and `POST /live/buy`.
-   Plan 3 builds the actual viewer page against these endpoints; today they can
-   be exercised directly with curl or a WebSocket client.
+   The viewer page at `/live` (below) is the UI over these endpoints.
+5. Chat moderation: every chat message carries a `fromId` (8-hex digest of the
+   customer id). The host console shows the feed with a Mute button per line;
+   `POST /host/mute { "fromId" }` drops that customer's future messages. Mutes
+   are in-memory — a server restart clears them.
+
+## Viewer page
+
+`GET /live` serves the customer-facing page: HLS player, pinned-item card with
+the BID/BUY button, countdown with going-once styling, chat, email+OTP sign-in
+and the get-bid-ready card flow. It is a plain-JS widget — no build step:
+
+- `public/live.js` + `public/live.css`, served under `/static/` (10-minute cache).
+- The page is just `<div id="cf-live">` plus those two files. **This is the
+  Shopify embed contract**: the theme's live page includes the same stylesheet,
+  div, and script tag (pointing at the API host) and gets the identical widget.
+  The widget derives the API origin from its own `<script src>`.
+- Cross-origin embedding needs `WIDGET_ORIGINS` in `.env` (comma-separated,
+  e.g. `https://circularfash.com,https://www.circularfash.com`). CORS runs with
+  credentials; session cookies stay SameSite=Lax, which works because
+  circularfash.com → api.circularfash.com is same-site.
+- `GET /live/config` hands the widget `STRIPE_PUBLISHABLE_KEY`. Without it the
+  bid-ready modal explains card setup is unavailable (dev default); with it the
+  widget mounts a Stripe Payment Element and polls `/auth/me` until the webhook
+  flips `bidReady`.
+- Video: create the stream with a `playbackUrl` (Mux LL-HLS `.m3u8`) and the
+  player picks it up — native HLS on Safari, hls.js (lazy CDN load) elsewhere.
+  No URL → a "stream starting" panel; no live stream at all → the off-air panel.
+
+Scripted dry run: with the dev server up and a seeded stream, the Plan-3
+verification script drives sign-in, bid-ready (fake webhook), a bidding duel,
+soft close, settle → SOLD, a buy-now claim, and host-side mute headlessly via
+puppeteer. See `docs/superpowers/plans/2026-08-30-live-auction-3-viewer.md`.
+
+## Left for Plan 4 (hardening)
+
+Shopify order sync on charge success, replays / seen-live grid, Mux wiring +
+real playback IDs, load test (p95 bid round-trip < 300 ms @ 200 viewers), and
+persisted mutes if they should survive restarts.

@@ -92,9 +92,9 @@ live/server/
 
 ### Task 9: README + scripted dry run
 
-- [ ] **Verify:** full `npm test` + `npm run tsc` green. Scripted browser dry run against the dev server: create stream + items via host API, open viewer in Chrome, sign in with an OTP (dev mailer logs the code), fake-webhook the customer bid-ready, bid from the page, watch soft-close, settle, SOLD stamp. Screenshot the money states.
-- [ ] **Document:** README "Viewer page" section — the embed contract for the Shopify page (div + two static files + `WIDGET_ORIGINS`), the playback-URL flow from Mux, and what stays for Plan 4 (Shopify order sync, replays, load test).
-- [ ] **Commit** `feat(live): viewer docs and dry-run notes`
+- [x] **Verify:** full `npm test` + `npm run tsc` green. Scripted browser dry run against the dev server: create stream + items via host API, open viewer in Chrome, sign in with an OTP (dev mailer logs the code), fake-webhook the customer bid-ready, bid from the page, watch soft-close, settle, SOLD stamp. Screenshot the money states.
+- [x] **Document:** README "Viewer page" section — the embed contract for the Shopify page (div + two static files + `WIDGET_ORIGINS`), the playback-URL flow from Mux, and what stays for Plan 4 (Shopify order sync, replays, load test).
+- [x] **Commit** `feat(live): viewer docs and dry-run notes`
 
 ## What Plan 4 (hardening) consumes from this plan
 
