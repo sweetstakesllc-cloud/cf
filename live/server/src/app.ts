@@ -1,6 +1,8 @@
+import { fileURLToPath } from 'node:url';
 import Fastify, { type FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
 import cors from '@fastify/cors';
+import fastifyStatic from '@fastify/static';
 import websocket from '@fastify/websocket';
 import type pg from 'pg';
 import type { Config } from './config.js';
@@ -13,6 +15,7 @@ import { registerHost } from './live/host-routes.js';
 import { Hub } from './live/hub.js';
 import { getSession } from './auth/session.js';
 import { getPublicState } from './live/engine.js';
+import { VIEWER_HTML } from './live/viewer-page.js';
 
 declare module 'fastify' {
   interface FastifyInstance { hub: Hub }
@@ -33,6 +36,12 @@ export function buildApp(deps: Deps): FastifyInstance {
   if (deps.config.widgetOrigins.length > 0)
     app.register(cors, { origin: deps.config.widgetOrigins, credentials: true });
   app.get('/healthz', async () => ({ ok: true }));
+  app.register(fastifyStatic, {
+    root: fileURLToPath(new URL('../public', import.meta.url)),
+    prefix: '/static/',
+    maxAge: '10m', // long enough for a stream, short enough to ship widget fixes
+  });
+  app.get('/live', async (_req, reply) => reply.type('text/html').send(VIEWER_HTML));
   registerAuth(app, deps.pool, deps.mailer, now, deps.config.env);
   registerBilling(app, deps.pool, deps.gateway);
   registerLive(app, deps.pool, deps.gateway, now, deps.config.stripePublishableKey);

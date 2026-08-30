@@ -64,9 +64,9 @@ live/server/
 
 ### Task 5: Static plumbing + viewer shell
 
-- [ ] **Test:** `viewer-shell.test.ts` — `GET /live` returns `text/html` containing `id="cf-live"`, `/static/live.js`, `/static/live.css`; `GET /static/live.js` serves JS with a long-lived cache header; 404 for `/static/nope.js`.
-- [ ] **Implement:** `@fastify/static` rooted at `public/` under prefix `/static/`; `src/live/viewer-page.ts` exports `VIEWER_HTML` (shell: viewport meta, Assistant font link, the div, the two static includes); serve at `GET /live`.
-- [ ] **Commit** `feat(live): static widget serving and viewer shell`
+- [x] **Test:** `viewer-shell.test.ts` — `GET /live` returns `text/html` containing `id="cf-live"`, `/static/live.js`, `/static/live.css`; `GET /static/live.js` serves JS with a long-lived cache header; 404 for `/static/nope.js`.
+- [x] **Implement:** `@fastify/static` rooted at `public/` under prefix `/static/`; `src/live/viewer-page.ts` exports `VIEWER_HTML` (shell: viewport meta, Assistant font link, the div, the two static includes); serve at `GET /live`.
+- [x] **Commit** `feat(live): static widget serving and viewer shell`
 
 ### Task 6: Widget core — state render, countdown, bid/buy
 
