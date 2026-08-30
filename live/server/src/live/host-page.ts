@@ -35,6 +35,7 @@ export const HOST_HTML = `<!doctype html>
   .big { font-size: 28px; }
   .muted { color: #888; }
   .actions { padding-top: 8px; }
+  #loginError { color: #ff6b6b; }
 </style>
 </head>
 <body>
@@ -43,6 +44,7 @@ export const HOST_HTML = `<!doctype html>
   <div id="login">
     <input id="pw" type="password" placeholder="host password" autocomplete="off">
     <button id="connectBtn" class="primary">Connect</button>
+    <span id="loginError" class="mono"></span>
   </div>
 
   <div id="console">
@@ -74,6 +76,8 @@ export const HOST_HTML = `<!doctype html>
   var pw = null;
   var streamId = null;
   var currentEndsAt = null;
+  var pollTimer = null;
+  var tickTimer = null;
 
   function fmtKr(ore) {
     return (ore / 100).toLocaleString('sv-SE') + ' kr';
@@ -111,10 +115,14 @@ export const HOST_HTML = `<!doctype html>
   }
 
   async function fetchState() {
-    var res = await fetch('/host/state', { headers: { Authorization: 'Bearer ' + pw } });
+    var res;
+    try {
+      res = await fetch('/host/state', { headers: { Authorization: 'Bearer ' + pw } });
+    } catch (e) { return; /* network blip during polling — try again next tick */ }
+    if (res.status === 401) { backToLogin('password rejected — reconnect'); return; }
+    if (!res.ok) return; /* do not alert on poll failures — only user-initiated actions alert */
     var data = null;
-    try { data = await res.json(); } catch (e) { /* no body */ }
-    if (!res.ok) { alert((data && data.error) || ('state fetch failed: ' + res.status)); return; }
+    try { data = await res.json(); } catch (e) { return; }
     render(data);
   }
 
@@ -165,7 +173,7 @@ export const HOST_HTML = `<!doctype html>
         var price = item.mode === 'buy_now' ? item.buyNowPriceOre : item.startingBidOre;
         return '<div class="row"><span>' + escapeHtml(item.title) + ' <span class="muted mono">(' + escapeHtml(item.mode) + ')</span></span>' +
           '<span class="mono">' + fmtKr(price || 0) + '</span>' +
-          '<button data-pin="' + item.itemId + '">Pin</button></div>';
+          '<button data-pin="' + escapeHtml(item.itemId) + '">Pin</button></div>';
       }).join('');
       qbox.querySelectorAll('button[data-pin]').forEach(function (btn) {
         btn.addEventListener('click', function () { pinItem(btn.dataset.pin); });
@@ -196,18 +204,49 @@ export const HOST_HTML = `<!doctype html>
     try { await api('/host/items/' + itemId + '/pin', 'POST'); fetchState(); } catch (e) { /* alerted */ }
   }
 
-  document.getElementById('connectBtn').addEventListener('click', function () {
-    var val = document.getElementById('pw').value;
-    if (!val) return;
-    pw = val;
-    document.getElementById('login').style.display = 'none';
-    document.getElementById('console').style.display = 'block';
-    fetchState();
-    setInterval(fetchState, 2000);
-    setInterval(function () {
+  function startPolling() {
+    if (pollTimer) clearInterval(pollTimer);
+    if (tickTimer) clearInterval(tickTimer);
+    pollTimer = setInterval(fetchState, 2000);
+    tickTimer = setInterval(function () {
       var el = document.getElementById('countdown');
       if (el && currentEndsAt) el.textContent = fmtCountdown(currentEndsAt);
     }, 1000);
+  }
+
+  function backToLogin(message) {
+    if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+    if (tickTimer) { clearInterval(tickTimer); tickTimer = null; }
+    pw = null;
+    document.getElementById('console').style.display = 'none';
+    document.getElementById('login').style.display = 'flex';
+    document.getElementById('loginError').textContent = message || '';
+  }
+
+  document.getElementById('connectBtn').addEventListener('click', async function () {
+    var val = document.getElementById('pw').value;
+    var errEl = document.getElementById('loginError');
+    errEl.textContent = '';
+    if (!val) return;
+    var res;
+    try {
+      res = await fetch('/host/state', { headers: { Authorization: 'Bearer ' + val } });
+    } catch (e) { errEl.textContent = 'network error'; return; }
+    if (res.status === 401) { errEl.textContent = 'wrong password'; return; }
+    if (res.status === 503) { errEl.textContent = 'host disabled (HOST_PASSWORD not set)'; return; }
+    if (!res.ok) {
+      var errData = null;
+      try { errData = await res.json(); } catch (e) { /* no body */ }
+      errEl.textContent = (errData && errData.error) || ('error: ' + res.status);
+      return;
+    }
+    var data = null;
+    try { data = await res.json(); } catch (e) { errEl.textContent = 'bad response from server'; return; }
+    pw = val;
+    render(data);
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('console').style.display = 'block';
+    startPolling();
   });
 
   document.getElementById('newStreamBtn').addEventListener('click', async function () {
