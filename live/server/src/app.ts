@@ -8,6 +8,7 @@ import { registerAuth } from './auth/routes.js';
 import type { PaymentGateway } from './billing/gateway.js';
 import { registerBilling } from './billing/routes.js';
 import { registerLive } from './live/routes.js';
+import { registerHost } from './live/host-routes.js';
 import { Hub } from './live/hub.js';
 import { getSession } from './auth/session.js';
 import { getPublicState } from './live/engine.js';
@@ -32,6 +33,7 @@ export function buildApp(deps: Deps): FastifyInstance {
   registerAuth(app, deps.pool, deps.mailer, now, deps.config.env);
   registerBilling(app, deps.pool, deps.gateway);
   registerLive(app, deps.pool, deps.gateway, now);
+  registerHost(app, deps.pool, deps.gateway, now, deps.config.hostPassword);
 
   const hub = new Hub(now);
   app.decorate('hub', hub);

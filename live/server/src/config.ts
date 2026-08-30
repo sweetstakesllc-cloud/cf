@@ -7,6 +7,7 @@ const schema = z.object({
   COOKIE_SECRET: z.string().min(32),
   STRIPE_SECRET_KEY: z.string().min(1).optional(),
   STRIPE_WEBHOOK_SECRET: z.string().min(1).optional(),
+  HOST_PASSWORD: z.string().min(12).optional(),
 });
 
 export type Config = {
@@ -16,6 +17,7 @@ export type Config = {
   cookieSecret: string;
   stripeSecretKey: string | null;
   stripeWebhookSecret: string | null;
+  hostPassword: string | null;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -27,5 +29,6 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     cookieSecret: e.COOKIE_SECRET,
     stripeSecretKey: e.STRIPE_SECRET_KEY ?? null,
     stripeWebhookSecret: e.STRIPE_WEBHOOK_SECRET ?? null,
+    hostPassword: e.HOST_PASSWORD ?? null,
   };
 }
