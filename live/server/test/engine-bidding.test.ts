@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { getTestPool, truncateAll } from './helpers.js';
-import { createStream, addItem, pinItem, openAuction, placeBid, extendAuction, passItem, SOFT_CLOSE_MS } from '../src/live/engine.js';
+import { createStream, addItem, pinItem, openAuction, placeBid, extendAuction, passItem, getPublicState, SOFT_CLOSE_MS } from '../src/live/engine.js';
 import type pg from 'pg';
 
 let pool: pg.Pool;
@@ -89,5 +89,15 @@ describe('extendAuction', () => {
     await extendAuction(pool, itemId, 60_000, at(10_000));
     const { rows } = await pool.query(`SELECT ends_at FROM stream_items WHERE id=$1`, [itemId]);
     expect(new Date(rows[0].ends_at).getTime()).toBe(t0.getTime() + 120_000);
+  });
+});
+
+describe('current bidder in public state', () => {
+  it('is null before any bid and masked after one', async () => {
+    const itemId = await openItem();
+    const anna = await customer('anna@x.se');
+    expect((await getPublicState(pool)).pinned!.currentBidderMasked).toBeNull();
+    await placeBid(pool, itemId, anna, 100000, at(1000));
+    expect((await getPublicState(pool)).pinned!.currentBidderMasked).toBe('a***');
   });
 });

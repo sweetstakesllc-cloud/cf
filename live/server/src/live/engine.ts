@@ -10,6 +10,7 @@ export type PublicState = {
     itemId: string; title: string; imageUrl: string | null; mode: 'auction' | 'buy_now';
     state: string; startingBidOre: number | null; minIncrementOre: number;
     buyNowPriceOre: number | null; currentBidOre: number | null;
+    currentBidderMasked: string | null;
     endsAt: string | null; bidCount: number;
     winner: null | { emailMasked: string; amountOre: number };
   };
@@ -99,9 +100,10 @@ export async function getPublicState(pool: pg.Pool): Promise<PublicState> {
   if (!stream.rows[0]) return { stream: null, pinned: null, queueLength: 0 };
   const s = stream.rows[0];
   const item = await pool.query(
-    `SELECT i.*, c.email AS winner_email,
+    `SELECT i.*, c.email AS winner_email, cb.email AS current_bidder_email,
             (SELECT count(*)::int FROM bids b WHERE b.item_id = i.id) AS bid_count
      FROM stream_items i LEFT JOIN customers c ON c.id = i.winner_id
+     LEFT JOIN customers cb ON cb.id = i.current_bidder_id
      WHERE i.stream_id=$1 AND i.state <> 'queued'
      ORDER BY CASE WHEN i.state IN ('pinned','auction_open') THEN 0 ELSE 1 END, i.pinned_at DESC NULLS LAST LIMIT 1`, [s.id]);
   const q = await pool.query(`SELECT count(*)::int AS n FROM stream_items WHERE stream_id=$1 AND state='queued'`, [s.id]);
@@ -112,6 +114,7 @@ export async function getPublicState(pool: pg.Pool): Promise<PublicState> {
       itemId: r.id, title: r.title, imageUrl: r.image_url, mode: r.mode, state: r.state,
       startingBidOre: r.starting_bid_ore, minIncrementOre: r.min_increment_ore,
       buyNowPriceOre: r.buy_now_price_ore, currentBidOre: r.current_bid_ore,
+      currentBidderMasked: r.current_bidder_email ? maskEmail(r.current_bidder_email) : null,
       endsAt: r.ends_at ? new Date(r.ends_at).toISOString() : null, bidCount: r.bid_count,
       winner: r.winner_id && r.winning_amount_ore
         ? { emailMasked: maskEmail(r.winner_email), amountOre: r.winning_amount_ore } : null,

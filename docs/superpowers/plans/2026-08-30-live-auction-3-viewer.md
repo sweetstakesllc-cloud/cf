@@ -52,9 +52,9 @@ live/server/
 
 ### Task 3: Current bidder in public state
 
-- [ ] **Test:** engine — after a bid, `getPublicState().pinned.currentBidderMasked` is the bidder's masked email; null before any bid.
-- [ ] **Implement:** join `customers` on `current_bidder_id` in `getPublicState`, mask with the existing `maskEmail`. (The viewer uses this for "x*** is highest — you've been outbid" states; masking level matches what the chat already leaks.)
-- [ ] **Commit** `feat(live): expose masked current bidder in public state`
+- [x] **Test:** engine — after a bid, `getPublicState().pinned.currentBidderMasked` is the bidder's masked email; null before any bid.
+- [x] **Implement:** join `customers` on `current_bidder_id` in `getPublicState`, mask with the existing `maskEmail`. (The viewer uses this for "x*** is highest — you've been outbid" states; masking level matches what the chat already leaks.)
+- [x] **Commit** `feat(live): expose masked current bidder in public state`
 
 ### Task 4: Chat identity + host mute (deferred from Plan 2)
 
