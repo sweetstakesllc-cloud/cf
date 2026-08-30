@@ -1,4 +1,22 @@
-{%- render 'cf-search-terms' -%}
+{%- comment -%}
+  The search terms as the shopper typed them.
+
+  snippets/cf-search-and.liquid rewrites a multi-word query into Shopify's
+  query syntax before submitting, so search.terms comes back as
+  "louis* AND vuitton* AND chelsea*". Undo that for display only; the query
+  itself is untouched.
+
+  Inlined rather than rendered: {% render %} runs in an isolated scope, so a
+  variable it assigns is not visible to the caller. This was a snippet at
+  first and every echo of it came out blank.
+{%- endcomment -%}
+{%- liquid
+  assign cf_terms = search.terms
+  if cf_terms contains ' AND '
+    assign cf_terms = cf_terms | replace: ' AND ', ' '
+  endif
+  assign cf_terms = cf_terms | replace: '*', ''
+-%}
 {{ 'template-collection.css' | asset_url | stylesheet_tag }}
 {{ 'component-card.css' | asset_url | stylesheet_tag }}
 {{ 'component-price.css' | asset_url | stylesheet_tag }}

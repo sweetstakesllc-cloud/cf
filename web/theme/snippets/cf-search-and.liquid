@@ -81,7 +81,25 @@
       if (!input) return;
       var rewritten = toAnd(input.value);
       if (rewritten === input.value) return;
-      input.value = rewritten;
+
+      // Do NOT overwrite the visible input: the shopper watches their own words
+      // turn into "louis* AND vuitton*" for the instant before the page
+      // navigates. Disable it so it submits nothing, and carry the real query
+      // in a hidden field of the same name instead.
+      input.disabled = true;
+      // Re-enable on the way back, or a browser restoring this page from the
+      // back/forward cache shows a dead search box.
+      window.addEventListener('pageshow', function () { input.disabled = false; });
+
+      var real = form.querySelector('input[type="hidden"][name="q"].cf-q');
+      if (!real) {
+        real = document.createElement('input');
+        real.type = 'hidden';
+        real.name = 'q';
+        real.className = 'cf-q';
+        form.appendChild(real);
+      }
+      real.value = rewritten;
       // The prefix option appends its own wildcard; ours are already explicit,
       // and both together produce "chelsea**", which matches nothing.
       var prefix = form.querySelector('input[name="options[prefix]"]');
