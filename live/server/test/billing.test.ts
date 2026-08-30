@@ -53,3 +53,43 @@ describe('POST /billing/setup-intent', () => {
     expect(rows[0].stripe_customer_id).toMatch(/^cus_fake_/);
   });
 });
+
+describe('POST /webhooks/stripe', () => {
+  it('rejects a bad signature', async () => {
+    const res = await app.inject({
+      method: 'POST', url: '/webhooks/stripe',
+      headers: { 'stripe-signature': 'nope', 'content-type': 'application/json' },
+      payload: JSON.stringify({ type: 'ignored' }),
+    });
+    expect(res.statusCode).toBe(400);
+  });
+
+  it('marks the customer bid-ready on setup_succeeded', async () => {
+    const token = await login();
+    await app.inject({ method: 'POST', url: '/billing/setup-intent', cookies: { cf_session: token } });
+    const { rows } = await pool.query(`SELECT stripe_customer_id FROM customers WHERE email='a@b.se'`);
+
+    const res = await app.inject({
+      method: 'POST', url: '/webhooks/stripe',
+      headers: { 'stripe-signature': 'fake-valid-signature', 'content-type': 'application/json' },
+      payload: JSON.stringify({
+        type: 'setup_succeeded',
+        gatewayCustomerId: rows[0].stripe_customer_id,
+        paymentMethodId: 'pm_fake_1',
+      }),
+    });
+    expect(res.statusCode).toBe(200);
+
+    const me = await app.inject({ method: 'GET', url: '/auth/me', cookies: { cf_session: token } });
+    expect(me.json()).toEqual({ email: 'a@b.se', bidReady: true });
+  });
+
+  it('ignores unknown events without error', async () => {
+    const res = await app.inject({
+      method: 'POST', url: '/webhooks/stripe',
+      headers: { 'stripe-signature': 'fake-valid-signature', 'content-type': 'application/json' },
+      payload: JSON.stringify({ type: 'ignored' }),
+    });
+    expect(res.statusCode).toBe(200);
+  });
+});
