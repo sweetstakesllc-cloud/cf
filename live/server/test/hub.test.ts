@@ -94,3 +94,34 @@ describe('/live/ws', () => {
     authed.ws.close();
   });
 });
+
+describe('chat identity and mute', () => {
+  it('stamps chat with a stable non-uuid fromId', async () => {
+    const watcher = await connect();
+    const authed = await connect(await loggedInCookie());
+    authed.ws.send(JSON.stringify({ type: 'chat', text: 'hej!' }));
+    const chat = await watcher.next(m => m.type === 'chat');
+    expect(chat.fromId).toMatch(/^[0-9a-f]{8}$/);
+    const { rows } = await pool.query(`SELECT id FROM customers WHERE email='anna@x.se'`);
+    expect(chat.fromId).not.toContain(rows[0].id.slice(0, 8));
+    watcher.ws.close(); authed.ws.close();
+  });
+
+  it('drops chat from a muted sender with an error, leaving others alone', async () => {
+    const watcher = await connect();
+    const anna = await connect(await loggedInCookie('anna@x.se'));
+    const bert = await connect(await loggedInCookie('bert@x.se'));
+    anna.ws.send(JSON.stringify({ type: 'chat', text: 'first' }));
+    const first = await watcher.next(m => m.type === 'chat');
+    app.hub.mute(first.fromId);
+    await new Promise(r => setTimeout(r, 2100)); // clear the chat cooldown
+    anna.ws.send(JSON.stringify({ type: 'chat', text: 'again' }));
+    const err = await anna.next(m => m.type === 'error' && m.error === 'muted');
+    expect(err.error).toBe('muted');
+    bert.ws.send(JSON.stringify({ type: 'chat', text: 'unaffected' }));
+    const chat = await watcher.next(m => m.type === 'chat' && m.text === 'unaffected');
+    expect(chat.from).toBe('b***');
+    expect(watcher.messages.filter(m => (m as any).type === 'chat').map(m => (m as any).text)).not.toContain('again');
+    watcher.ws.close(); anna.ws.close(); bert.ws.close();
+  });
+});

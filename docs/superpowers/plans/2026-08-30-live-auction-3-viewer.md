@@ -58,9 +58,9 @@ live/server/
 
 ### Task 4: Chat identity + host mute (deferred from Plan 2)
 
-- [ ] **Test:** hub — chat broadcasts now carry a stable `fromId` (8-hex digest of customerId, not the raw uuid); after `hub.mute(fromId)`, that customer's next chat is not broadcast and the sender gets `{type:'error',error:'muted'}`; other customers unaffected. host routes — `POST /host/mute {fromId}` (bearer) mutes; bad body 400.
-- [ ] **Implement:** `fromId = sha256(customerId).slice(0,8)` computed once per `add()`; `Hub.mute(fromId)` + muted set consulted in `handleMessage`; route wires to `app.hub`. Host console: a chat feed panel (the console opens the same `/live/ws` read-only) with a MUTE button per line calling the endpoint.
-- [ ] **Commit** `feat(live): chat sender ids and host mute`
+- [x] **Test:** hub — chat broadcasts now carry a stable `fromId` (8-hex digest of customerId, not the raw uuid); after `hub.mute(fromId)`, that customer's next chat is not broadcast and the sender gets `{type:'error',error:'muted'}`; other customers unaffected. host routes — `POST /host/mute {fromId}` (bearer) mutes; bad body 400.
+- [x] **Implement:** `fromId = sha256(customerId).slice(0,8)` computed once per `add()`; `Hub.mute(fromId)` + muted set consulted in `handleMessage`; route wires to `app.hub`. Host console: a chat feed panel (the console opens the same `/live/ws` read-only) with a MUTE button per line calling the endpoint.
+- [x] **Commit** `feat(live): chat sender ids and host mute`
 
 ### Task 5: Static plumbing + viewer shell
 

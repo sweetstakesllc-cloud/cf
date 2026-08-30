@@ -126,6 +126,13 @@ export function registerHost(
       } catch (err) { return mapEngineError(reply, err); }
     });
 
+    host.post('/host/mute', async (request, reply) => {
+      const parsed = z.object({ fromId: z.string().regex(/^[0-9a-f]{8}$/) }).safeParse(request.body);
+      if (!parsed.success) return reply.code(400).send({ error: 'bad_request' });
+      app.hub.mute(parsed.data.fromId);
+      return { ok: true };
+    });
+
     host.get('/host/state', async () => {
       const state = await getPublicState(pool);
       if (!state.stream) return { ...state, queue: [] };

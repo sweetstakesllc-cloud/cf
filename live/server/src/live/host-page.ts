@@ -36,6 +36,11 @@ export const HOST_HTML = `<!doctype html>
   .muted { color: #888; }
   .actions { padding-top: 8px; }
   #loginError { color: #ff6b6b; }
+  #chatBox { max-height: 260px; overflow-y: auto; }
+  .chat-line { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; border-bottom: 1px solid #222; font-size: 13px; }
+  .chat-line .who { color: #E8FF52; }
+  .chat-line .text { flex: 1; word-break: break-word; }
+  .chat-line button { padding: 2px 8px; font-size: 11px; margin: 0; }
 </style>
 </head>
 <body>
@@ -68,6 +73,11 @@ export const HOST_HTML = `<!doctype html>
       <h2>Queue</h2>
       <button id="addItemBtn">Add item</button>
       <div id="queueBox"></div>
+    </div>
+
+    <div class="panel">
+      <h2>Chat <span id="viewerCount" class="muted mono"></span></h2>
+      <div id="chatBox"><div class="muted">no messages yet</div></div>
     </div>
   </div>
 
@@ -204,6 +214,38 @@ export const HOST_HTML = `<!doctype html>
     try { await api('/host/items/' + itemId + '/pin', 'POST'); fetchState(); } catch (e) { /* alerted */ }
   }
 
+  var chatWs = null;
+
+  function startChat() {
+    if (chatWs) { chatWs.onclose = null; chatWs.close(); }
+    var proto = location.protocol === 'https:' ? 'wss://' : 'ws://';
+    chatWs = new WebSocket(proto + location.host + '/live/ws');
+    chatWs.onmessage = function (ev) {
+      var msg;
+      try { msg = JSON.parse(ev.data); } catch (e) { return; }
+      if (msg.type === 'viewers') {
+        document.getElementById('viewerCount').textContent = msg.count + ' watching';
+      } else if (msg.type === 'chat') {
+        var box = document.getElementById('chatBox');
+        if (box.firstChild && box.firstChild.className === 'muted') box.innerHTML = '';
+        var line = document.createElement('div');
+        line.className = 'chat-line';
+        line.innerHTML = '<span class="who mono">' + escapeHtml(msg.from) + '</span>' +
+          '<span class="text">' + escapeHtml(msg.text) + '</span>' +
+          '<button>Mute</button>';
+        line.querySelector('button').addEventListener('click', async function () {
+          try { await api('/host/mute', 'POST', { fromId: msg.fromId }); line.style.opacity = '0.4'; } catch (e) { /* alerted */ }
+        });
+        box.appendChild(line);
+        while (box.children.length > 200) box.removeChild(box.firstChild);
+        box.scrollTop = box.scrollHeight;
+      }
+    };
+    chatWs.onclose = function () {
+      if (pw) setTimeout(startChat, 2000); /* reconnect while logged in */
+    };
+  }
+
   function startPolling() {
     if (pollTimer) clearInterval(pollTimer);
     if (tickTimer) clearInterval(tickTimer);
@@ -247,6 +289,7 @@ export const HOST_HTML = `<!doctype html>
     document.getElementById('login').style.display = 'none';
     document.getElementById('console').style.display = 'block';
     startPolling();
+    startChat();
   });
 
   document.getElementById('newStreamBtn').addEventListener('click', async function () {

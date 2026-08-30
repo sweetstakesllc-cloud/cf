@@ -197,3 +197,13 @@ describe('POST /host/streams playbackUrl', () => {
     expect(s.statusCode).toBe(400);
   });
 });
+
+describe('POST /host/mute', () => {
+  it('mutes by fromId with bearer auth', async () => {
+    expect((await app.inject({ method: 'POST', url: '/host/mute', payload: { fromId: 'deadbeef' } })).statusCode).toBe(401);
+    expect((await app.inject({ method: 'POST', url: '/host/mute', headers: auth, payload: {} })).statusCode).toBe(400);
+    const ok = await app.inject({ method: 'POST', url: '/host/mute', headers: auth, payload: { fromId: 'deadbeef' } });
+    expect(ok.statusCode).toBe(200);
+    expect(app.hub.isMuted('deadbeef')).toBe(true);
+  });
+});
