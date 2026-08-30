@@ -16,16 +16,34 @@ export async function requestOtp(
   const windowStart = new Date(now().getTime() - OTP_TTL_MS);
   const code = String(randomInt(0, 1_000_000)).padStart(6, '0');
 
-  // Atomically check rate limit and insert: INSERT succeeds only if count < MAX_REQUESTS_PER_WINDOW
-  const { rows } = await pool.query(
-    `INSERT INTO otp_codes (email, code_hash, expires_at, created_at)
-     SELECT $1, $2, $3, $4
-     WHERE (SELECT count(*)::int FROM otp_codes WHERE email=$1 AND created_at > $5) < $6
-     RETURNING id`,
-    [email, hashToken(code), new Date(now().getTime() + OTP_TTL_MS), now(), windowStart, MAX_REQUESTS_PER_WINDOW],
-  );
+  // Serialize per-email with advisory lock to prevent concurrent bypass of rate limit
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    // Lock prevents other transactions with same email from proceeding
+    await client.query('SELECT pg_advisory_xact_lock(hashtext($1))', [email]);
 
-  if (rows.length === 0) return { ok: false, reason: 'rate_limited' };
+    // Now check count while holding lock
+    const { rows: countRows } = await client.query(
+      `SELECT count(*)::int AS n FROM otp_codes WHERE email=$1 AND created_at > $2`,
+      [email, windowStart],
+    );
+
+    if (countRows[0].n >= MAX_REQUESTS_PER_WINDOW) {
+      await client.query('ROLLBACK');
+      return { ok: false, reason: 'rate_limited' };
+    }
+
+    // Insert while holding lock
+    await client.query(
+      `INSERT INTO otp_codes (email, code_hash, expires_at, created_at) VALUES ($1, $2, $3, $4)`,
+      [email, hashToken(code), new Date(now().getTime() + OTP_TTL_MS), now()],
+    );
+
+    await client.query('COMMIT');
+  } finally {
+    client.release();
+  }
 
   await mailer.sendOtp(email, code);
   return { ok: true };
