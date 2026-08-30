@@ -4,11 +4,14 @@ import type pg from 'pg';
 import type { Config } from './config.js';
 import type { Mailer } from './mailer.js';
 import { registerAuth } from './auth/routes.js';
+import type { PaymentGateway } from './billing/gateway.js';
+import { registerBilling } from './billing/routes.js';
 
 export type Deps = {
   config: Config;
   pool: pg.Pool;
   mailer: Mailer;
+  gateway: PaymentGateway;
   now?: () => Date;
 };
 
@@ -18,5 +21,6 @@ export function buildApp(deps: Deps): FastifyInstance {
   app.register(cookie, { secret: deps.config.cookieSecret });
   app.get('/healthz', async () => ({ ok: true }));
   registerAuth(app, deps.pool, deps.mailer, now, deps.config.env);
+  registerBilling(app, deps.pool, deps.gateway);
   return app;
 }

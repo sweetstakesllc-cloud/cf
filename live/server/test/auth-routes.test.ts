@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { getTestPool, truncateAll } from './helpers.js';
 import { buildApp } from '../src/app.js';
 import { loadConfig } from '../src/config.js';
+import { FakePaymentGateway } from '../src/billing/gateway.js';
 import type { Mailer } from '../src/mailer.js';
 import type pg from 'pg';
 import type { FastifyInstance } from 'fastify';
@@ -19,7 +20,7 @@ beforeAll(async () => {
       DATABASE_URL: 'postgres://cf:cf@localhost:5433/cf_live',
       COOKIE_SECRET: 'test-cookie-secret-at-least-32-chars!!',
     }),
-    pool, mailer,
+    pool, mailer, gateway: new FakePaymentGateway(),
   });
 });
 afterAll(async () => { await app.close(); await pool.end(); });

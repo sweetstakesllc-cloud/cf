@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { loadConfig } from '../src/config.js';
 import { buildApp } from '../src/app.js';
 import { getTestPool } from './helpers.js';
+import { FakePaymentGateway } from '../src/billing/gateway.js';
 import type { Mailer } from '../src/mailer.js';
 import type pg from 'pg';
 
@@ -36,7 +37,7 @@ describe('config', () => {
 
 describe('healthz', () => {
   it('responds ok', async () => {
-    const app = buildApp({ config: loadConfig(baseEnv), pool, mailer: noopMailer });
+    const app = buildApp({ config: loadConfig(baseEnv), pool, mailer: noopMailer, gateway: new FakePaymentGateway() });
     try {
       const res = await app.inject({ method: 'GET', url: '/healthz' });
       expect(res.statusCode).toBe(200);
