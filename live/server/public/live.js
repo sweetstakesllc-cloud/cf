@@ -355,9 +355,175 @@
       .then(function () { ctaBusy = false; refreshState(); });
   }
 
-  // Filled in by the sign-in / bid-ready flows.
-  function openAuthModal() { toast('Sign-in coming in the next step'); }
-  function openReadyModal() { toast('Card setup coming in the next step'); }
+  // ---------- modal chrome ----------
+  function modal(title) {
+    closeModal();
+    var back = el('div', 'cfl-modalback');
+    var box = el('div', 'cfl-modal');
+    var close = el('button', 'cfl-close', 'Close');
+    close.addEventListener('click', closeModal);
+    box.appendChild(close);
+    box.appendChild(el('h3', null, title));
+    back.appendChild(box);
+    back.addEventListener('click', function (ev) { if (ev.target === back) closeModal(); });
+    mountEl.appendChild(back);
+    return box;
+  }
+
+  function closeModal() {
+    var open = mountEl.querySelector('.cfl-modalback');
+    if (open) open.remove();
+  }
+
+  function textInput(placeholder, type, mode) {
+    var input = el('input');
+    input.type = type || 'text';
+    input.placeholder = placeholder;
+    if (mode) input.inputMode = mode;
+    return input;
+  }
+
+  function primaryBtn(label) {
+    return el('button', 'cfl-cta', label);
+  }
+
+  // ---------- sign-in (email + one-time code) ----------
+  function openAuthModal() {
+    var box = modal('Sign in to bid');
+    var err = el('div', 'err');
+    var email = textInput('Email address', 'email', 'email');
+    var next = primaryBtn('Send code');
+    box.appendChild(el('p', null, 'We’ll email you a 6-digit code. No password, no account setup.'));
+    box.appendChild(email);
+    box.appendChild(err);
+    box.appendChild(next);
+    email.focus();
+
+    next.addEventListener('click', function () {
+      var addr = email.value.trim();
+      if (!addr) { err.textContent = 'Enter your email'; return; }
+      next.disabled = true;
+      err.textContent = '';
+      api('/auth/request-code', { method: 'POST', body: JSON.stringify({ email: addr }) })
+        .then(function (res) {
+          if (res.status === 429) { err.textContent = 'Too many codes — wait a minute and retry'; next.disabled = false; return; }
+          if (!res.ok) { err.textContent = 'Could not send the code — check the address'; next.disabled = false; return; }
+          codeStep(addr);
+        })
+        .catch(function () { err.textContent = 'Network error'; next.disabled = false; });
+    });
+
+    function codeStep(addr) {
+      var box2 = modal('Enter the code');
+      var err2 = el('div', 'err');
+      var code = textInput('6-digit code', 'text', 'numeric');
+      code.maxLength = 6;
+      code.autocomplete = 'one-time-code';
+      var verify = primaryBtn('Sign in');
+      box2.appendChild(el('p', null, 'Sent to ' + addr + '. It’s valid for a few minutes.'));
+      box2.appendChild(code);
+      box2.appendChild(err2);
+      box2.appendChild(verify);
+      code.focus();
+
+      verify.addEventListener('click', function () {
+        verify.disabled = true;
+        err2.textContent = '';
+        api('/auth/verify', { method: 'POST', body: JSON.stringify({ email: addr, code: code.value.trim() }) })
+          .then(function (res) {
+            if (!res.ok) { err2.textContent = 'Wrong or expired code'; verify.disabled = false; return; }
+            return fetchMe().then(function () {
+              closeModal();
+              toast('Signed in');
+              // Reconnect so the socket picks up the session — chat needs it.
+              if (ws) ws.close();
+              if (me && !me.bidReady) openReadyModal();
+            });
+          })
+          .catch(function () { err2.textContent = 'Network error'; verify.disabled = false; });
+      });
+    }
+  }
+
+  // ---------- get bid-ready (save a card via Stripe) ----------
+  var widgetConfig = null;
+
+  function fetchConfig() {
+    if (widgetConfig) return Promise.resolve(widgetConfig);
+    return api('/live/config').then(function (res) { return res.json(); })
+      .then(function (data) { widgetConfig = data; return data; });
+  }
+
+  var stripeLib = null;
+
+  function loadStripeJs() {
+    if (stripeLib) return stripeLib;
+    stripeLib = new Promise(function (resolve, reject) {
+      var s = document.createElement('script');
+      s.src = 'https://js.stripe.com/v3/';
+      s.onload = function () { resolve(window.Stripe); };
+      s.onerror = reject;
+      document.head.appendChild(s);
+    });
+    return stripeLib;
+  }
+
+  function openReadyModal() {
+    var box = modal('Get bid-ready');
+    var err = el('div', 'err');
+    var slot = el('div');
+    box.appendChild(el('p', null,
+      'Save a card once and every win is charged automatically the moment the hammer falls — no checkout race.'));
+    box.appendChild(slot);
+    box.appendChild(err);
+
+    fetchConfig().then(function (cfg) {
+      if (!cfg.stripePublishableKey) {
+        slot.appendChild(el('p', null, 'Card setup isn’t available right now. You can watch and chat — bidding needs a saved card.'));
+        return;
+      }
+      return Promise.all([loadStripeJs(), api('/billing/setup-intent', { method: 'POST', body: '{}' }).then(function (res) {
+        if (!res.ok) throw new Error('setup_intent_failed');
+        return res.json();
+      })]).then(function (parts) {
+        var stripe = parts[0](cfg.stripePublishableKey);
+        var elements = stripe.elements({
+          clientSecret: parts[1].clientSecret,
+          appearance: { theme: 'night', variables: { colorPrimary: '#E8FF52', borderRadius: '0px', fontFamily: 'Assistant, sans-serif' } },
+        });
+        elements.create('payment').mount(slot);
+        var save = primaryBtn('Save card');
+        box.appendChild(save);
+        save.addEventListener('click', function () {
+          save.disabled = true;
+          err.textContent = '';
+          stripe.confirmSetup({ elements: elements, confirmParams: { return_url: API + '/live' }, redirect: 'if_required' })
+            .then(function (result) {
+              if (result.error) { err.textContent = result.error.message || 'Card was not saved'; save.disabled = false; return; }
+              save.textContent = 'Confirming…';
+              return waitForBidReady().then(function (ready) {
+                if (ready) { closeModal(); toast('You’re bid-ready'); }
+                else { err.textContent = 'Saved — confirmation is taking a moment. Try bidding shortly.'; save.disabled = false; save.textContent = 'Save card'; }
+              });
+            });
+        });
+      });
+    }).catch(function () { err.textContent = 'Could not start card setup — try again'; });
+  }
+
+  // The webhook flips bid_ready; poll briefly until it lands.
+  function waitForBidReady() {
+    var tries = 15;
+    return new Promise(function (resolve) {
+      (function poll() {
+        fetchMe().then(function (data) {
+          if (data && data.bidReady) return resolve(true);
+          if (--tries <= 0) return resolve(false);
+          setTimeout(poll, 2000);
+        });
+      })();
+    });
+  }
 
   // ---------- me ----------
   function fetchMe() {
