@@ -41,6 +41,9 @@ export async function requestOtp(
     );
 
     await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
   } finally {
     client.release();
   }
