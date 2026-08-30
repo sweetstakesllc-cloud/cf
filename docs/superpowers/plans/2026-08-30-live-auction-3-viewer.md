@@ -70,7 +70,7 @@ live/server/
 
 ### Task 6: Widget core — state render, countdown, bid/buy
 
-- [ ] **Implement** `public/live.css` + `public/live.js` core:
+- [x] **Implement** `public/live.css` + `public/live.js` core:
   - Mobile-first layout: video full-bleed behind, bottom sheet with pinned-item card (title, image thumb, condition-free v1 fields: current/starting price in mono, bid count, viewer count), chat above it, ≥900px: video left ~2/3, rail right.
   - WS client with reconnect (1s→8s backoff), `state`/`viewers`/`chat`/`error` handling; `GET /live/state` fallback poll every 10s while socket is down.
   - Countdown from `endsAt` every 250ms; ≤10s renders in the soft-close style (pulsing, "GOING ONCE…"); state transitions won/charged render the SOLD stamp with `winner.emailMasked` + amount; `passed` renders PASSED; no stream renders the off-air panel (schedule pointer back to /pages/live content).
@@ -78,7 +78,7 @@ live/server/
   - Bid ticker derived client-side: on state change where `currentBidOre` moved, prepend "`x*** bid 3 400 kr`" into the chat feed.
   - Player: `<video muted playsinline autoplay>`; native HLS if `canPlayType('application/vnd.apple.mpegurl')`, else lazy hls.js from jsdelivr with onerror → poster panel; no playbackUrl → "stream starting" panel.
   - Money renders `3 400 kr` style (space thousands, öre dropped when zero) in the mono stack.
-- [ ] **Commit** `feat(live): viewer widget core — player, state, countdown, bid`
+- [x] **Commit** `feat(live): viewer widget core — player, state, countdown, bid`
 
 ### Task 7: Widget — sign-in and get-bid-ready flows
 
