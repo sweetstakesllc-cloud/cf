@@ -11,5 +11,5 @@ export async function getTestPool(): Promise<pg.Pool> {
 }
 
 export async function truncateAll(pool: pg.Pool): Promise<void> {
-  await pool.query(`TRUNCATE sessions, otp_codes, customers CASCADE`);
+  await pool.query(`TRUNCATE events, charges, bids, stream_items, streams, sessions, otp_codes, customers CASCADE`);
 }
