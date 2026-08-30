@@ -1,4 +1,6 @@
 import type pg from 'pg';
+import { chargeWinner } from './charge.js';
+import type { PaymentGateway } from '../billing/gateway.js';
 
 export const SOFT_CLOSE_MS = 10_000;
 export type EngineEvent = { type: string; payload: Record<string, unknown> };
@@ -217,4 +219,66 @@ export async function passItem(pool: pg.Pool, itemId: string, now: () => Date): 
   } finally {
     client.release();
   }
+}
+
+export async function settleDueAuctions(pool: pg.Pool, gateway: PaymentGateway, now: () => Date): Promise<EngineEvent[]> {
+  const events: EngineEvent[] = [];
+  const toCharge: string[] = [];
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const due = await client.query(
+      `SELECT * FROM stream_items WHERE state='auction_open' AND ends_at <= $1 FOR UPDATE SKIP LOCKED`, [now()]);
+    for (const item of due.rows) {
+      if (item.current_bidder_id != null) {
+        await client.query(
+          `UPDATE stream_items SET state='won', winner_id=$2, winning_amount_ore=$3 WHERE id=$1`,
+          [item.id, item.current_bidder_id, item.current_bid_ore]);
+        events.push(await logEvent(client, item.stream_id, 'auction_won',
+          { itemId: item.id, amountOre: item.current_bid_ore }));
+        toCharge.push(item.id);
+      } else {
+        await client.query(`UPDATE stream_items SET state='passed' WHERE id=$1`, [item.id]);
+        events.push(await logEvent(client, item.stream_id, 'item_passed', { itemId: item.id }));
+      }
+    }
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+  for (const itemId of toCharge) events.push(...await chargeWinner(pool, gateway, itemId, now));
+  return events;
+}
+
+export async function secondChance(pool: pg.Pool, gateway: PaymentGateway, itemId: string, now: () => Date): Promise<EngineEvent[]> {
+  const events: EngineEvent[] = [];
+  const client = await pool.connect();
+  try {
+    await client.query('BEGIN');
+    const { rows } = await client.query(`SELECT * FROM stream_items WHERE id=$1 FOR UPDATE`, [itemId]);
+    const item = rows[0];
+    if (!item || item.state !== 'payment_failed') throw new Error('cannot_second_chance');
+    const under = await client.query(
+      `SELECT customer_id, amount_ore FROM bids
+       WHERE item_id=$1 AND customer_id <> $2
+       ORDER BY amount_ore DESC, created_at ASC LIMIT 1`,
+      [itemId, item.winner_id]);
+    if (!under.rows[0]) throw new Error('no_underbidder');
+    await client.query(
+      `UPDATE stream_items SET state='won', winner_id=$2, winning_amount_ore=$3 WHERE id=$1`,
+      [itemId, under.rows[0].customer_id, under.rows[0].amount_ore]);
+    events.push(await logEvent(client, item.stream_id, 'second_chance',
+      { itemId, amountOre: under.rows[0].amount_ore }));
+    await client.query('COMMIT');
+  } catch (err) {
+    await client.query('ROLLBACK');
+    throw err;
+  } finally {
+    client.release();
+  }
+  events.push(...await chargeWinner(pool, gateway, itemId, now));
+  return events;
 }
