@@ -7,6 +7,7 @@ import type { Mailer } from './mailer.js';
 import { registerAuth } from './auth/routes.js';
 import type { PaymentGateway } from './billing/gateway.js';
 import { registerBilling } from './billing/routes.js';
+import { registerLive } from './live/routes.js';
 import { Hub } from './live/hub.js';
 import { getSession } from './auth/session.js';
 import { getPublicState } from './live/engine.js';
@@ -30,6 +31,7 @@ export function buildApp(deps: Deps): FastifyInstance {
   app.get('/healthz', async () => ({ ok: true }));
   registerAuth(app, deps.pool, deps.mailer, now, deps.config.env);
   registerBilling(app, deps.pool, deps.gateway);
+  registerLive(app, deps.pool, deps.gateway, now);
 
   const hub = new Hub(now);
   app.decorate('hub', hub);
