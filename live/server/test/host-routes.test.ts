@@ -90,4 +90,56 @@ describe('host flow', () => {
     expect(st.json().pinned.winnerEmail).toBe('anna@x.se');
     expect(st.json().pinned.chargeStatus).toBe('succeeded');
   });
+
+  it('extend and second-chance work through the host API', async () => {
+    const s = await app.inject({ method: 'POST', url: '/host/streams', headers: auth, payload: { title: 'S' } });
+    const { streamId } = s.json();
+    const i = await app.inject({ method: 'POST', url: '/host/items', headers: auth,
+      payload: { streamId, title: 'Jackie', mode: 'auction', startingBidOre: 100000 } });
+    const { itemId } = i.json();
+    // A second, never-pinned item stays 'queued' — the cleanest way to exercise extend's not_open 409.
+    const other = await app.inject({ method: 'POST', url: '/host/items', headers: auth,
+      payload: { streamId, title: 'Other', mode: 'auction', startingBidOre: 1000 } });
+    await app.inject({ method: 'POST', url: `/host/items/${itemId}/pin`, headers: auth });
+    await app.inject({ method: 'POST', url: `/host/items/${itemId}/open-auction`, headers: auth, payload: { durationSec: 60 } });
+
+    const extend = await app.inject({ method: 'POST', url: `/host/items/${itemId}/extend`, headers: auth, payload: { extraSec: 60 } });
+    expect(extend.statusCode).toBe(200);
+    expect(extend.json()).toEqual({ ok: true });
+
+    const extendOther = await app.inject({
+      method: 'POST', url: `/host/items/${other.json().itemId}/extend`, headers: auth, payload: { extraSec: 60 },
+    });
+    expect(extendOther.statusCode).toBe(409);
+
+    // Drive a real failed-then-second-chance charge through the engine (bids + settle), then
+    // exercise /host/items/:id/second-chance the same way the host would.
+    const { placeBid, settleDueAuctions } = await import('../src/live/engine.js');
+    const { rows: annaRows } = await pool.query(
+      `INSERT INTO customers (email, bid_ready, stripe_customer_id, default_payment_method_id)
+       VALUES ('anna@x.se', true, 'cus_anna', 'pm_anna') RETURNING id`);
+    const { rows: erikRows } = await pool.query(
+      `INSERT INTO customers (email, bid_ready, stripe_customer_id, default_payment_method_id)
+       VALUES ('erik@x.se', true, 'cus_erik', 'pm_erik') RETURNING id`);
+    await placeBid(pool, itemId, { customerId: erikRows[0].id, bidReady: true }, 100000,
+      () => new Date(now().getTime() + 1000));
+    await placeBid(pool, itemId, { customerId: annaRows[0].id, bidReady: true }, 120000,
+      () => new Date(now().getTime() + 2000));
+
+    gateway.failNextCharge = true;
+    await settleDueAuctions(pool, gateway, () => new Date(now().getTime() + 200_000));
+    const failed = await pool.query(`SELECT state FROM stream_items WHERE id=$1`, [itemId]);
+    expect(failed.rows[0].state).toBe('payment_failed');
+
+    const sc = await app.inject({ method: 'POST', url: `/host/items/${itemId}/second-chance`, headers: auth });
+    expect(sc.statusCode).toBe(200);
+    expect(sc.json()).toEqual({ ok: true, charged: true });
+
+    const st = await app.inject({ method: 'GET', url: '/host/state', headers: auth });
+    expect(st.json().pinned.winnerEmail).toBe('erik@x.se');
+    expect(st.json().pinned.chargeStatus).toBe('succeeded');
+
+    const sc2 = await app.inject({ method: 'POST', url: `/host/items/${itemId}/second-chance`, headers: auth });
+    expect(sc2.statusCode).toBe(409);
+  });
 });
