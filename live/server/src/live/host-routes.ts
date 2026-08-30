@@ -6,6 +6,7 @@ import {
   createStream, endStream, addItem, pinItem, openAuction, extendAuction,
   passItem, secondChance, getPublicState,
 } from './engine.js';
+import { HOST_HTML } from './host-page.js';
 
 const ERROR_STATUS: Record<string, number> = {
   stream_already_live: 409, auction_in_progress: 409, cannot_open: 409, not_open: 409,
@@ -29,6 +30,8 @@ export function registerHost(
   };
 
   const broadcast = async () => app.hub.broadcast({ type: 'state', state: await getPublicState(pool) });
+
+  app.get('/host', async (_req, reply) => reply.type('text/html').send(HOST_HTML));
 
   app.register(async (host) => {
     host.addHook('preHandler', requireHost);

@@ -143,3 +143,12 @@ describe('host flow', () => {
     expect(sc2.statusCode).toBe(409);
   });
 });
+
+describe('GET /host', () => {
+  it('serves the console page without auth', async () => {
+    const res = await app.inject({ method: 'GET', url: '/host' });
+    expect(res.statusCode).toBe(200);
+    expect(res.headers['content-type']).toContain('text/html');
+    expect(res.body).toContain('Circular Fash');
+  });
+});

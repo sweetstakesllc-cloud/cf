@@ -1,0 +1,242 @@
+// Operator console for running a live auction stream. Ugly-but-usable by design:
+// no build step, no external assets, one inline <script>. Plan 3 owns the pretty
+// customer-facing viewer page; this one only needs to work for the host.
+export const HOST_HTML = `<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circular Fash Host Console</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: #0E0E0E; color: #fff;
+    font-family: -apple-system, Segoe UI, Arial, sans-serif;
+    padding: 16px 20px 60px;
+  }
+  .mono { font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace; }
+  h1 { font-size: 18px; margin: 0 0 16px; }
+  h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #999; margin: 0 0 10px; }
+  button {
+    background: #1c1c1c; color: #fff; border: 1px solid #555; border-radius: 0;
+    padding: 8px 14px; font-size: 14px; cursor: pointer; margin: 0 8px 8px 0;
+  }
+  button:hover { background: #2a2a2a; }
+  button.primary { background: #E8FF52; color: #0E0E0E; border-color: #E8FF52; font-weight: 700; }
+  input {
+    background: #1c1c1c; color: #fff; border: 1px solid #555; border-radius: 0;
+    padding: 8px; font-size: 14px;
+  }
+  #login { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; }
+  #console { display: none; }
+  .panel { border: 1px solid #333; padding: 14px 16px; margin-bottom: 16px; max-width: 640px; }
+  .row { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 0; border-bottom: 1px solid #222; }
+  .row:last-child { border-bottom: none; }
+  .big { font-size: 28px; }
+  .muted { color: #888; }
+  .actions { padding-top: 8px; }
+</style>
+</head>
+<body>
+  <h1>Circular Fash &mdash; Host Console</h1>
+
+  <div id="login">
+    <input id="pw" type="password" placeholder="host password" autocomplete="off">
+    <button id="connectBtn" class="primary">Connect</button>
+  </div>
+
+  <div id="console">
+    <div class="panel">
+      <h2>Stream</h2>
+      <div class="row">
+        <span id="streamTitle" class="mono">no stream</span>
+        <span>
+          <button id="newStreamBtn">New stream</button>
+          <button id="endStreamBtn">End stream</button>
+        </span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>On screen</h2>
+      <div id="pinnedBox"><div class="muted">nothing pinned</div></div>
+    </div>
+
+    <div class="panel">
+      <h2>Queue</h2>
+      <button id="addItemBtn">Add item</button>
+      <div id="queueBox"></div>
+    </div>
+  </div>
+
+<script>
+(function () {
+  var pw = null;
+  var streamId = null;
+  var currentEndsAt = null;
+
+  function fmtKr(ore) {
+    return (ore / 100).toLocaleString('sv-SE') + ' kr';
+  }
+
+  function fmtCountdown(endsAt) {
+    if (!endsAt) return '';
+    var ms = new Date(endsAt).getTime() - Date.now();
+    if (ms < 0) ms = 0;
+    var totalSec = Math.floor(ms / 1000);
+    var m = Math.floor(totalSec / 60);
+    var s = totalSec % 60;
+    return m + ':' + (s < 10 ? '0' : '') + s;
+  }
+
+  function escapeHtml(s) {
+    var map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+    return String(s).replace(/[&<>"']/g, function (c) { return map[c]; });
+  }
+
+  async function api(path, method, body) {
+    var opts = { method: method, headers: { Authorization: 'Bearer ' + pw } };
+    if (body !== undefined) {
+      opts.headers['Content-Type'] = 'application/json';
+      opts.body = JSON.stringify(body);
+    }
+    var res = await fetch(path, opts);
+    var data = null;
+    try { data = await res.json(); } catch (e) { /* no body */ }
+    if (!res.ok) {
+      alert((data && data.error) || ('request failed: ' + res.status));
+      throw new Error('api_error');
+    }
+    return data;
+  }
+
+  async function fetchState() {
+    var res = await fetch('/host/state', { headers: { Authorization: 'Bearer ' + pw } });
+    var data = null;
+    try { data = await res.json(); } catch (e) { /* no body */ }
+    if (!res.ok) { alert((data && data.error) || ('state fetch failed: ' + res.status)); return; }
+    render(data);
+  }
+
+  function pinnedActionsHtml(p) {
+    var html = '';
+    if (p.mode === 'auction' && p.state === 'pinned') html += '<button data-act="open">Open auction</button>';
+    if (p.state === 'auction_open') html += '<button data-act="extend">Extend +60s</button>';
+    if (['pinned', 'auction_open', 'payment_failed'].indexOf(p.state) !== -1) html += '<button data-act="pass">Pass</button>';
+    if (p.state === 'payment_failed') html += '<button data-act="second-chance">Second chance</button>';
+    return html;
+  }
+
+  function render(state) {
+    streamId = state.stream ? state.stream.id : null;
+    document.getElementById('streamTitle').textContent =
+      state.stream ? state.stream.title + ' (' + state.stream.status + ')' : 'no stream';
+
+    var box = document.getElementById('pinnedBox');
+    var p = state.pinned;
+    currentEndsAt = p ? p.endsAt : null;
+    if (!p) {
+      box.innerHTML = '<div class="muted">nothing pinned</div>';
+    } else {
+      var priceOre = p.mode === 'buy_now' ? p.buyNowPriceOre : (p.currentBidOre || p.startingBidOre);
+      var html = '';
+      html += '<div class="row"><span>' + escapeHtml(p.title) + '</span><span class="mono">' + escapeHtml(p.state) + '</span></div>';
+      html += '<div class="row"><span>' + (p.mode === 'buy_now' ? 'Buy now' : 'Current bid') + '</span><span class="mono big">' + fmtKr(priceOre || 0) + '</span></div>';
+      if (p.state === 'auction_open') {
+        html += '<div class="row"><span>Ends in</span><span class="mono" id="countdown">' + fmtCountdown(p.endsAt) + '</span></div>';
+      }
+      if (p.winner) {
+        var who = p.winnerEmail ? escapeHtml(p.winnerEmail) : escapeHtml(p.winner.emailMasked);
+        html += '<div class="row"><span>Winner</span><span class="mono">' + who + ' &mdash; ' + escapeHtml(p.chargeStatus || 'unknown') + '</span></div>';
+      }
+      html += '<div class="actions">' + pinnedActionsHtml(p) + '</div>';
+      box.innerHTML = html;
+      box.querySelectorAll('button[data-act]').forEach(function (btn) {
+        btn.addEventListener('click', function () { onPinnedAction(btn.dataset.act, p.itemId); });
+      });
+    }
+
+    var qbox = document.getElementById('queueBox');
+    var queue = state.queue || [];
+    if (!queue.length) {
+      qbox.innerHTML = '<div class="muted">queue empty</div>';
+    } else {
+      qbox.innerHTML = queue.map(function (item) {
+        var price = item.mode === 'buy_now' ? item.buyNowPriceOre : item.startingBidOre;
+        return '<div class="row"><span>' + escapeHtml(item.title) + ' <span class="muted mono">(' + escapeHtml(item.mode) + ')</span></span>' +
+          '<span class="mono">' + fmtKr(price || 0) + '</span>' +
+          '<button data-pin="' + item.itemId + '">Pin</button></div>';
+      }).join('');
+      qbox.querySelectorAll('button[data-pin]').forEach(function (btn) {
+        btn.addEventListener('click', function () { pinItem(btn.dataset.pin); });
+      });
+    }
+  }
+
+  async function onPinnedAction(act, itemId) {
+    try {
+      if (act === 'open') {
+        var secStr = prompt('Duration in seconds', '60');
+        if (secStr === null) return;
+        var durationSec = parseInt(secStr, 10);
+        if (!durationSec) durationSec = 60;
+        await api('/host/items/' + itemId + '/open-auction', 'POST', { durationSec: durationSec });
+      } else if (act === 'extend') {
+        await api('/host/items/' + itemId + '/extend', 'POST', { extraSec: 60 });
+      } else if (act === 'pass') {
+        await api('/host/items/' + itemId + '/pass', 'POST');
+      } else if (act === 'second-chance') {
+        await api('/host/items/' + itemId + '/second-chance', 'POST');
+      }
+      fetchState();
+    } catch (e) { /* alert already shown by api() */ }
+  }
+
+  async function pinItem(itemId) {
+    try { await api('/host/items/' + itemId + '/pin', 'POST'); fetchState(); } catch (e) { /* alerted */ }
+  }
+
+  document.getElementById('connectBtn').addEventListener('click', function () {
+    var val = document.getElementById('pw').value;
+    if (!val) return;
+    pw = val;
+    document.getElementById('login').style.display = 'none';
+    document.getElementById('console').style.display = 'block';
+    fetchState();
+    setInterval(fetchState, 2000);
+    setInterval(function () {
+      var el = document.getElementById('countdown');
+      if (el && currentEndsAt) el.textContent = fmtCountdown(currentEndsAt);
+    }, 1000);
+  });
+
+  document.getElementById('newStreamBtn').addEventListener('click', async function () {
+    var title = prompt('Stream title');
+    if (!title) return;
+    try { await api('/host/streams', 'POST', { title: title }); fetchState(); } catch (e) { /* alerted */ }
+  });
+
+  document.getElementById('endStreamBtn').addEventListener('click', async function () {
+    if (!streamId) { alert('no active stream'); return; }
+    try { await api('/host/streams/end', 'POST', { streamId: streamId }); fetchState(); } catch (e) { /* alerted */ }
+  });
+
+  document.getElementById('addItemBtn').addEventListener('click', async function () {
+    if (!streamId) { alert('no active stream'); return; }
+    var title = prompt('Item title');
+    if (!title) return;
+    var mode = prompt('Mode: auction or buy_now', 'auction');
+    if (mode !== 'auction' && mode !== 'buy_now') { alert('mode must be auction or buy_now'); return; }
+    var krStr = prompt(mode === 'auction' ? 'Starting bid (kr)' : 'Buy-now price (kr)', '100');
+    var kr = parseFloat(krStr);
+    if (!kr || kr <= 0) { alert('invalid price'); return; }
+    var ore = Math.round(kr * 100);
+    var payload = { streamId: streamId, title: title, mode: mode };
+    if (mode === 'auction') payload.startingBidOre = ore; else payload.buyNowPriceOre = ore;
+    try { await api('/host/items', 'POST', payload); fetchState(); } catch (e) { /* alerted */ }
+  });
+})();
+</script>
+</body>
+</html>
+`;
