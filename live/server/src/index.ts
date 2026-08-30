@@ -5,6 +5,7 @@ import { ConsoleMailer } from './mailer.js';
 import { FakePaymentGateway, type PaymentGateway } from './billing/gateway.js';
 import { StripeGateway } from './billing/stripe.js';
 import { runMigrations } from '../scripts/migrate.js';
+import { settleDueAuctions, getPublicState } from './live/engine.js';
 
 const config = loadConfig();
 const pool = createPool(config.databaseUrl);
@@ -26,3 +27,13 @@ if (config.env === 'production') {
 const app = buildApp({ config, pool, mailer, gateway });
 await app.listen({ port: config.port, host: '0.0.0.0' });
 console.log(`cf-live-server on :${config.port} (stripe: ${gateway instanceof StripeGateway ? 'live' : 'fake'})`);
+
+const TICK_MS = 500;
+setInterval(async () => {
+  try {
+    const events = await settleDueAuctions(pool, gateway, () => new Date());
+    if (events.length > 0) app.hub.broadcast({ type: 'state', state: await getPublicState(pool) });
+  } catch (err) {
+    app.log.error(err, 'settle tick failed');
+  }
+}, TICK_MS);
