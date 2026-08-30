@@ -7,8 +7,13 @@ import { getPublicState, placeBid, buyNow } from './engine.js';
 const bidSchema = z.object({ itemId: z.string().uuid(), amountOre: z.number().int().positive().max(100_000_000) });
 const buySchema = z.object({ itemId: z.string().uuid() });
 
-export function registerLive(app: FastifyInstance, pool: pg.Pool, gateway: PaymentGateway, now: () => Date): void {
+export function registerLive(
+  app: FastifyInstance, pool: pg.Pool, gateway: PaymentGateway, now: () => Date,
+  stripePublishableKey: string | null = null,
+): void {
   app.get('/live/state', async () => getPublicState(pool));
+
+  app.get('/live/config', async () => ({ stripePublishableKey }));
 
   app.post('/live/bid', { preHandler: app.requireAuth }, async (request, reply) => {
     const parsed = bidSchema.safeParse(request.body);

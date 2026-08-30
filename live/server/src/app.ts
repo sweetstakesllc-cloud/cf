@@ -1,5 +1,6 @@
 import Fastify, { type FastifyInstance } from 'fastify';
 import cookie from '@fastify/cookie';
+import cors from '@fastify/cors';
 import websocket from '@fastify/websocket';
 import type pg from 'pg';
 import type { Config } from './config.js';
@@ -29,10 +30,12 @@ export function buildApp(deps: Deps): FastifyInstance {
   const now = deps.now ?? (() => new Date());
   const app = Fastify({ logger: deps.config.env !== 'test' });
   app.register(cookie, { secret: deps.config.cookieSecret });
+  if (deps.config.widgetOrigins.length > 0)
+    app.register(cors, { origin: deps.config.widgetOrigins, credentials: true });
   app.get('/healthz', async () => ({ ok: true }));
   registerAuth(app, deps.pool, deps.mailer, now, deps.config.env);
   registerBilling(app, deps.pool, deps.gateway);
-  registerLive(app, deps.pool, deps.gateway, now);
+  registerLive(app, deps.pool, deps.gateway, now, deps.config.stripePublishableKey);
   registerHost(app, deps.pool, deps.gateway, now, deps.config.hostPassword);
 
   const hub = new Hub(now);

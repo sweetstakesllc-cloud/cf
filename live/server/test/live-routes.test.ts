@@ -55,6 +55,28 @@ describe('GET /live/state', () => {
   });
 });
 
+describe('GET /live/config', () => {
+  it('returns a null publishable key when Stripe is not configured', async () => {
+    const res = await app.inject({ method: 'GET', url: '/live/config' });
+    expect(res.statusCode).toBe(200);
+    expect(res.json()).toEqual({ stripePublishableKey: null });
+  });
+
+  it('returns the configured publishable key', async () => {
+    const keyed = buildApp({
+      config: loadConfig({
+        NODE_ENV: 'test', DATABASE_URL: 'postgres://cf:cf@localhost:5433/cf_live',
+        COOKIE_SECRET: 'test-cookie-secret-at-least-32-chars!!',
+        STRIPE_PUBLISHABLE_KEY: 'pk_test_abc',
+      }),
+      pool, mailer, gateway, now,
+    });
+    const res = await keyed.inject({ method: 'GET', url: '/live/config' });
+    expect(res.json()).toEqual({ stripePublishableKey: 'pk_test_abc' });
+    await keyed.close();
+  });
+});
+
 describe('POST /live/bid', () => {
   it('requires auth and bid-readiness', async () => {
     const itemId = await openAuctionItem();
