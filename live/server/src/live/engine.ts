@@ -78,7 +78,7 @@ export async function pinItem(pool: pg.Pool, itemId: string, now: () => Date): P
     const item = await client.query(`SELECT id, stream_id, title FROM stream_items WHERE id=$1 FOR UPDATE`, [itemId]);
     if (!item.rows[0]) throw new Error('not_found');
     await client.query(`UPDATE stream_items SET state='queued' WHERE state='pinned' AND id <> $1`, [itemId]);
-    await client.query(`UPDATE stream_items SET state='pinned' WHERE id=$1`, [itemId]);
+    await client.query(`UPDATE stream_items SET state='pinned', pinned_at=$2 WHERE id=$1`, [itemId, now()]);
     const ev = await logEvent(client, item.rows[0].stream_id, 'item_pinned', { itemId, title: item.rows[0].title });
     await client.query('COMMIT');
     return [ev];
@@ -99,7 +99,7 @@ export async function getPublicState(pool: pg.Pool): Promise<PublicState> {
             (SELECT count(*)::int FROM bids b WHERE b.item_id = i.id) AS bid_count
      FROM stream_items i LEFT JOIN customers c ON c.id = i.winner_id
      WHERE i.stream_id=$1 AND i.state <> 'queued'
-     ORDER BY i.created_at DESC LIMIT 1`, [s.id]);
+     ORDER BY CASE WHEN i.state IN ('pinned','auction_open') THEN 0 ELSE 1 END, i.pinned_at DESC NULLS LAST LIMIT 1`, [s.id]);
   const q = await pool.query(`SELECT count(*)::int AS n FROM stream_items WHERE stream_id=$1 AND state='queued'`, [s.id]);
   const r = item.rows[0];
   return {

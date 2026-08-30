@@ -70,4 +70,17 @@ describe('streams and items', () => {
     expect(state.pinned!.bidCount).toBe(0);
     expect(state.queueLength).toBe(1);
   });
+
+  it('regression: shows newly pinned item even if previous was sold', async () => {
+    const clock1 = () => new Date('2026-08-30T19:00:00Z');
+    const clock2 = () => new Date('2026-08-30T19:00:10Z');
+    const { streamId } = await createStream(pool, 'Stream');
+    const a = await addItem(pool, streamId, { title: 'Item A', mode: 'auction', startingBidOre: 1000 });
+    const b = await addItem(pool, streamId, { title: 'Item B', mode: 'auction', startingBidOre: 2000 });
+    await pinItem(pool, b.itemId, clock1);
+    await pool.query(`UPDATE stream_items SET state='charged' WHERE id=$1`, [b.itemId]);
+    await pinItem(pool, a.itemId, clock2);
+    const state = await getPublicState(pool);
+    expect(state.pinned!.itemId).toBe(a.itemId);
+  });
 });
