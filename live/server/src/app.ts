@@ -16,6 +16,7 @@ import { Hub } from './live/hub.js';
 import { getSession } from './auth/session.js';
 import { getPublicState } from './live/engine.js';
 import { VIEWER_HTML } from './live/viewer-page.js';
+import { registerCertificateRoutes } from './certificates/routes.js';
 
 declare module 'fastify' {
   interface FastifyInstance { hub: Hub }
@@ -46,6 +47,12 @@ export function buildApp(deps: Deps): FastifyInstance {
   registerBilling(app, deps.pool, deps.gateway);
   registerLive(app, deps.pool, deps.gateway, now, deps.config.stripePublishableKey);
   registerHost(app, deps.pool, deps.gateway, now, deps.config.hostPassword);
+  registerCertificateRoutes(
+    app,
+    deps.pool,
+    deps.config.shopifyWebhookSecret,
+    deps.config.certificateStorageDirectory,
+  );
 
   const hub = new Hub(now);
   app.decorate('hub', hub);

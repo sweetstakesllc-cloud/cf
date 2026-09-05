@@ -10,6 +10,15 @@ const schema = z.object({
   STRIPE_PUBLISHABLE_KEY: z.string().min(1).optional(),
   HOST_PASSWORD: z.string().min(12).optional(),
   WIDGET_ORIGINS: z.string().default(''),
+  SHOPIFY_WEBHOOK_SECRET: z.string().min(1).optional(),
+  SHOPIFY_STORE_DOMAIN: z.string().min(1).optional(),
+  SHOPIFY_ADMIN_ACCESS_TOKEN: z.string().min(1).optional(),
+  SHOPIFY_API_VERSION: z.string().regex(/^\d{4}-\d{2}$/).default('2026-07'),
+  PUBLIC_BASE_URL: z.string().url().optional(),
+  CERTIFICATE_STORAGE_DIR: z.string().default('./data/certificates'),
+  CERTIFICATE_PYTHON_BIN: z.string().default('python'),
+  RESEND_API_KEY: z.string().min(1).optional(),
+  CERTIFICATE_FROM_EMAIL: z.string().min(3).optional(),
 });
 
 export type Config = {
@@ -22,6 +31,15 @@ export type Config = {
   stripePublishableKey: string | null;
   hostPassword: string | null;
   widgetOrigins: string[];
+  shopifyWebhookSecret: string | null;
+  shopifyStoreDomain: string | null;
+  shopifyAdminAccessToken: string | null;
+  shopifyApiVersion: string;
+  publicBaseUrl: string | null;
+  certificateStorageDirectory: string;
+  certificatePythonBin: string;
+  resendApiKey: string | null;
+  certificateFromEmail: string | null;
 };
 
 export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
@@ -36,5 +54,14 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
     stripePublishableKey: e.STRIPE_PUBLISHABLE_KEY ?? null,
     hostPassword: e.HOST_PASSWORD ?? null,
     widgetOrigins: e.WIDGET_ORIGINS.split(',').map(s => s.trim()).filter(Boolean),
+    shopifyWebhookSecret: e.SHOPIFY_WEBHOOK_SECRET ?? null,
+    shopifyStoreDomain: e.SHOPIFY_STORE_DOMAIN ?? null,
+    shopifyAdminAccessToken: e.SHOPIFY_ADMIN_ACCESS_TOKEN ?? null,
+    shopifyApiVersion: e.SHOPIFY_API_VERSION,
+    publicBaseUrl: e.PUBLIC_BASE_URL?.replace(/\/$/, '') ?? null,
+    certificateStorageDirectory: e.CERTIFICATE_STORAGE_DIR,
+    certificatePythonBin: e.CERTIFICATE_PYTHON_BIN,
+    resendApiKey: e.RESEND_API_KEY ?? null,
+    certificateFromEmail: e.CERTIFICATE_FROM_EMAIL ?? null,
   };
 }

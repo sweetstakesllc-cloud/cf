@@ -82,3 +82,49 @@ puppeteer. See `docs/superpowers/plans/2026-08-30-live-auction-3-viewer.md`.
 Shopify order sync on charge success, replays / seen-live grid, Mux wiring +
 real playback IDs, load test (p95 bid round-trip < 300 ms @ 200 viewers), and
 persisted mutes if they should survive restarts.
+
+## Authenticity certificate automation
+
+The server now accepts Shopify's `orders/fulfilled` webhook, creates one immutable
+certificate per order line item, writes certificate links to the order's
+`custom.authenticity_certificates` JSON metafield, and sends one service email
+containing every certificate in that order. Repeat purchases create new records;
+they never replace previous certificates.
+
+Setup:
+
+1. Install Python 3 and run `python -m pip install -r requirements.txt`.
+2. Set every certificate variable shown in `.env.example`. The Shopify custom app
+   needs permission to read products/orders and write order metafields.
+3. Give `CERTIFICATE_STORAGE_DIR` persistent storage. Do not use an ephemeral
+   deployment filesystem in production.
+4. In the Shopify custom app, subscribe `orders/fulfilled` to
+   `https://YOUR_API_HOST/webhooks/shopify/orders-fulfilled` using JSON delivery.
+5. Add optional product metafields `custom.authentication_partner` and
+   `custom.authentication_report_number`. They are printed when populated.
+6. Verify the Resend sending domain, then test with a Shopify test order. The
+   same Resend configuration also replaces the development-only OTP console
+   mailer when the live server is deployed.
+
+Webhook deliveries are HMAC-verified, stored before processing, deduplicated by
+Shopify's webhook ID, and retried with exponential backoff. Public verification
+pages contain no customer email or other personal information.
+
+### Native newsletter popup (Shopify Admin)
+
+The Forms app embed is already enabled in this theme. Create the popup in
+**Apps > Forms** rather than adding another Liquid popup:
+
+- Floating layout; bottom-right desktop and compact mobile placement.
+- Show on the second page view after an 8-second delay.
+- Hide from existing email subscribers and retain the default dismissal memory.
+- Heading: `Stay in the loop`.
+- Body: `Join our email list for first access to new arrivals and receive a
+  discount on your next purchase.`
+- Button: `GET MY DISCOUNT`.
+- Footer: `Unsubscribe anytime.` plus a link to the privacy policy.
+
+Then create and activate **Messaging > Automations > Welcome new subscribers
+with a discount email**. Keep only the Shopify Forms popup published; the
+Klaviyo theme embed is currently disabled and should remain disabled while the
+native form is in use.
