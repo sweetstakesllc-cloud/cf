@@ -31,10 +31,11 @@ exchanged automatically and cached until one minute before token expiry.
 
 ## Shopify and email
 
-The currently installed app has product/theme/content permissions, but no order
-permissions. Add `read_orders` and `write_orders` to its configuration and approve
-the updated installation. Verify access to the customer email field required by
-the webhook. Configure and verify the Resend sending domain's DNS records.
+The installed app now has `read_orders` and `write_orders`, confirmed by the
+Admin API after releasing `certificates-orders-2026-09-06` and accepting the
+updated installation. Shopify displayed the required customer data access during
+that update. Resend has verified the sending domain. Confirm the customer email
+field with a controlled fulfillment test before enabling normal processing.
 
 Only after the backend is healthy, register `orders/fulfilled` JSON delivery to
 `https://SERVICE_HOST/webhooks/shopify/orders-fulfilled`.
@@ -68,4 +69,15 @@ sending records through Shopify-managed DNS:
 All three exact values were confirmed in Shopify and public DNS. Resend
 verification completed successfully. Existing Google MX, root SPF, DMARC,
 and other sender records were preserved; Resend receiving was not enabled.
-Hosting and securely configuring a Resend sending API key remain outstanding.
+A domain-limited Resend sending API key has been created and securely staged
+locally for deployment; its value is not stored in Git.
+
+## Render progress
+
+Render is connected to only the `sweetstakesllc-cloud/cf` repository. The
+`deploy/certificates` branch contains the certificate-only Docker entry point
+and `render.yaml` for a Frankfurt web service, managed PostgreSQL, and a 1 GB
+persistent disk. Blueprint setup found the configuration but is blocked by
+Render's payment-card requirement. No paid resources have been created yet.
+After billing is added, finish Blueprint setup with the staged secrets, verify
+`/health`, set the final public URL, and register/test the fulfillment webhook.
