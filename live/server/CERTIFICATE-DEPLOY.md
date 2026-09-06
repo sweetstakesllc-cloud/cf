@@ -1,6 +1,6 @@
 # Certificate service deployment
 
-Prepared locally; not deployed. This uses `src/certificates/index.ts`, a
+Deployed on Render on 2026-09-06. This uses `src/certificates/index.ts`, a
 certificate-only entry point that does not need Stripe or expose auction routes.
 The combined live-server entry point can also run certificate automation.
 
@@ -72,12 +72,36 @@ and other sender records were preserved; Resend receiving was not enabled.
 A domain-limited Resend sending API key has been created and securely staged
 locally for deployment; its value is not stored in Git.
 
-## Render progress
+## Live deployment — 2026-09-06
 
-Render is connected to only the `sweetstakesllc-cloud/cf` repository. The
-`deploy/certificates` branch contains the certificate-only Docker entry point
-and `render.yaml` for a Frankfurt web service, managed PostgreSQL, and a 1 GB
-persistent disk. Blueprint setup found the configuration but is blocked by
-Render's payment-card requirement. No paid resources have been created yet.
-After billing is added, finish Blueprint setup with the staged secrets, verify
-`/health`, set the final public URL, and register/test the fulfillment webhook.
+- Public base URL: `https://certificates.circularfash.com`.
+- Render service: `srv-daequev40ujc738cn7cg`, Starter, Frankfurt.
+- Database: `dpg-daeqtov40ujc738ck94g-a`, Basic-256mb, PostgreSQL 18,
+  1 GB, Frankfurt; external PostgreSQL traffic blocked.
+- Persistent disk: 1 GB at `/data`; PDFs in `/data/certificates`.
+- Blueprint: `exs-daeqpreq1p3s73ah0ss0`, branch `deploy/certificates`.
+- Runtime commit: `469a32e`; automatic code deployments are off.
+- Shopify `ORDERS_FULFILLED` subscription:
+  `gid://shopify/WebhookSubscription/2318272201032` targeting
+  `https://certificates.circularfash.com/webhooks/shopify/orders-fulfilled`.
+- Shopify DNS: CNAME `certificates` to `cf-certificates.onrender.com`.
+- Real credentials configured in Render, including domain-limited Resend
+  sending access. No secrets are committed to Git.
+
+The custom HTTPS `/health` endpoint returns 200 and confirms database access.
+Unsigned webhook requests are rejected. A hosted synthetic test generated a
+5,107-byte PDF, reused its certificate on repeated processing, and served both
+PDF and verification page over HTTPS. Its record is deliberately marked revoked
+and labeled TEST ONLY. Shopify metadata writes and email were mocked for this
+synthetic test: **real email delivery and a real Shopify test-order round trip
+remain unverified**, pending a user-controlled test recipient.
+
+The synthetic test token is `bd6d5939-06fd-46ce-8a74-19ae00e28549`.
+No customer email was sent during deployment testing. The fulfillment webhook
+is registered, so new fulfilled orders are enabled for automatic processing.
+Historical orders are not backfilled by this deployment.
+
+Render shows three-day point-in-time database recovery, initially initializing,
+and daily disk snapshots retained for seven days. No restore drill or
+post-restart persistence check has been performed yet. Watch failed certificate
+jobs and Render failure notifications; periodically test recovery.
