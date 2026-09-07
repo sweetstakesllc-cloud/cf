@@ -105,3 +105,9 @@ Render shows three-day point-in-time database recovery, initially initializing,
 and daily disk snapshots retained for seven days. No restore drill or
 post-restart persistence check has been performed yet. Watch failed certificate
 jobs and Render failure notifications; periodically test recovery.
+
+### Certificate image selection (7 September 2026)
+
+New certificates use the first listing photograph and the final two photographs, where tag/label details are normally listed. Duplicate URLs are removed for short galleries. Shopify images are paginated so the actual end of a gallery is used. Both the PDF and verification page consume this saved selection. Existing certificates retain their original snapshots.
+
+Validation: six image-selection regression tests, TypeScript checking, a real Shopify product read, and a rendered sample with buckle and stamped label details.

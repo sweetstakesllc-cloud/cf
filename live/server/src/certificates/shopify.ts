@@ -58,31 +58,45 @@ export class ShopifyAdminClient implements ShopifyAdmin {
 
   async getProduct(productId: string): Promise<ProductSnapshot | null> {
     const id = productId.startsWith('gid://') ? productId : `gid://shopify/Product/${productId}`;
-    const data = await this.query<{
-      product: null | {
-        title: string;
-        vendor: string;
-        images: { nodes: Array<{ url: string }> };
-        partner: null | { value: string };
-        reportNumber: null | { value: string };
+    const images: string[] = [];
+    let cursor: string | null = null;
+    let snapshot: ProductSnapshot | null = null;
+    do {
+      const data: {
+        product: null | {
+          title: string;
+          vendor: string;
+          images: { nodes: Array<{ url: string }>; pageInfo: { hasNextPage: boolean; endCursor: string | null } };
+          partner: null | { value: string };
+          reportNumber: null | { value: string };
+        };
+      } = await this.query(`query CertificateProduct($id: ID!, $cursor: String) {
+        product(id: $id) {
+          title
+          vendor
+          images(first: 250, after: $cursor) { nodes { url } pageInfo { hasNextPage endCursor } }
+          partner: metafield(namespace: "custom", key: "authentication_partner") { value }
+          reportNumber: metafield(namespace: "custom", key: "authentication_report_number") { value }
+        }
+      }`, { id, cursor });
+      if (!data.product) return null;
+      images.push(...data.product.images.nodes.map(image => image.url));
+      snapshot = {
+        title: data.product.title,
+        brand: data.product.vendor,
+        // Keep the main product photo plus the final listing photos (tags/labels).
+        // Short galleries overlap, so avoid repeating the same image.
+        imageUrls: [...new Set([...images.slice(0, 1), ...images.slice(-2)])],
+        authenticationPartner: data.product.partner?.value ?? null,
+        authenticationReportNumber: data.product.reportNumber?.value ?? null,
       };
-    }>(`query CertificateProduct($id: ID!) {
-      product(id: $id) {
-        title
-        vendor
-        images(first: 3) { nodes { url } }
-        partner: metafield(namespace: "custom", key: "authentication_partner") { value }
-        reportNumber: metafield(namespace: "custom", key: "authentication_report_number") { value }
+      const page = data.product.images.pageInfo;
+      if (page.hasNextPage && (!page.endCursor || page.endCursor === cursor)) {
+        throw new Error('Shopify image pagination did not advance');
       }
-    }`, { id });
-    if (!data.product) return null;
-    return {
-      title: data.product.title,
-      brand: data.product.vendor,
-      imageUrls: data.product.images.nodes.map(image => image.url),
-      authenticationPartner: data.product.partner?.value ?? null,
-      authenticationReportNumber: data.product.reportNumber?.value ?? null,
-    };
+      cursor = page.hasNextPage ? page.endCursor : null;
+    } while (cursor);
+    return snapshot;
   }
 
   async setOrderCertificates(
