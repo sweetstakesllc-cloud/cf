@@ -682,6 +682,7 @@
                   {% render 'product-variant-picker', product: product, block: block, product_form_id: product_form_id %}
                 {%- endif -%}
               {%- when 'buy_buttons' -%}
+                {% render 'cf-size-finder', product: product, section_id: section.id %}
                 {%- render 'buy-buttons',
                   block: block,
                   product: product,
