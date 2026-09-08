@@ -48,28 +48,31 @@
       }
       return result(Math.abs(delta) <= 2 ? 'A close width match' : delta > 0 ? 'A roomier chest fit' : 'A closer chest fit', detail, 'Based on the listing’s measurements and your reference garment, not a body-size prediction. A close width match does not confirm the whole garment will fit.');
     }
-    let index = sizes.indexOf(input.usual), source = 'usual';
-    if (index < 0) {
-      if (h < 145 || h > 205 || w < 45 || w > 130) return result('A measurement comparison will help', 'Your inputs are outside this rough guide’s range. Add the width of a garment you own instead of relying on a height-and-weight size estimate.');
-      // Broad merchant heuristic: weight normalized to 175 cm. Not inferred body
-      // measurements, a brand chart, BMI advice or statistical fit confidence.
-      const adjusted = w * (175 / h) ** 2;
-      const cutoffs = input.reference === 'women' ? [49, 56, 64, 73, 84, 98, 114] : [53, 61, 70, 80, 92, 106, 122];
-      index = cutoffs.findIndex(c => adjusted < c);
-      if (index < 0) index = 7;
-      source = 'rough';
-    }
+    if (h < 145 || h > 205 || w < 45 || w > 130) return result('A measurement comparison will help', 'Your inputs are outside this rough guide’s range. Add the width of a garment you own instead of relying on a height-and-weight size estimate. Your usual label size cannot resolve this.');
+    // Broad merchant heuristic: weight normalized to 175 cm. Not inferred body
+    // measurements, a brand chart, BMI advice or statistical fit confidence.
+    // A self-reported label must never replace the independent estimate.
+    const adjusted = w * (175 / h) ** 2;
+    const cutoffs = input.reference === 'women' ? [49, 56, 64, 73, 84, 98, 114] : [53, 61, 70, 80, 92, 106, 122];
+    let index = cutoffs.findIndex(c => adjusted < c);
+    if (index < 0) index = 7;
     const shift = input.fit === 'relaxed' ? 1 : input.fit === 'close' ? -1 : 0;
     const center = Math.max(0, Math.min(7, index + shift));
-    const range = source === 'rough' ? [...new Set([sizes[Math.max(0, center - 1)], sizes[center], sizes[Math.min(7, center + 1)]])] : [sizes[center]];
-    let detail = source === 'rough' ? `A broad starting range from height, weight and your chosen sizing reference. Body shape cannot be determined from these inputs, so use the garment comparison before deciding.` : `Based on your usual ${input.usual} and ${input.fit === 'close' ? 'closer' : input.fit} fit preference. Brand labels are not standardized.`;
+    const range = [...new Set([sizes[Math.max(0, center - 1)], sizes[center], sizes[Math.min(7, center + 1)]])];
+    let detail = `A broad starting range from your ${h} cm height, ${w} kg weight, chosen sizing reference and fit preference. This is not a measurement of your body or confirmation that this particular piece will fit.`;
+    if (sizes.includes(input.usual)) {
+      facts.push(range.includes(input.usual)
+        ? `Your usual ${input.usual} is consistent with this rough range. It was used only as a cross-check, not to choose the result.`
+        : `Your usual ${input.usual} differs from this rough range. That disagreement is a reason to compare garment measurements, not to automatically change your size.`);
+    }
+    if (validPit) facts.push(`For an item-specific comparison, enter the flat chest width of a similar garment you own above. This piece measures ${validPit} cm; height and weight alone cannot establish the width you need.`);
     const candidates = single && fitNote ? [letter(fitNote)] : available.map(letter).filter(Boolean);
     if (candidates.length) detail += candidates.some(v => range.includes(v)) ? ' This listing has a size within that range; that alone does not confirm fit.' : ' This listing’s size is outside that starting range. Check the measurements carefully.';
     else detail += ' This listing has no comparable available letter size. Numeric sizes are not converted without a brand chart.';
     if (single && /oversized|slim fit|runs small|runs large/i.test(`${listed.join(' ')} ${p.description}`)) facts.push('The listing includes a cut or fit note. Compare the actual measurements; no automatic brand-size correction was applied.');
     if (!single) facts.push('This listing has several sizes. Product-level measurements and fit notes are not assigned to individual variants.');
     if (!validPit) facts.push('No usable chest-width measurement is available for this size. Ask us for measurements before buying if unsure.');
-    return result(`${source === 'rough' ? 'Rough starting range' : 'Starting size'}: ${range.length > 1 ? range[0] + '–' + range.at(-1) : range[0]}`, detail);
+    return result(`Rough starting range: ${range.length > 1 ? range[0] + '–' + range.at(-1) : range[0]}`, detail);
   }
   // Also used by the focused arithmetic and catalog regression checks.
   if (typeof module !== 'undefined' && module.exports) module.exports = {recommend, kind, letter};
