@@ -8,9 +8,11 @@ import { PythonCertificateGenerator } from './pdf.js';
 import { ResendCertificateMailer } from './mailer.js';
 import { CertificateService } from './service.js';
 import { processNextCertificateJob } from './worker.js';
+import { registerProfitRoutes } from '../profit/routes.js';
+import { syncProfit } from '../profit/sync.js';
 import { registerCertificateRequestRoutes, processNextCertificateRequest, processNextReviewNotification, findRequestOrder } from './requests.js';
 
-// Certificate-only production entry point; no auction, payment, or OTP routes.
+// Certificate service and private merchant profit dashboard; no auction or checkout routes.
 const env = z.object({
   PORT: z.coerce.number().int().default(3001),
   DATABASE_URL: z.string().min(1),
@@ -47,6 +49,14 @@ const service = new CertificateService(pool, shopify,
   env.PUBLIC_BASE_URL.replace(/\/$/, ''),
 );
 let stopping = false;
+let profitJob: Promise<unknown> | undefined;
+const refreshProfit = (): Promise<unknown> => {
+  if (stopping) return Promise.resolve(false);
+  if (!profitJob) profitJob = syncProfit(pool, shopify).finally(() => { profitJob = undefined; });
+  return profitJob;
+};
+registerProfitRoutes(app, pool, shopify, { clientId: env.SHOPIFY_CLIENT_ID, clientSecret: env.SHOPIFY_CLIENT_SECRET, store: env.SHOPIFY_STORE_DOMAIN, sync: refreshProfit });
+const profitTimer = setInterval(() => { void refreshProfit().catch(error => app.log.error(error, 'profit sync failed')); }, 10 * 60 * 1000);
 let activeJob: Promise<void> | undefined;
 const timer = setInterval(() => {
   if (stopping || activeJob) return;
@@ -69,9 +79,13 @@ for (const signal of ['SIGINT', 'SIGTERM'] as const) {
   process.once(signal, async () => {
     stopping = true;
     clearInterval(timer);
+    clearInterval(profitTimer);
     await app.close();
     await activeJob;
+    await profitJob?.catch(() => {});
     await pool.end();
   });
 }
 await app.listen({ host: '0.0.0.0', port: env.PORT });
+
+void refreshProfit().catch(error => app.log.error(error, 'initial profit sync failed'));

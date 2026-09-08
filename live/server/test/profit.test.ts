@@ -1,0 +1,44 @@
+import {createHmac} from 'node:crypto';
+import {describe,it,expect,beforeAll,beforeEach,afterAll,vi} from 'vitest';
+import Fastify from 'fastify';import pg from 'pg';
+import {verifyShopifyToken} from '../src/profit/auth.js';
+import {calculateOrder,minor,localDay,type ProfitOrder} from '../src/profit/model.js';
+import {registerProfitRoutes} from '../src/profit/routes.js';
+import {syncProfit} from '../src/profit/sync.js';
+import {runMigrations} from '../scripts/migrate.js';
+const bag=(n:number)=>({shopMoney:{amount:String(n),currencyCode:'SEK'}});
+const fixture=():ProfitOrder=>({id:'gid://shopify/Order/1',name:'#1',processedAt:'2026-09-01T23:30:00Z',updatedAt:'2026-09-02T00:00:00Z',test:false,displayFinancialStatus:'PAID',displayFulfillmentStatus:'FULFILLED',netPaymentSet:bag(1000),currentTotalPriceSet:bag(1000),currentTotalTaxSet:bag(200),currentShippingPriceSet:bag(0),totalRefundedSet:bag(0),lineItems:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[{id:'gid://shopify/LineItem/1',title:'Jacket',sku:'SKU',quantity:1,currentQuantity:1,isGiftCard:false,requiresShipping:true,discountedUnitPriceAfterAllDiscountsSet:bag(1000),product:{id:'gid://shopify/Product/1'},variant:{id:'gid://shopify/ProductVariant/1',inventoryItem:{id:'gid://shopify/InventoryItem/1',unitCost:{amount:'400',currencyCode:'SEK'}}}}]},transactions:[{id:'tx1',kind:'SALE',status:'SUCCESS',gateway:'shopify_payments',formattedGateway:'Shopify Payments',test:false,amountSet:bag(1000),paymentDetails:{wallet:'APPLE_PAY'},fees:[{id:'fee1',amount:{amount:'30',currencyCode:'SEK'},taxAmount:{amount:'0',currencyCode:'SEK'},type:'processing_fee'}]}],refunds:[]});
+const costs=[{line_id:'gid://shopify/LineItem/1',variant_id:'gid://shopify/ProductVariant/1',unit_cost:40000,source:'confirmed_manual'}];
+const adj={shipping_cost:5000,packaging_cost:1000,fee_override:null,tax_override:null};
+const sign=(claims:any,secret='secret')=>{const parts=[{alg:'HS256',typ:'JWT'},claims].map(x=>Buffer.from(JSON.stringify(x)).toString('base64url'));return parts.join('.')+'.'+createHmac('sha256',secret).update(parts.join('.')).digest('base64url');};
+const claims=()=>({aud:'client',dest:'https://test.myshopify.com',iss:'https://test.myshopify.com/admin',sub:'123',iat:Math.floor(Date.now()/1000),nbf:Math.floor(Date.now()/1000),exp:Math.floor(Date.now()/1000)+60});
+describe('profit arithmetic and access',()=>{
+ it('rounds money without binary floating point errors',()=>{expect(minor('10.075')).toBe(1008);expect(minor('-1.005')).toBe(-101);expect(minor('0')).toBe(0);});
+ it('uses Stockholm dates across midnight and DST',()=>{expect(localDay('2026-09-01T23:30:00Z')).toBe('2026-09-02');expect(localDay('2026-01-01T23:30:00Z')).toBe('2026-01-02');});
+ it('deducts VAT, COGS, actual fees and recorded expenses once',()=>{const r=calculateOrder(fixture(),costs,adj);expect(r.profit).toBe(31000);expect(r.complete).toBe(true);expect(r.methods).toEqual(['APPLE_PAY']);});
+ it('excludes failed attempts and deduplicates fee records',()=>{const o=fixture();o.transactions.push({...o.transactions[0]!,id:'failure',status:'FAILURE',fees:[{...o.transactions[0]!.fees[0]!,id:'fee-failure'}]});o.transactions.push({...o.transactions[0]!,id:'duplicate'});expect(calculateOrder(o,costs,adj).fees).toBe(3000);});
+ it('never presents missing costs or fees as confirmed zero',()=>{expect(calculateOrder(fixture(),[],adj).profit).toBeNull();const o=fixture();o.transactions[0]!.fees=[];expect(calculateOrder(o,costs,adj).profit).toBeNull();expect(calculateOrder(o,costs,{...adj,fee_override:0}).profit).toBe(34000);});
+ it('preserves the original fee and item loss on a non-restocked full refund',()=>{const o=fixture();o.netPaymentSet=bag(0);o.currentTotalPriceSet=bag(0);o.currentTotalTaxSet=bag(0);o.totalRefundedSet=bag(1000);o.displayFinancialStatus='REFUNDED';o.lineItems.nodes[0]!.currentQuantity=0;o.refunds=[{id:'refund1',refundLineItems:{pageInfo:{hasNextPage:false,endCursor:null},nodes:[{quantity:1,restocked:false,restockType:'NO_RESTOCK',lineItem:{id:costs[0]!.line_id}}]}}];expect(calculateOrder(o,costs,adj).profit).toBe(-49000);o.refunds[0]!.refundLineItems.nodes[0]!.restocked=true;expect(calculateOrder(o,costs,adj).profit).toBe(-9000);});
+ it('excludes unpaid and test orders from totals',()=>{expect(calculateOrder({...fixture(),test:true},costs,adj).eligible).toBe(false);expect(calculateOrder({...fixture(),displayFinancialStatus:'PENDING'},costs,adj).eligible).toBe(false);});
+ it('flags first-import historical costs and unmatched currencies',()=>{expect(calculateOrder(fixture(),[{...costs[0]!,source:'current_cost_on_import'}],adj).complete).toBe(false);const o=fixture();o.transactions[0]!.fees[0]!.amount.currencyCode='USD';expect(calculateOrder(o,costs,adj).missingFees).toBe(true);});
+ it('validates Shopify signature, audience, shop and expiry',()=>{expect(verifyShopifyToken(sign(claims()),'client','secret','test.myshopify.com')).toBe('123');for(const c of [{...claims(),aud:'other'},{...claims(),dest:'https://evil.myshopify.com'},{...claims(),exp:1},{...claims(),iss:'https://test.myshopify.com.evil/admin'}])expect(verifyShopifyToken(sign(c),'client','secret','test.myshopify.com')).toBeNull();expect(verifyShopifyToken(sign(claims(),'wrong'),'client','secret','test.myshopify.com')).toBeNull();});
+});
+const pool=new pg.Pool({connectionString:process.env.PROFIT_TEST_DATABASE_URL});const app=Fastify();let importedCost='400';
+const fake:any={query:vi.fn(async(query:string)=>{
+ if(query.includes('currentAppInstallation'))return {shop:{currencyCode:'SEK',ianaTimezone:'Europe/Stockholm'},currentAppInstallation:{accessScopes:[]}};
+ if(query.includes('orders(first:12')){const o=fixture();o.lineItems.nodes[0]!.variant!.inventoryItem.unitCost!.amount=importedCost;return {orders:{nodes:[o],pageInfo:{hasNextPage:false,endCursor:null}}};}
+ if(query.includes('productVariants(first:150'))return {productVariants:{nodes:[{id:'gid://shopify/ProductVariant/1',title:'Default Title',sku:'SKU',inventoryQuantity:1,product:{id:'gid://shopify/Product/1',title:'Jacket',status:'ACTIVE'},inventoryItem:{id:'gid://shopify/InventoryItem/1',unitCost:{amount:importedCost,currencyCode:'SEK'}}}],pageInfo:{hasNextPage:false,endCursor:null}}};
+ if(query.includes('productVariantsBulkUpdate'))return {productVariantsBulkUpdate:{userErrors:[]}};
+ throw Error('Unexpected query');
+})};
+const headers=()=>({authorization:'Bearer '+sign(claims())});
+beforeAll(async()=>{if(!process.env.PROFIT_TEST_DATABASE_URL?.endsWith(':55439/profit_test'))throw Error('Use the isolated profit_test database');await runMigrations(pool);registerProfitRoutes(app,pool,fake,{clientId:'client',clientSecret:'secret',store:'test.myshopify.com',sync:()=>syncProfit(pool,fake)});});
+beforeEach(async()=>{await pool.query('TRUNCATE profit_audit,profit_expenses,profit_adjustments,profit_costs,profit_orders,profit_variants,profit_state CASCADE');importedCost='400';});
+afterAll(async()=>{await app.close();await pool.end();});
+describe('profit sync and API',()=>{
+ it('blocks anonymous financial reads and writes',async()=>{expect((await app.inject('/profit/api/report?from=2026-09-01&to=2026-09-30')).statusCode).toBe(401);expect((await app.inject({method:'POST',url:'/profit/api/sync'})).statusCode).toBe(401);});
+ it('retains historical cost snapshots when Shopify cost changes',async()=>{await syncProfit(pool,fake);importedCost='800';await syncProfit(pool,fake);expect(Number((await pool.query('SELECT unit_cost FROM profit_costs')).rows[0].unit_cost)).toBe(40000);expect(Number((await pool.query('SELECT cost FROM profit_variants')).rows[0].cost)).toBe(80000);});
+ it('allows explicit historical cost correction with an audit trail',async()=>{await syncProfit(pool,fake);const r=await app.inject({method:'PUT',url:'/profit/api/order-cost',headers:headers(),payload:{orderId:fixture().id,lineId:costs[0]!.line_id,cost:450.25}});expect(r.statusCode).toBe(200);expect(Number((await pool.query('SELECT unit_cost FROM profit_costs')).rows[0].unit_cost)).toBe(45025);expect((await pool.query('SELECT * FROM profit_audit')).rowCount).toBe(1);});
+ it('saves an expense and includes it in the selected day and period',async()=>{await syncProfit(pool,fake);expect((await app.inject({method:'POST',url:'/profit/api/expenses',headers:headers(),payload:{day:'2026-09-03',category:'Advertising',description:'Campaign',amount:100}})).statusCode).toBe(200);const r=await app.inject({url:'/profit/api/report?from=2026-09-01&to=2026-09-30',headers:headers()});expect(r.statusCode).toBe(200);expect(r.json().totals.expenses).toBe(10000);expect(r.json().days.find((d:any)=>d.day==='2026-09-03').result).toBe(-10000);});
+ it('rejects negative costs and excessive precision',async()=>{for(const cost of [-1,1.001])expect((await app.inject({method:'PUT',url:'/profit/api/order-cost',headers:headers(),payload:{orderId:fixture().id,lineId:costs[0]!.line_id,cost}})).statusCode).toBe(400);});
+});

@@ -1,0 +1,8 @@
+CREATE TABLE profit_state (key text PRIMARY KEY, value jsonb NOT NULL, updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE profit_orders (id text PRIMARY KEY, name text NOT NULL, processed_at timestamptz NOT NULL, data jsonb NOT NULL, synced_at timestamptz NOT NULL DEFAULT now());
+CREATE INDEX profit_orders_date ON profit_orders(processed_at);
+CREATE TABLE profit_costs (order_id text NOT NULL REFERENCES profit_orders(id),line_id text NOT NULL,variant_id text,unit_cost bigint CHECK(unit_cost>=0),source text NOT NULL,recorded_at timestamptz NOT NULL DEFAULT now(),PRIMARY KEY(order_id,line_id));
+CREATE TABLE profit_variants (id text PRIMARY KEY, product_id text NOT NULL, inventory_id text NOT NULL, title text NOT NULL, sku text, cost bigint, quantity integer NOT NULL DEFAULT 0, active boolean NOT NULL DEFAULT true, synced_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE profit_adjustments (order_id text PRIMARY KEY REFERENCES profit_orders(id),shipping_cost bigint CHECK(shipping_cost>=0),packaging_cost bigint CHECK(packaging_cost>=0),fee_override bigint CHECK(fee_override>=0),tax_override bigint CHECK(tax_override>=0),note text NOT NULL DEFAULT '',updated_by text NOT NULL,updated_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE profit_expenses (id uuid PRIMARY KEY DEFAULT gen_random_uuid(),day date NOT NULL,category text NOT NULL,description text NOT NULL,amount bigint NOT NULL CHECK(amount>0),created_by text NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
+CREATE TABLE profit_audit (id bigserial PRIMARY KEY,actor text NOT NULL,action text NOT NULL,details jsonb NOT NULL,created_at timestamptz NOT NULL DEFAULT now());
