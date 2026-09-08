@@ -8,6 +8,7 @@ import { PythonCertificateGenerator } from './pdf.js';
 import { ResendCertificateMailer } from './mailer.js';
 import { CertificateService } from './service.js';
 import { processNextCertificateJob } from './worker.js';
+import { registerCertificateRequestRoutes, processNextCertificateRequest, processNextReviewNotification, findRequestOrder } from './requests.js';
 
 // Certificate-only production entry point; no auction, payment, or OTP routes.
 const env = z.object({
@@ -27,18 +28,22 @@ const env = z.object({
 
 const pool = createPool(env.DATABASE_URL);
 await runMigrations(pool);
-const app = Fastify({ logger: true });
+const app = Fastify({ logger: true, trustProxy: (_address, hop) => hop === 0 });
 registerCertificateRoutes(app, pool, env.SHOPIFY_WEBHOOK_SECRET, env.CERTIFICATE_STORAGE_DIR);
 app.get('/health', async () => {
   await pool.query('SELECT 1');
   return { ok: true };
 });
-const service = new CertificateService(pool,
-  new ShopifyAdminClient(env.SHOPIFY_STORE_DOMAIN, {
+const shopify = new ShopifyAdminClient(env.SHOPIFY_STORE_DOMAIN, {
     clientId: env.SHOPIFY_CLIENT_ID, clientSecret: env.SHOPIFY_CLIENT_SECRET,
-  }, env.SHOPIFY_API_VERSION),
+  }, env.SHOPIFY_API_VERSION);
+let reviewEmail: string | undefined;
+const mailer = new ResendCertificateMailer(env.RESEND_API_KEY, env.CERTIFICATE_FROM_EMAIL);
+const baseUrl = env.PUBLIC_BASE_URL.replace(/\/$/, '');
+registerCertificateRequestRoutes(app, pool, baseUrl, env.SHOPIFY_WEBHOOK_SECRET);
+const service = new CertificateService(pool, shopify,
   new PythonCertificateGenerator(env.CERTIFICATE_STORAGE_DIR, env.CERTIFICATE_PYTHON_BIN),
-  new ResendCertificateMailer(env.RESEND_API_KEY, env.CERTIFICATE_FROM_EMAIL),
+  mailer,
   env.PUBLIC_BASE_URL.replace(/\/$/, ''),
 );
 let stopping = false;
@@ -47,7 +52,16 @@ const timer = setInterval(() => {
   if (stopping || activeJob) return;
   activeJob = (async () => {
     try {
-      while (!stopping && await processNextCertificateJob(pool, service)) { /* drain */ }
+      await processNextCertificateJob(pool, service);
+      if (!stopping) await processNextCertificateRequest(pool, { findOrder: name => findRequestOrder(shopify, name), service, mailer, baseUrl });
+      if (!stopping) await processNextReviewNotification(pool, async input => {
+        if (!reviewEmail) {
+          const data = await shopify.query<{shop:{email:string}}>('{shop{email}}');
+          reviewEmail = data.shop.email;
+          if (!reviewEmail) throw new Error('Shop contact email missing');
+        }
+        await mailer.sendReviewNotification(input, reviewEmail, env.SHOPIFY_STORE_DOMAIN);
+      });
     } catch (error) { app.log.error(error, 'certificate worker failed'); }
   })().finally(() => { activeJob = undefined; });
 }, 3000);

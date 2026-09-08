@@ -30,6 +30,17 @@ export class ConsoleCertificateMailer implements CertificateMailer {
 export class ResendCertificateMailer implements CertificateMailer {
   constructor(private readonly apiKey: string, private readonly from: string) {}
 
+  async sendReviewNotification(input: { id: string; orderName: string; email: string; reason: string }, recipient: string, storeDomain: string): Promise<void> {
+    const response = await fetch('https://api.resend.com/emails', {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${this.apiKey}`, 'Content-Type': 'application/json', 'Idempotency-Key': `certificate-review-${input.id}` },
+      body: JSON.stringify({ from: this.from, to: [recipient], subject: `Certificate request ${input.orderName} needs review`,
+        text: `A customer requested a certificate.\n\nOrder: ${input.orderName}\nCheckout email supplied: ${input.email}\nReview reason: ${input.reason}\nRequest ID: ${input.id}\n\nCheck the order and email in Shopify before issuing. No certificate has been sent for this request.\nhttps://${storeDomain}/admin/orders?query=${encodeURIComponent(input.orderName)}\n\nAsk your certificate administrator to review this request, or use the certificate-requests.ts operator command documented in CERTIFICATE-DEPLOY.md.` }),
+      signal: AbortSignal.timeout(30000),
+    });
+    if (!response.ok) throw new Error(`Review notification failed (${response.status})`);
+  }
+
   async sendCertificateEmail(input: {
     email: string;
     orderName: string;

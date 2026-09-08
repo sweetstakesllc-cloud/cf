@@ -111,3 +111,29 @@ jobs and Render failure notifications; periodically test recovery.
 New certificates use the first listing photograph and the final two photographs, where tag/label details are normally listed. Duplicate URLs are removed for short galleries. Shopify images are paginated so the actual end of a gallery is used. Both the PDF and verification page consume this saved selection. Existing certificates retain their original snapshots.
 
 Validation: six image-selection regression tests, TypeScript checking, a real Shopify product read, and a rendered sample with buckle and stamped label details.
+
+## Past-order certificate requests — 8 September 2026
+
+Customers can use `/request` with their order number and checkout email. The form returns the same acknowledgement regardless of order existence. Matching, paid, fulfilled, uncancelled single-quantity items are generated or reused and emailed only to the order email. Refunded, removed, missing-product, revoked-certificate and other exceptional cases require review. No fulfillment status is changed. The three selected listing images include the first photo and final two photos.
+
+Requests and rate limits persist in PostgreSQL (migration 010). Concurrent submissions are deduplicated; delivery retries reuse a per-request Resend idempotency key. Requests are limited per hashed client IP and normalized email. The service trusts only its immediate reverse proxy; confirm client IP handling if the proxy topology changes.
+
+The app currently lacks `read_all_orders`, so orders outside Shopify's default 60-day read window are queued for manual review. Request that scope through Shopify's access-request process to allow automatic historical matching. No customer passwords or browser sessions are stored in the service.
+
+Review requests trigger an email to the shop's configured `shop.email`, containing the order number, supplied email and request ID. Staff must verify the order and email in Shopify. The public form never reveals certificate links. Review notification retries are durable and bounded; inspect pending review records if delivery fails.
+
+Inside the Render service, list pending review requests:
+
+```sh
+node --import tsx scripts/certificate-requests.ts list
+```
+
+For an inaccessible historical order, retrieve its JSON from the authenticated Shopify admin: `/store/ef7144/orders/ORDER_ID.json`. Save it in the service temporarily. Use only an export retrieved by staff from Shopify, never a customer-provided file. To issue and email a verified request:
+
+```sh
+node --import tsx scripts/certificate-requests.ts issue REQUEST_ID /tmp/trusted-order.json
+```
+
+The command verifies order number, checkout email, paid/fulfilled status and line items before issuing. It does not override eligibility checks. Remove the temporary export after processing. Customers whose email does not match need to contact staff; do not alter the request email to bypass verification.
+
+Validation: 11 request tests, 10 existing certificate/image tests, TypeScript checking, a real read-only Shopify eligibility lookup, and a mobile browser form submission against an isolated local database. Email deliveries were mocked; no customer or staff test emails were sent.
