@@ -48,14 +48,7 @@
           keeps the theme editor's preview honest.
         {%- endcomment -%}
         {%- if localization.available_countries.size > 1 -%}
-          <localization-form class="cf-locale" data-prevent-hide>
-            {%- form 'localization', id: 'CfHeaderCountryForm', class: 'localization-form' -%}
-              <h2 class="visually-hidden" id="CfHeaderCountryLabel">
-                {{ 'localization.country_label' | t }}
-              </h2>
-              {%- render 'country-localization', localPosition: 'CfHeaderCountry' -%}
-            {%- endform -%}
-          </localization-form>
+          {% render 'cf-country-selector' %}
         {%- elsif section.settings.region_line != blank -%}
           <span class="muted">{{ section.settings.region_line }}</span>
         {%- endif -%}

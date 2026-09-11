@@ -1,0 +1,12 @@
+<style>
+.cf-country-form{display:grid;gap:10px;width:100%;max-width:100%;text-align:left;letter-spacing:0;text-transform:none}.cf-country-form label{font-size:13px;font-weight:600}.cf-country-form select{box-sizing:border-box;width:100%;min-width:0;min-height:44px;padding:10px 30px 10px 10px;border:1px solid #cbcfc4;border-radius:3px;background:#fff;color:#252b22;font:14px Arial,sans-serif}.cf-country-form button{justify-self:start;min-height:44px;padding:9px 18px;background:#213d30;color:#fff;border:0;border-radius:3px;cursor:pointer;font:14px Arial,sans-serif}.cf-country-form :focus-visible{outline:2px solid #245d45;outline-offset:3px}.cf .cf-side-menu .util-in{width:100%;max-width:100%;margin:0}.cf .cf-side-menu .util-right{width:100%;min-width:0}
+</style>
+{%- form 'localization', id: 'CfCountryCurrencyForm', class: 'cf-country-form' -%}
+  <label for="CfCountryCurrency">Country / currency</label>
+  <select name="country_code" id="CfCountryCurrency">
+    {%- for country in localization.available_countries -%}
+      <option value="{{ country.iso_code }}"{% if country.iso_code == localization.country.iso_code %} selected{% endif %}>{{ country.name | escape }} — {{ country.currency.iso_code }} {{ country.currency.symbol }}</option>
+    {%- endfor -%}
+  </select>
+  <button type="submit">Apply currency</button>
+{%- endform -%}
