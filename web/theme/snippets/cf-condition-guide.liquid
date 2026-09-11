@@ -1,0 +1,18 @@
+{{ 'cf-condition-guide.css' | asset_url | stylesheet_tag }}
+<script src="{{ 'cf-condition-guide.js' | asset_url }}" defer></script>
+<cf-condition-guide>
+  <h2 class="cf-cond__title"><button class="cf-condition__open" type="button" aria-haspopup="dialog" hidden>Condition: {{ label | escape }} <span aria-hidden="true">ⓘ</span></button><span data-condition-fallback>Condition: {{ label | escape }}</span></h2>
+  <dialog class="cf-condition__dialog" aria-labelledby="cf-condition-heading-{{ section_id }}">
+    <header class="cf-condition__header"><h2 id="cf-condition-heading-{{ section_id }}">Condition</h2><button class="cf-condition__close" type="button" aria-label="Close condition guide">×</button></header>
+    <div class="cf-condition__body">
+      <p>Most of the items that we carry have been previously owned. Unless otherwise stated, they may not be in flawless condition. We inspect each item and list any notable flaws under the Condition Rating. Be sure to inspect all detailed photos that we have taken of the item.</p>
+      <section><h3>Giftable</h3><p>Item is in New condition (see below for more information on this condition) and includes one or more of the following: the original box, case, attached retailer tags.</p></section>
+      <section><h3>New</h3><p>Item appears unused. May contain faint signs of wear due to storage conditions.</p></section>
+      <section><h3>Excellent</h3><p>Item is clean and contains very little wear. Any notable flaws or signs of wear are stated in the listing.</p></section>
+      <section><h3>Very Good</h3><p>Item shows some wear and signs of previous use, but still has a lot of life in it. Slightly worn corners, creases in leather, and tarnished hardware may be visible. Any notable flaws or signs of wear are stated in the listing.</p></section>
+      <section><h3>Good</h3><p>Item does show moderate signs of prior use. Surface scratches, slight darkening in handles, and other indications of wear may be visible. Such signs of wear or imperfections will be noted in the listing.</p></section>
+      <section><h3>Fair</h3><p>Item will have noticeable signs of wear such as well scuffed edges or significant scratches. Please read the condition notes in the listing and inspect photos before purchasing. Fair condition items often present our customers with the greatest opportunity to save significantly on authentic luxury bags.</p></section>
+      <section><h3>Flawed</h3><p>Item is generally in nice condition overall, but has a major defect or flaw that affects the item's appearance or functionality.</p></section>
+    </div>
+  </dialog>
+</cf-condition-guide>
