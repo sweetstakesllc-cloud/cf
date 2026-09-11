@@ -2,9 +2,26 @@
 <script src="{{ 'cf-condition-guide.js' | asset_url }}" defer></script>
 <cf-condition-guide>
   <h2 class="cf-cond__title"><button class="cf-condition__open" type="button" aria-haspopup="dialog" hidden>Condition: {{ label | escape }} <span aria-hidden="true">ⓘ</span></button><span data-condition-fallback>Condition: {{ label | escape }}</span></h2>
+  <button class="cf-condition__chart" type="button" aria-haspopup="dialog" aria-label="Condition: {{ rating | default: label | escape }}. Open condition guide.">
+    <span class="cf-cond__steps">
+      {%- assign condition_names = 'New,Excellent,Very Good,Good,Fair' | split: ',' -%}
+      {%- for condition_name in condition_names -%}
+        <span class="cf-cond__step{% if forloop.index == band %} is-on{% endif %}">
+          <span class="cf-cond__seg"></span>
+          <span class="cf-cond__name">{{ condition_name }}</span>
+        </span>
+      {%- endfor -%}
+    </span>
+    <span class="cf-condition__current">{{ rating | default: label | escape }} <span aria-hidden="true">· View condition guide ↗</span></span>
+  </button>
   <dialog class="cf-condition__dialog" aria-labelledby="cf-condition-heading-{{ section_id }}">
     <header class="cf-condition__header"><h2 id="cf-condition-heading-{{ section_id }}">Condition</h2><button class="cf-condition__close" type="button" aria-label="Close condition guide">×</button></header>
     <div class="cf-condition__body">
+      <div class="cf-condition__item">
+        <h3>This item's condition</h3>
+        <p><strong>{{ rating | default: label | escape }}</strong></p>
+        {%- if item_notes != blank -%}<div class="rte cf-condition__item-notes">{{ item_notes }}</div>{%- endif -%}
+      </div>
       <p>Most of the items that we carry have been previously owned. Unless otherwise stated, they may not be in flawless condition. We inspect each item and list any notable flaws under the Condition Rating. Be sure to inspect all detailed photos that we have taken of the item.</p>
       <section><h3>Giftable</h3><p>Item is in New condition (see below for more information on this condition) and includes one or more of the following: the original box, case, attached retailer tags.</p></section>
       <section><h3>New</h3><p>Item appears unused. May contain faint signs of wear due to storage conditions.</p></section>

@@ -7,9 +7,10 @@
       const open = this.querySelector('.cf-condition__open'), dialog = this.querySelector('dialog');
       open.hidden = false;
       this.querySelector('[data-condition-fallback]').hidden = true;
-      open.addEventListener('click', () => dialog.showModal());
+      let trigger = open;
+      for (const button of [open, this.querySelector('.cf-condition__chart')]) button.addEventListener('click', () => {trigger = button; dialog.showModal();});
       this.querySelector('.cf-condition__close').addEventListener('click', () => dialog.close());
-      dialog.addEventListener('close', () => open.focus());
+      dialog.addEventListener('close', () => trigger.focus());
       dialog.addEventListener('click', event => {
         if (event.target !== dialog) return;
         const rect = dialog.getBoundingClientRect();
