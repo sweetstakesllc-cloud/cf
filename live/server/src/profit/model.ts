@@ -55,6 +55,6 @@ export function calculateOrder(order:ProfitOrder,costs:Cost[],adjustment?:Adjust
  const profit=revenue-tax-cogs-fees-(shipping||0)-(packaging||0);
  const netSales=revenue-tax;const denominator=lines.reduce((sum,l)=>sum+l.salesWeight,0);
  return {id:order.id,name:order.name,day:localDay(order.processedAt),status:order.displayFinancialStatus,fulfillment:order.displayFulfillmentStatus,eligible,revenue,tax,netSales,cogs,fees,shipping,packaging,
-  profit:missingCost||missingFees?null:profit,knownCostsResult:profit,complete:issues.length===0&&historicalCosts===0&&order.displayFulfillmentStatus!=='UNFULFILLED',issues:[...new Set(issues)],notes,missingCost,missingFees,historicalCosts,
+  profit:missingCost||missingFees?null:profit,profitBeforeVat:missingCost||missingFees?null:profit+tax,knownCostsBeforeVat:profit+tax,knownCostsResult:profit,complete:issues.length===0&&historicalCosts===0&&order.displayFulfillmentStatus!=='UNFULFILLED',issues:[...new Set(issues)],notes,missingCost,missingFees,historicalCosts,
   methods:[...methods],refunds:money(order.totalRefundedSet),lines:lines.map(l=>({...l,allocatedNetSales:denominator?Math.round(netSales*l.salesWeight/denominator):0}))};
 }

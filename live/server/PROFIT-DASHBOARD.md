@@ -27,3 +27,9 @@ VAT treatment is not confirmed by the merchant. The dashboard uses recorded Shop
 14 profit arithmetic/authentication/database/API tests; 21 existing certificate/request/image tests; TypeScript checking; real read-only Shopify import; authenticated local browser checks on desktop/mobile, cost search and order dialogs. No live purchase costs or financial records were modified during verification. Real store screenshots and preview credentials are kept outside Git.
 
 Local preview: the temporary `/private/tmp/cf-profit-preview.mts` serves loopback port 3034 against isolated PostgreSQL port 55439. Its URL is in the mode-600 `/private/tmp/cf-profit-preview-access.json`. Test database `profit_test` is separate from the preview's imported records.
+
+## VAT visibility update — September 11, 2026
+
+Overview shows receipts including VAT, profit before recorded sales VAT, recorded VAT, and profit after VAT. Both results deduct the same recorded item costs, fees, shipping, packaging and business expenses. Tax is taken from Shopify or an explicit order override, not a fixed percentage. Orders and CSV show both results; daily/monthly charts have a before/after VAT selector, defaulting to before VAT. Missing costs/fees keep both order profit amounts unknown, with known-cost subtotals still labeled as incomplete. This changes presentation and adds report fields; it does not change VAT treatment or tax records.
+
+Verified with 15 profit tests (including VAT overrides, missing costs, refunds and expense-only dates), TypeScript, and desktop/mobile browser checks of KPI arithmetic, both chart modes, monthly grouping and order detail. Fresh isolated test DB uses port 55549; older isolated port 55439 remains supported.
