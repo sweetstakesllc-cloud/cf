@@ -21,11 +21,11 @@
     "fresh_finds": {
       "type": "featured-collection-cf",
       "settings": {
-        "collection": "new",
+        "collection": "all",
         "heading": "Fresh Finds",
         "subtext": "Your daily designer drop.",
         "sub_link_label": "Shop New Arrivals",
-        "sub_link": "/collections/new",
+        "sub_link": "/collections/all?sort_by=created-descending",
         "limit": 8,
         "button_label": "Shop All",
         "button_link": "/collections/all"
