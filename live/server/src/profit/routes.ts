@@ -31,13 +31,19 @@ export function registerProfitRoutes(app:FastifyInstance,pool:pg.Pool,shopify:Sh
     pool.query('SELECT id,day::text,category,description,amount FROM profit_expenses WHERE day BETWEEN $1::date AND $2::date ORDER BY day DESC',[from,to]),
     pool.query(`SELECT id,product_id,title,sku,quantity FROM profit_variants WHERE active AND cost IS NULL ORDER BY (quantity>0) DESC,title`),pool.query('SELECT key,value FROM profit_state')]);
    const settings=state.rows.find(r=>r.key==='settings')?.value||{};
-   const rows=orders.rows.map(r=>{
+   const excludedOrders:Array<{id:string;name:string;currency:string;reason:string}>=[];
+   const rows=orders.rows.flatMap(r=>{
+    try {
     const a=adjustments.rows.find(a=>a.order_id===r.id);const adjusted={...a};let defaults=false;
     if(adjusted.shipping_cost==null&&settings.shippingDefault!=null){adjusted.shipping_cost=settings.shippingDefault;defaults=true;}
     if(adjusted.packaging_cost==null&&settings.packagingDefault!=null){adjusted.packaging_cost=settings.packagingDefault;defaults=true;}
     const calculated=calculateOrder(r.data as ProfitOrder,costs.rows.filter(c=>c.order_id===r.id) as Cost[],adjusted as Adjustments);
     if(defaults){calculated.notes.push('Uses estimated shipping / packaging defaults');calculated.complete=false;}
-    return {...calculated,adjustments:a||null};
+    return [{...calculated,adjustments:a||null}];
+    } catch(error) {
+     if(!(error instanceof Error)||error.message!=='Unsupported shop currency')throw error;
+     excludedOrders.push({id:r.id,name:r.data.name,currency:r.data.netPaymentSet?.shopMoney?.currencyCode||'Unknown',reason:'Non-SEK order amounts need verified conversion; excluded from SEK totals.'});return [];
+    }
    });
    const included=rows.filter(r=>r.eligible);const periods=new Map<string,any>();
    for(const row of included){const p=periods.get(row.day)||{day:row.day,orders:0,revenue:0,tax:0,beforeVat:0,netSales:0,cogs:0,fees:0,result:0,missing:0};p.orders++;p.revenue+=row.revenue;p.tax+=row.tax;p.beforeVat+=row.knownCostsBeforeVat;p.netSales+=row.netSales;p.cogs+=row.cogs;p.fees+=row.fees;p.result+=row.knownCostsResult;if(!row.complete)p.missing++;periods.set(row.day,p);}
@@ -46,7 +52,7 @@ export function registerProfitRoutes(app:FastifyInstance,pool:pg.Pool,shopify:Sh
    for(const expense of expenses.rows){const day=expense.day;const p=periods.get(day)||{day,orders:0,revenue:0,tax:0,beforeVat:0,netSales:0,cogs:0,fees:0,result:0,missing:0};p.result-=Number(expense.amount);p.beforeVat-=Number(expense.amount);periods.set(day,p);}
    totals.expenses=expenses.rows.reduce((sum,r)=>sum+Number(r.amount),0);totals.result-=totals.expenses;totals.beforeVat-=totals.expenses;
    const methods=new Map<string,{method:string;orders:number;fees:number;missing:number}>();for(const row of included){const name=row.methods.join(' + ')||'Unknown';const m=methods.get(name)||{method:name,orders:0,fees:0,missing:0};m.orders++;m.fees+=row.fees;if(row.missingFees)m.missing++;methods.set(name,m);}
-   return {from,to,currency:'SEK',timezone:'Europe/Stockholm',totals,orders:rows,days:[...periods.values()].sort((a,b)=>a.day.localeCompare(b.day)),methods:[...methods.values()],expenses:expenses.rows.map(r=>({...r,amount:Number(r.amount)})),missingCosts:missing.rows,sync:state.rows.find(r=>r.key==='sync')?.value||{status:'not_started'},settings};
+   return {from,to,currency:'SEK',timezone:'Europe/Stockholm',totals,orders:rows,excludedOrders,days:[...periods.values()].sort((a,b)=>a.day.localeCompare(b.day)),methods:[...methods.values()],expenses:expenses.rows.map(r=>({...r,amount:Number(r.amount)})),missingCosts:missing.rows,sync:state.rows.find(r=>r.key==='sync')?.value||{status:'not_started'},settings};
   });
   protectedApp.post('/profit/api/sync',async(_request,reply)=>{void config.sync().catch(()=>{});return reply.code(202).send({ok:true});});
   protectedApp.put('/profit/api/order-cost',async(request,reply)=>{
