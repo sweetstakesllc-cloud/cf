@@ -17,11 +17,16 @@
   `read_all_orders`. Orders older than 60 days require manual review or the
   additional Shopify access scope. See
   [Shopify order access](https://shopify.dev/docs/api/admin-graphql/latest/queries/order).
-- The exact requests reported by customers and Resend delivery results have not
-  been inspected: production request storage and logs require Render access.
-  Certificate creation and working PDF links do not prove email delivery.
+- Render access was restored using the existing account. The database contains
+  five customer requests, all created on 9 September. Seven-day application logs
+  show the same five POST requests and no additional submissions on 14 September.
+- Requests for #2294, #2784 and #2663 are `needs_review/order_not_accessible`.
+  Each attempted once and successfully notified staff. Requests for #3456 and
+  #3473 are `sent`. All 42 fulfillment webhook jobs are `completed`.
+- Resend inbox delivery/bounce records have not been inspected. The `sent`
+  status means the service's send call succeeded; it does not prove inbox receipt.
 
-## Changes prepared
+## Changes deployed
 
 - Missing order emails enter staff review. Matching still uses the verified
   order email; a customer-supplied address cannot bypass this check.
@@ -38,7 +43,7 @@
 
 ## Validation
 
-- Certificate regression tests and TypeScript checking pass.
+- All 33 certificate regression tests and TypeScript checking pass.
 - A local end-to-end request with two products, one with quantity two, generated
   three real PDFs and three working verification pages. One email was captured
   by a fake mailer, and a duplicate request did not send another email.
@@ -46,23 +51,34 @@
   and permits a second unit on the same order line.
 - Local test artifacts are in `output/certificate-investigation`. Synthetic
   certificates are labelled TEST ONLY. No customer or staff email was sent.
+- A production smoke check generated three real PDFs (5,106, 5,042 and 5,049
+  bytes), captured one email with a fake mailer and reused the certificates on
+  retry. Database changes were rolled back and temporary PDF files removed.
+- After deployment, health/request endpoints returned HTTP 200, the form
+  contained the updated per-item/help text, and all four existing PDFs for
+  #3541/#3543 still returned HTTP 200 with `application/pdf`.
 
 ## Deployment and follow-up
 
-The fix is prepared on `fix/certificate-requests-sep15`, based on the deployment
-branch. Production deployment has not been performed.
+Commit `f9cfe02dcfb33fa7755bb30a594d0d0adeb21db4` was fast-forwarded to
+`deploy/certificates` and manually deployed on 15 September at 12:08:39 CEST.
+Render reported deployment success and the service live at 12:09:24 CEST.
 
-1. Inspect Render's `certificate_requests` status/reason/attempts and webhook
-   failures for 14 September; correlate with Resend delivery records. Verify
-   which order numbers customers reported before attributing a specific cause.
-2. Deploy the code and migration `012-certificate-units.sql` together. Startup
-   applies the migration. The prior application version uses the old unique
-   constraint and is not compatible with the new per-unit schema; a rollback
-   must retain the new lookup/conflict key. Do not remove issued unit records.
-3. Verify health, request page and existing PDF links after deployment.
-4. Review historical `rejected/order_email_mismatch` and
-   `needs_review/line_item_review` requests individually. Reprocess only verified
-   requests; do not overwrite request emails or blindly issue all old orders.
-5. Correct missing contact details in Shopify and obtain `read_all_orders`
-   through Shopify's access process if automatic requests for older orders are
-   required. Orders outside the permitted window still need staff handling.
+[Render deployment](https://dashboard.render.com/web/srv-daequev40ujc738cn7cg/deploys/dep-dakhi9rl550s73f8gnmg).
+
+Migration `012-certificate-units.sql` ran during startup. The prior application
+version uses the old unique constraint and is not compatible with the new
+per-unit schema; a rollback must retain the new lookup/conflict key. Do not
+remove issued unit records.
+
+### Remaining historical-order work
+
+The three inaccessible-order requests have not been issued or resent. They need
+verified Shopify order access. Shopify reports that the existing account is not
+connected to Google and requires a normal sign-in. The Shopify sign-in tab was
+left open and the user was asked to log in; no password was obtained or stored.
+
+Once signed in, verify #2294, #2784 and #2663 against their submitted checkout
+emails and eligibility. Obtain `read_all_orders` through Shopify's access
+process to automate older-order lookup, or use the trusted Shopify export
+operator flow. Do not overwrite request emails or blindly issue old orders.
