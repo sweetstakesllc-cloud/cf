@@ -9,7 +9,7 @@ const RENDER_SCRIPT = fileURLToPath(new URL('../../scripts/render_certificate.py
 
 function runPython(pythonBin: string, args: string[]): Promise<void> {
   return new Promise((resolve, reject) => {
-    const child = spawn(pythonBin, args, { stdio: ['ignore', 'ignore', 'pipe'] });
+    const child = spawn(pythonBin, args, { stdio: ['ignore', 'ignore', 'pipe'], timeout: 60000, killSignal: 'SIGKILL' });
     let stderr = '';
     child.stderr.setEncoding('utf8');
     child.stderr.on('data', chunk => { stderr += chunk; });
@@ -25,7 +25,7 @@ async function downloadImages(urls: string[], directory: string): Promise<string
   const paths: string[] = [];
   for (const [index, url] of urls.slice(0, 3).entries()) {
     try {
-      const response = await fetch(url);
+      const response = await fetch(url, { signal: AbortSignal.timeout(15000) });
       if (!response.ok) continue;
       const extension = response.headers.get('content-type')?.includes('png') ? '.png' : '.jpg';
       const destination = path.join(directory, `image-${index + 1}${extension}`);

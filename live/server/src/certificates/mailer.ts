@@ -60,17 +60,19 @@ export class ResendCertificateMailer implements CertificateMailer {
         from: this.from,
         to: [input.email],
         subject: `Your Circular Fash authenticity certificate${input.certificates.length === 1 ? '' : 's'}`,
+        text: `Your authenticity certificate${input.certificates.length === 1 ? '' : 's'} for ${input.orderName}.\n\nA separate certificate is included for each item:\n\n${input.certificates.map(certificate => `${certificate.productTitle} — ${certificate.certificateNumber}\n${input.publicBaseUrl}/certificates/${certificate.token}.pdf`).join('\n\n')}`,
         html: `<!doctype html><html><body style="margin:0;background:#f4f4f1">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:28px 12px">
           <table role="presentation" width="600" cellspacing="0" cellpadding="0" style="max-width:600px;width:100%;background:#fff;padding:34px">
             <tr><td><div style="font:700 15px Arial,sans-serif;color:#0e1b4d;letter-spacing:.08em">CIRCULAR FASH</div>
             <h1 style="font:700 27px Arial,sans-serif;color:#10141f;margin:28px 0 10px">Your authenticity certificate${input.certificates.length === 1 ? '' : 's'}</h1>
-            <p style="font:15px/1.55 Arial,sans-serif;color:#4b5563;margin:0 0 24px">Thank you for your purchase ${escapeHtml(input.orderName)}. Your item${input.certificates.length === 1 ? ' has' : 's have'} been authenticated and the permanent certificate${input.certificates.length === 1 ? ' is' : 's are'} ready below.</p>
+            <p style="font:15px/1.55 Arial,sans-serif;color:#4b5563;margin:0 0 24px">Thank you for your purchase ${escapeHtml(input.orderName)}. Your item${input.certificates.length === 1 ? ' has' : 's have'} been authenticated. There is a separate permanent certificate for each item below.</p>
             <table role="presentation" width="100%" cellspacing="0" cellpadding="0">${rows}</table>
             <p style="font:12px/1.5 Arial,sans-serif;color:#6b7280;margin:26px 0 0">This is a service email relating to your purchase, not a marketing subscription.</p>
             </td></tr></table></td></tr></table></body></html>`,
       }),
+      signal: AbortSignal.timeout(30000),
     });
-    if (!response.ok) throw new Error(`Resend returned ${response.status}: ${await response.text()}`);
+    if (!response.ok) throw new Error(`Certificate email failed (${response.status})`);
   }
 }

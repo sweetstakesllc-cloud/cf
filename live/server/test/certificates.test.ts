@@ -1,5 +1,5 @@
 import { createHmac } from 'node:crypto';
-import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
+import { describe, it, expect, beforeAll, afterAll, beforeEach, vi } from 'vitest';
 import type { FastifyInstance } from 'fastify';
 import type pg from 'pg';
 import { buildApp } from '../src/app.js';
@@ -125,6 +125,57 @@ describe('Shopify fulfilled-order webhook', () => {
 });
 
 describe('certificate processing', () => {
+  it('creates a unique certificate per unit and preserves all links on retries', async () => {
+    const generator = new FakeGenerator();
+    const mailer = new FakeCertificateMailer();
+    const shopify = new FakeShopify();
+    const service = new CertificateService(pool, shopify, generator, mailer, 'https://certificates.example.com');
+    const order = fulfilledOrder();
+    order.line_items[0]!.quantity = 2;
+    const first = await service.processFulfilledOrder(order);
+    expect(first).toHaveLength(3);
+    expect(new Set(first.map(certificate => certificate.token)).size).toBe(3);
+    expect(new Set(first.map(certificate => certificate.certificateNumber)).size).toBe(3);
+    expect(generator.rendered).toHaveLength(3);
+    expect(mailer.sent[0]?.certificates).toHaveLength(3);
+    expect(shopify.updates[0]).toHaveLength(3);
+    expect((await service.processFulfilledOrder(order)).map(c => c.token)).toEqual(first.map(c => c.token));
+    expect(mailer.sent).toHaveLength(1);
+    expect(generator.rendered).toHaveLength(3);
+  });
+
+  it('adds missing units to an existing order without replacing its certificates', async () => {
+    const generator = new FakeGenerator();
+    const mailer = new FakeCertificateMailer();
+    const service = new CertificateService(pool, new FakeShopify(), generator, mailer, 'https://certificates.example.com');
+    const order = fulfilledOrder();
+    const original = await service.processFulfilledOrder(order);
+    order.line_items[0]!.quantity = 2;
+    const expanded = await service.processFulfilledOrder(order);
+    expect(expanded).toHaveLength(3);
+    expect(expanded.map(c => c.token)).toEqual(expect.arrayContaining(original.map(c => c.token)));
+    expect(generator.rendered).toHaveLength(3);
+    expect(mailer.sent).toHaveLength(2);
+    expect(mailer.sent[1]?.idempotencyKey).not.toBe(mailer.sent[0]?.idempotencyKey);
+    await service.processFulfilledOrder(order);
+    expect(mailer.sent).toHaveLength(2);
+  });
+
+  it('finishes a partially generated multi-item order before sending any email', async () => {
+    const generator = new FakeGenerator();
+    const render = vi.spyOn(generator, 'render').mockResolvedValueOnce('first.pdf').mockRejectedValueOnce(new Error('Temporary PDF failure'));
+    const mailer = new FakeCertificateMailer();
+    const service = new CertificateService(pool, new FakeShopify(), generator, mailer, 'https://certificates.example.com');
+    const order = fulfilledOrder();order.line_items[0]!.quantity = 2;
+    await expect(service.processFulfilledOrder(order)).rejects.toThrow('Temporary PDF failure');
+    expect(mailer.sent).toHaveLength(0);
+    const firstToken = (await pool.query("SELECT token FROM authenticity_certificates WHERE pdf_path='first.pdf'")).rows[0].token;
+    const retried = await service.processFulfilledOrder(order);
+    expect(retried).toHaveLength(3);expect(retried.map(c => c.token)).toContain(firstToken);
+    expect(mailer.sent).toHaveLength(1);expect(mailer.sent[0]?.certificates).toHaveLength(3);
+    expect(render).toHaveBeenCalledTimes(4);
+  });
+
   it('creates one PDF per item and sends one order email without duplicating on retry', async () => {
     const shopify = new FakeShopify();
     const generator = new FakeGenerator();

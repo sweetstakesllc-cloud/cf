@@ -35,13 +35,51 @@ describe('past-order certificate requests',()=>{
  expect(generate).not.toHaveBeenCalled();expect(send).not.toHaveBeenCalled();
  expect((await pool.query('SELECT status FROM certificate_requests')).rows[0].status).toBe('rejected');
  });
+ it('keeps a missing order email for staff review instead of rejecting the customer',async()=>{
+ deps.findOrder.mockResolvedValue({...order,email:null});await submit();await processNextCertificateRequest(pool,deps);
+ expect((await pool.query('SELECT status,reason FROM certificate_requests')).rows[0]).toEqual({status:'needs_review',reason:'order_email_missing'});
+ expect(generate).not.toHaveBeenCalled();expect(send).not.toHaveBeenCalled();
+ const notify=vi.fn(async(_input:unknown)=>{});await processNextReviewNotification(pool,notify);expect(notify).toHaveBeenCalledOnce();
+ expect(await processNextCertificateRequest(pool,deps)).toBe(false);
+ // Staff fix the email in Shopify; the request verifies it again before sending.
+ deps.findOrder.mockResolvedValue(structuredClone(order));await pool.query('UPDATE certificate_requests SET next_attempt_at=now()');
+ await processNextCertificateRequest(pool,deps);expect(send).toHaveBeenCalledOnce();
+ expect((await pool.query('SELECT status FROM certificate_requests')).rows[0].status).toBe('sent');
+ });
+ it('rechecks a request after fulfillment rather than leaving it in review forever',async()=>{
+ deps.findOrder.mockResolvedValue({...order,displayFulfillmentStatus:'UNFULFILLED'});await submit();await processNextCertificateRequest(pool,deps);
+ expect(send).not.toHaveBeenCalled();expect(await processNextCertificateRequest(pool,deps)).toBe(false);
+ deps.findOrder.mockResolvedValue(structuredClone(order));await pool.query('UPDATE certificate_requests SET next_attempt_at=now()');
+ await processNextCertificateRequest(pool,deps);expect(send).toHaveBeenCalledOnce();
+ });
+ it('rechecks the email before releasing a waiting request',async()=>{
+ deps.findOrder.mockResolvedValue({...order,email:null});await submit();await processNextCertificateRequest(pool,deps);
+ deps.findOrder.mockResolvedValue({...order,email:'someone-else@example.com'});await pool.query('UPDATE certificate_requests SET next_attempt_at=now()');
+ await processNextCertificateRequest(pool,deps);expect(send).not.toHaveBeenCalled();expect(generate).not.toHaveBeenCalled();
+ expect((await pool.query('SELECT status FROM certificate_requests')).rows[0].status).toBe('rejected');
+ });
+ it('emails every certificate for multiple products and multiple units in one order',async()=>{
+ const second={...order.lineItems.nodes[0]!,id:'gid://shopify/LineItem/45',title:'Bag',product:{id:'gid://shopify/Product/56'}};
+ deps.findOrder.mockResolvedValue({...order,lineItems:{...order.lineItems,nodes:[{...order.lineItems.nodes[0]!,quantity:2,currentQuantity:2},second]}});
+ const certificate={token:'token',certificateNumber:'CF-TEST',orderName:'#3324',productTitle:'Jacket',brand:'Brand',sku:'SKU',imageUrls:[],authenticationPartner:null,authenticationReportNumber:null,issuedAt:new Date(),pdfPath:'token.pdf',status:'active' as const};
+ generate.mockResolvedValue([certificate,{...certificate,token:'token-2'},{...certificate,token:'token-3',productTitle:'Bag'}]);
+ await submit();await processNextCertificateRequest(pool,deps);
+ expect(generate.mock.calls[0]![0].line_items.map(line=>line.quantity)).toEqual([2,1]);
+ expect(send).toHaveBeenCalledOnce();expect(send.mock.calls[0]![0].certificates).toHaveLength(3);
+ expect((await pool.query('SELECT status FROM certificate_requests')).rows[0].status).toBe('sent');
+ });
+ it('never sends an incomplete certificate set',async()=>{
+ deps.findOrder.mockResolvedValue({...order,lineItems:{...order.lineItems,nodes:[{...order.lineItems.nodes[0]!,quantity:2,currentQuantity:2}]}});
+ await submit();await processNextCertificateRequest(pool,deps);expect(send).not.toHaveBeenCalled();
+ expect((await pool.query('SELECT status FROM certificate_requests')).rows[0].status).toBe('pending');
+ });
  it('retains inaccessible historical orders for review',async()=>{
  deps.findOrder.mockResolvedValue(null);await submit();await processNextCertificateRequest(pool,deps);
  expect((await pool.query('SELECT status,reason FROM certificate_requests')).rows[0]).toEqual({status:'needs_review',reason:'order_not_accessible'});expect(send).not.toHaveBeenCalled();
  });
- it('does not issue refunded, cancelled, unfulfilled, removed, deleted or multiple-quantity items',()=>{
+ it('does not issue refunded, cancelled, unfulfilled, removed, deleted or invalid-quantity items',()=>{
  for(const modified of [{...order,cancelledAt:'2026-01-01'}, {...order,displayFinancialStatus:'REFUNDED'}, {...order,displayFulfillmentStatus:'UNFULFILLED'},
- ...[{currentQuantity:0},{product:null},{quantity:2}].map(change=>({...order,lineItems:{...order.lineItems,nodes:[{...order.lineItems.nodes[0]!,...change}]}}))])
+ ...[{currentQuantity:0},{product:null},{quantity:2},{quantity:0,currentQuantity:0},{quantity:1.5,currentQuantity:1.5}].map(change=>({...order,lineItems:{...order.lineItems,nodes:[{...order.lineItems.nodes[0]!,...change}]}}))])
  expect(requestEligibility(modified,'#3324','buyer@example.com')).not.toBeNull();
  });
  it('retries provider failures with the same email idempotency key',async()=>{

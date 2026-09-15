@@ -1,9 +1,10 @@
-import { randomBytes, randomUUID } from 'node:crypto';
+import { createHash, randomBytes, randomUUID } from 'node:crypto';
 import type pg from 'pg';
 import type {
   CertificateGenerator,
   CertificateMailer,
   CertificateRecord,
+  ProductSnapshot,
   ShopifyAdmin,
   ShopifyFulfilledOrder,
 } from './types.js';
@@ -64,57 +65,67 @@ export class CertificateService {
     for (const line of order.line_items) {
       const lineItemId = String(line.id);
       const productId = line.product_id == null ? null : String(line.product_id);
-      let row = (await this.pool.query<CertificateRow>(
-        `SELECT * FROM authenticity_certificates WHERE shopify_order_id=$1 AND line_item_id=$2`,
-        [orderId, lineItemId],
-      )).rows[0];
-      if (!row) {
-        const product = productId ? await this.shopify.getProduct(productId) : null;
-        const issuedAt = this.now();
-        const token = randomUUID();
-        const inserted = await this.pool.query<CertificateRow>(`
-          INSERT INTO authenticity_certificates (
-            token, certificate_number, shopify_order_id, order_name, line_item_id,
-            product_id, customer_email, product_title, brand, sku, image_urls,
-            authentication_partner, authentication_report_number, issued_at
-          ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)
-          ON CONFLICT (shopify_order_id, line_item_id) DO NOTHING
-          RETURNING *`, [
-          token, certificateNumber(issuedAt), orderId, orderName, lineItemId,
-          productId, email, product?.title ?? line.title ?? line.name ?? 'Purchased item',
-          product?.brand ?? line.vendor ?? '', line.sku ?? '', JSON.stringify(product?.imageUrls ?? []),
-          product?.authenticationPartner ?? null, product?.authenticationReportNumber ?? null, issuedAt,
-        ]);
-        row = inserted.rows[0] ?? (await this.pool.query<CertificateRow>(
-          `SELECT * FROM authenticity_certificates WHERE shopify_order_id=$1 AND line_item_id=$2`,
-          [orderId, lineItemId],
+      const quantity = line.quantity ?? 1;
+      if (!Number.isSafeInteger(quantity) || quantity < 1) throw new Error('Invalid certificate item quantity');
+      let product: ProductSnapshot | null | undefined;
+      for (let unitNumber = 1; unitNumber <= quantity; unitNumber++) {
+        let row = (await this.pool.query<CertificateRow>(
+          `SELECT * FROM authenticity_certificates WHERE shopify_order_id=$1 AND line_item_id=$2 AND unit_number=$3`,
+          [orderId, lineItemId, unitNumber],
         )).rows[0];
-      }
-      if (!row) throw new Error(`Unable to create certificate for line item ${lineItemId}`);
-      if (!row.pdf_path) {
-        const item = record(row);
-        const pdfPath = await this.generator.render({
-          ...item,
-          verificationUrl: `${this.publicBaseUrl}/certificates/${item.token}`,
-        });
-        await this.pool.query(`UPDATE authenticity_certificates SET pdf_path=$2 WHERE token=$1`, [row.token, pdfPath]);
+        if (!row) {
+          if (product === undefined) product = productId ? await this.shopify.getProduct(productId) : null;
+          const issuedAt = this.now();
+          const token = randomUUID();
+          const inserted = await this.pool.query<CertificateRow>(`
+            INSERT INTO authenticity_certificates (
+              token, certificate_number, shopify_order_id, order_name, line_item_id,
+              product_id, customer_email, product_title, brand, sku, image_urls,
+              authentication_partner, authentication_report_number, issued_at, unit_number
+            ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+            ON CONFLICT (shopify_order_id, line_item_id, unit_number) DO NOTHING
+            RETURNING *`, [
+            token, certificateNumber(issuedAt), orderId, orderName, lineItemId,
+            productId, email, product?.title ?? line.title ?? line.name ?? 'Purchased item',
+            product?.brand ?? line.vendor ?? '', line.sku ?? '', JSON.stringify(product?.imageUrls ?? []),
+            product?.authenticationPartner ?? null, product?.authenticationReportNumber ?? null, issuedAt, unitNumber,
+          ]);
+          row = inserted.rows[0] ?? (await this.pool.query<CertificateRow>(
+            `SELECT * FROM authenticity_certificates WHERE shopify_order_id=$1 AND line_item_id=$2 AND unit_number=$3`,
+            [orderId, lineItemId, unitNumber],
+          )).rows[0];
+        }
+        if (!row) throw new Error(`Unable to create certificate for line item ${lineItemId}`);
+        if (!row.pdf_path) {
+          const item = record(row);
+          const pdfPath = await this.generator.render({
+            ...item,
+            verificationUrl: `${this.publicBaseUrl}/certificates/${item.token}`,
+          });
+          await this.pool.query(`UPDATE authenticity_certificates SET pdf_path=$2 WHERE token=$1`, [row.token, pdfPath]);
+        }
       }
     }
 
     const result = await this.pool.query<CertificateRow>(
-      `SELECT * FROM authenticity_certificates WHERE shopify_order_id=$1 ORDER BY created_at`,
+      `SELECT * FROM authenticity_certificates WHERE shopify_order_id=$1 ORDER BY created_at, line_item_id, unit_number`,
       [orderId],
     );
     const certificates = result.rows.map(record);
     await this.shopify.setOrderCertificates(orderGid, certificates, this.publicBaseUrl);
 
     if (email && result.rows.some(row => !row.emailed_at)) {
+      // Previously issued units keep their links. An expanded order needs a new
+      // delivery key so the provider does not suppress the additional certificates.
+      const additionKey = result.rows.some(row => row.emailed_at)
+        ? '-' + createHash('sha256').update(certificates.map(c => c.token).sort().join(',')).digest('hex').slice(0, 24)
+        : '';
       await this.mailer.sendCertificateEmail({
         email,
         orderName,
         certificates,
         publicBaseUrl: this.publicBaseUrl,
-        idempotencyKey: `certificate-order-${orderId}`,
+        idempotencyKey: `certificate-order-${orderId}${additionKey}`,
       });
       await this.pool.query(
         `UPDATE authenticity_certificates SET emailed_at=$2 WHERE shopify_order_id=$1`,

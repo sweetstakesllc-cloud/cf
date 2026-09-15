@@ -7,7 +7,7 @@ import type { CertificateService } from './service.js';
 import type { CertificateMailer, ShopifyFulfilledOrder } from './types.js';
 import { requestCertificatePage } from './request-page.js';
 
-const RECEIVED = 'Request received. If the details match an eligible order, we will email your certificate to the address used at checkout. Older orders may need a manual check.';
+const RECEIVED = 'Request received. If the details match a paid, fulfilled order, we will email a separate certificate for each item to the address on the order. Check your spam folder too. Older orders or missing order details need a manual check. If nothing arrives within 24 hours, please contact us with your order number.';
 const inputSchema = z.object({
   orderNumber: z.string().trim().regex(/^#?\d{1,12}$/),
   email: z.string().trim().email().max(254),
@@ -67,11 +67,13 @@ export async function findRequestOrder(shopify: ShopifyAdminClient, name: string
   return data.orders.nodes.find(order => order.name === name) ?? null;
 }
 export function requestEligibility(order: RequestOrder, name: string, email: string): string | null {
-  if (order.name !== name || order.email?.trim().toLowerCase() !== email.trim().toLowerCase()) return 'order_email_mismatch';
+  if (order.name !== name) return 'order_email_mismatch';
+  if (!order.email?.trim()) return 'order_email_missing';
+  if (order.email.trim().toLowerCase() !== email.trim().toLowerCase()) return 'order_email_mismatch';
   if (order.cancelledAt || order.displayFinancialStatus !== 'PAID') return 'payment_or_cancellation_review';
   if (order.displayFulfillmentStatus !== 'FULFILLED') return 'fulfillment_review';
   if (order.lineItems.pageInfo.hasNextPage || !order.lineItems.nodes.length || order.lineItems.nodes.some(line =>
-    !line.product || line.quantity !== 1 || line.currentQuantity !== 1)) return 'line_item_review';
+    !line.product || !Number.isSafeInteger(line.quantity) || line.quantity < 1 || line.currentQuantity !== line.quantity)) return 'line_item_review';
   return null;
 }
 
@@ -81,7 +83,8 @@ type Dependencies = { findOrder(name:string):Promise<RequestOrder|null>; service
 export async function deliverCertificateRequest(pool:pg.Pool, job:RequestRow, order:RequestOrder, deps:Dependencies):Promise<void> {
   const reason = requestEligibility(order,job.order_name,job.email);
   if (reason) {
-    await pool.query(`UPDATE certificate_requests SET status=$2,reason=$3,processing_started_at=NULL WHERE id=$1`,
+    await pool.query(`UPDATE certificate_requests SET status=$2,reason=$3,processing_started_at=NULL,
+      next_attempt_at=now()+interval '1 hour' WHERE id=$1`,
       [job.id,reason==='order_email_mismatch'?'rejected':'needs_review',reason]);
     return;
   }
@@ -93,14 +96,17 @@ export async function deliverCertificateRequest(pool:pg.Pool, job:RequestRow, or
     line_items:order.lineItems.nodes.map(line=>({id:line.id.split('/').at(-1)!,product_id:line.product!.id.split('/').at(-1)!,
       title:line.title,vendor:line.vendor,sku:line.sku,quantity:line.quantity}))};
   const certificates=await deps.service.processFulfilledOrder(payload);
-  if(certificates.length!==payload.line_items.length||certificates.some(c=>c.status!=='active'||!c.pdfPath))throw new Error('certificate_set_requires_review');
+  const expectedCount=payload.line_items.reduce((count,line)=>count+(line.quantity??1),0);
+  if(certificates.length!==expectedCount||certificates.some(c=>c.status!=='active'||!c.pdfPath))throw new Error('certificate_set_requires_review');
   await deps.mailer.sendCertificateEmail({email:order.email!,orderName:order.name,certificates,publicBaseUrl:deps.baseUrl,idempotencyKey:`certificate-request-${job.id}`});
   await pool.query(`UPDATE certificate_requests SET status='sent',reason=NULL,completed_at=now(),processing_started_at=NULL WHERE id=$1`,[job.id]);
 }
 export async function processNextCertificateRequest(pool:pg.Pool,deps:Dependencies):Promise<boolean>{
-  const {rows}=await pool.query<RequestRow>(`UPDATE certificate_requests SET status='processing',attempts=attempts+1,processing_started_at=now()
+  const {rows}=await pool.query<RequestRow>(`UPDATE certificate_requests SET status='processing',
+    attempts=CASE WHEN status='needs_review' THEN 1 ELSE attempts+1 END,processing_started_at=now()
     WHERE id=(SELECT id FROM certificate_requests WHERE (status='pending' AND next_attempt_at<=now())
       OR (status='processing' AND processing_started_at<now()-interval '20 minutes')
+      OR (status='needs_review' AND reason IN ('fulfillment_review','order_email_missing') AND next_attempt_at<=now())
       ORDER BY created_at FOR UPDATE SKIP LOCKED LIMIT 1) RETURNING id,order_name,email,attempts`);
   const job=rows[0];if(!job)return false;
   try{
