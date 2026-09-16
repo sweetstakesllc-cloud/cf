@@ -30,12 +30,30 @@ by webhooks, unpaid/refunded/cancelled orders, provider failures, image selectio
 PDF time limits and preservation of issued certificates. TypeScript checking and
 `git diff --check` pass.
 
-## Deployment steps
+## Production rollout
 
-Deploy the tested code to the existing Render service, then register the
-`ORDERS_PAID` Shopify subscription. Recheck health, request text, signature
-rejection and subscription configuration. Requeue the existing verified #3550
-request and confirm the worker records successful email submission.
+Deployed commit `d01efef28b0021ef48a62ea1624c38e95b02000f` to the existing Render
+service on 16 September. The deployment was started at 16:10:37 CEST and
+reported success by 16:11:37 CEST.
+
+[Render deployment](https://dashboard.render.com/web/srv-daequev40ujc738cn7cg/deploys/dep-dala6n61egvs73f22ia0).
+
+Registered `ORDERS_PAID` subscription
+`gid://shopify/WebhookSubscription/2324823507272` targeting
+`https://certificates.circularfash.com/webhooks/shopify/orders-paid`.
+Readback confirms both paid and the existing fulfilled subscription are present.
+The configured webhook signing secret matches the installed app's secret.
+
+Post-deployment checks: health and request form HTTP 200; updated paid-delivery
+and email-subject text present; unsigned paid webhook rejected with HTTP 400;
+#3550's 2,214,368-byte PDF remained accessible with HTTP 200 after restart.
+
+Revalidated #3550 against Shopify and released its waiting request. The worker
+recorded `sent` at **14:13:39 UTC**, with the certificate delivery timestamp set.
+This confirms successful email-provider submission using the new subject,
+not independently confirmed inbox delivery. No fulfillment status was changed.
+The queue now has three sent requests and the same three inaccessible older
+requests awaiting review.
 
 ## Remaining limitation
 
