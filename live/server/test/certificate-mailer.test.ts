@@ -20,6 +20,8 @@ describe('certificate email delivery', () => {
     const options = fetchMock.mock.calls[0]![1];
     const body = JSON.parse(options.body);
     expect(body.to).toEqual(['buyer@example.com']);
+    expect(body.subject).toBe('Certificate of Authenticity – Order #100');
+    expect(fetchMock).toHaveBeenCalledOnce();
     for (const certificate of certificates) {
       const url = `https://certificates.example.com/certificates/${certificate.token}.pdf`;
       expect(body.html).toContain(url);expect(body.text).toContain(url);

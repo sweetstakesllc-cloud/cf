@@ -59,7 +59,7 @@ export class ResendCertificateMailer implements CertificateMailer {
       body: JSON.stringify({
         from: this.from,
         to: [input.email],
-        subject: `Your Circular Fash authenticity certificate${input.certificates.length === 1 ? '' : 's'}`,
+        subject: `Certificate of Authenticity – Order ${input.orderName}`,
         text: `Your authenticity certificate${input.certificates.length === 1 ? '' : 's'} for ${input.orderName}.\n\nA separate certificate is included for each item:\n\n${input.certificates.map(certificate => `${certificate.productTitle} — ${certificate.certificateNumber}\n${input.publicBaseUrl}/certificates/${certificate.token}.pdf`).join('\n\n')}`,
         html: `<!doctype html><html><body style="margin:0;background:#f4f4f1">
           <table role="presentation" width="100%" cellspacing="0" cellpadding="0"><tr><td align="center" style="padding:28px 12px">

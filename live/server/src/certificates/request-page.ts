@@ -7,7 +7,7 @@ export const requestCertificatePage = `<!doctype html>
 <label for="email">Email used at checkout</label><input id="email" name="email" type="email" autocomplete="email" required maxlength="254">
 <div class="trap" aria-hidden="true"><label for="website">Website</label><input id="website" name="website" tabindex="-1" autocomplete="off"></div>
 <button type="submit">Request certificate</button><div id="message" role="status" tabindex="-1" hidden></div></form>
-<p class="help">Certificates are available once your order is paid and fulfilled. We send them only to the email on the order. Purchases older than 60 days and orders with missing details need a manual check. Cancelled or returned items may not be eligible.</p>
+<p class="help">Certificates are emailed separately once your order is paid. Look for “Certificate of Authenticity” in your inbox. We send them only to the email on the order. Purchases older than 60 days and orders with missing details need a manual check. Cancelled or returned items may not be eligible.</p>
 <p class="help">No email yet? Check your spam folder. If nothing arrives within 24 hours, <a href="https://circularfash.com/pages/contact">contact us</a> with your order number so we can check your request.</p>
 <p class="help">Can't access your checkout email? <a href="https://circularfash.com/pages/contact">Contact us</a> for help.</p>
 <noscript><p>Please enable JavaScript to use this form, or contact us with your order number.</p></noscript></main>

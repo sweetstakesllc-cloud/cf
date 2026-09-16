@@ -7,6 +7,7 @@ import { loadConfig } from '../src/config.js';
 import { FakePaymentGateway } from '../src/billing/gateway.js';
 import type { Mailer } from '../src/mailer.js';
 import { CertificateService } from '../src/certificates/service.js';
+import { deliverCertificateRequest, type RequestOrder } from '../src/certificates/requests.js';
 import { processNextCertificateJob } from '../src/certificates/worker.js';
 import type {
   CertificateGenerator,
@@ -50,6 +51,8 @@ function fulfilledOrder(): ShopifyFulfilledOrder {
     admin_graphql_api_id: 'gid://shopify/Order/7001',
     name: '#7001',
     contact_email: 'buyer@example.se',
+    financial_status: 'paid',
+    cancelled_at: null,
     line_items: [
       { id: 81, product_id: 901, title: 'Maya Jacket', vendor: 'Moncler', sku: 'CF-901' },
       { id: 82, product_id: 902, title: 'Down Jacket', vendor: 'Prada', sku: 'CF-902' },
@@ -88,35 +91,35 @@ class FakeCertificateMailer implements CertificateMailer {
   }
 }
 
-describe('Shopify fulfilled-order webhook', () => {
-  it('verifies HMAC, queues once, and acknowledges duplicate deliveries', async () => {
+describe('Shopify certificate webhooks', () => {
+  it.each(['paid','fulfilled'])('verifies HMAC and deduplicates orders/%s', async event => {
     const body = JSON.stringify(fulfilledOrder());
     const headers = {
       'content-type': 'application/json',
       'x-shopify-hmac-sha256': signature(body),
       'x-shopify-webhook-id': 'webhook-1',
-      'x-shopify-topic': 'orders/fulfilled',
+      'x-shopify-topic': `orders/${event}`,
       'x-shopify-shop-domain': 'circular-fash.myshopify.com',
     };
-    const first = await app.inject({ method: 'POST', url: '/webhooks/shopify/orders-fulfilled', headers, payload: body });
+    const first = await app.inject({ method: 'POST', url: `/webhooks/shopify/orders-${event}`, headers, payload: body });
     expect(first.statusCode).toBe(202);
     expect(first.json()).toEqual({ received: true, duplicate: false });
-    const duplicate = await app.inject({ method: 'POST', url: '/webhooks/shopify/orders-fulfilled', headers, payload: body });
+    const duplicate = await app.inject({ method: 'POST', url: `/webhooks/shopify/orders-${event}`, headers, payload: body });
     expect(duplicate.statusCode).toBe(202);
     expect(duplicate.json()).toEqual({ received: true, duplicate: true });
     const { rows } = await pool.query(`SELECT count(*)::int AS count FROM shopify_webhooks`);
     expect(rows[0].count).toBe(1);
   });
 
-  it('rejects a forged delivery', async () => {
+  it.each(['paid','fulfilled'])('rejects a forged orders/%s delivery', async event => {
     const response = await app.inject({
       method: 'POST',
-      url: '/webhooks/shopify/orders-fulfilled',
+      url: `/webhooks/shopify/orders-${event}`,
       headers: {
         'content-type': 'application/json',
         'x-shopify-hmac-sha256': 'not-valid',
         'x-shopify-webhook-id': 'webhook-2',
-        'x-shopify-topic': 'orders/fulfilled',
+        'x-shopify-topic': `orders/${event}`,
       },
       payload: JSON.stringify(fulfilledOrder()),
     });
@@ -125,6 +128,60 @@ describe('Shopify fulfilled-order webhook', () => {
 });
 
 describe('certificate processing', () => {
+  it('emails all paid-order certificates once, including after webhook replay and fulfillment', async () => {
+    const order = fulfilledOrder();
+    order.line_items[0]!.quantity = 2;
+    const mailer = new FakeCertificateMailer();
+    const generator = new FakeGenerator();
+    const service = new CertificateService(pool, new FakeShopify(), generator, mailer, 'https://certificates.example.com');
+    for (const [index, event] of ['paid', 'paid', 'fulfilled'].entries()) {
+      const body = JSON.stringify(order);
+      const response = await app.inject({ method: 'POST', url: `/webhooks/shopify/orders-${event}`, payload: body,
+        headers: { 'content-type': 'application/json', 'x-shopify-hmac-sha256': signature(body),
+          'x-shopify-webhook-id': `paid-${index}`, 'x-shopify-topic': `orders/${event}` } });
+      expect(response.statusCode).toBe(202);
+      expect(await processNextCertificateJob(pool, service)).toBe(true);
+      expect(mailer.sent).toHaveLength(1);
+      expect(mailer.sent[0]?.certificates).toHaveLength(3);
+    }
+    expect(generator.rendered).toHaveLength(3);
+  });
+
+  it.each(['pending', 'authorized', 'partially_paid', 'refunded', 'partially_refunded', 'voided', undefined, 'cancelled'])
+  ('does not issue certificates from an ineligible webhook (%s)', async status => {
+    const order = {...fulfilledOrder(), financial_status: status === 'cancelled' ? 'paid' : status,
+      cancelled_at: status === 'cancelled' ? '2026-09-16T12:00:00Z' : null};
+    await pool.query(`INSERT INTO shopify_webhooks(webhook_id,topic,payload) VALUES('ineligible','orders/fulfilled',$1)`,[JSON.stringify(order)]);
+    const mailer = new FakeCertificateMailer();
+    const generator = new FakeGenerator();
+    const service = new CertificateService(pool, new FakeShopify(), generator, mailer, 'https://certificates.example.com');
+    expect(await processNextCertificateJob(pool, service)).toBe(true);
+    expect(mailer.sent).toHaveLength(0);
+    expect(generator.rendered).toHaveLength(0);
+    expect((await pool.query('SELECT status FROM shopify_webhooks')).rows[0].status).toBe('completed');
+  });
+
+  it('records requested delivery so later paid and fulfillment events do not resend', async () => {
+    const order = fulfilledOrder();
+    const mailer = new FakeCertificateMailer();
+    const service = new CertificateService(pool, new FakeShopify(), new FakeGenerator(), mailer, 'https://certificates.example.com');
+    const request = (await pool.query(`INSERT INTO certificate_requests(order_name,email,status) VALUES($1,$2,'processing') RETURNING id,order_name,email,attempts`,
+      [order.name,order.contact_email])).rows[0];
+    const requestOrder: RequestOrder = { id: order.admin_graphql_api_id!, name: order.name!, email: order.contact_email!,
+      cancelledAt: null, displayFinancialStatus: 'PAID', displayFulfillmentStatus: 'UNFULFILLED',
+      lineItems: {pageInfo:{hasNextPage:false},nodes:order.line_items.map(line=>({id:`gid://shopify/LineItem/${line.id}`,
+        title:line.title!,vendor:line.vendor??null,sku:line.sku??null,quantity:1,currentQuantity:1,product:{id:`gid://shopify/Product/${line.product_id}`}}))} };
+    await deliverCertificateRequest(pool, request, requestOrder, {findOrder:async()=>requestOrder,service,mailer,baseUrl:'https://certificates.example.com'});
+    expect(mailer.sent).toHaveLength(1);
+    expect((await pool.query('SELECT emailed_at FROM authenticity_certificates')).rows.every(c=>c.emailed_at)).toBe(true);
+    for (const event of ['paid','fulfilled']) {
+      await pool.query(`INSERT INTO shopify_webhooks(webhook_id,topic,payload) VALUES($1,$2,$3)`,[event,`orders/${event}`,JSON.stringify(order)]);
+      await processNextCertificateJob(pool,service);
+    }
+    expect(mailer.sent).toHaveLength(1);
+    await pool.query('DELETE FROM certificate_requests WHERE id=$1',[request.id]);
+  });
+
   it('creates a unique certificate per unit and preserves all links on retries', async () => {
     const generator = new FakeGenerator();
     const mailer = new FakeCertificateMailer();

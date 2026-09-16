@@ -85,10 +85,11 @@ persisted mutes if they should survive restarts.
 
 ## Authenticity certificate automation
 
-The server now accepts Shopify's `orders/fulfilled` webhook, creates one immutable
-certificate per order line item, writes certificate links to the order's
+The server accepts Shopify's `orders/paid` webhook, creates one immutable
+certificate per purchased unit, writes certificate links to the order's
 `custom.authenticity_certificates` JSON metafield, and sends one service email
-containing every certificate in that order. Repeat purchases create new records;
+containing every certificate in that order, with the subject
+`Certificate of Authenticity – Order #1234`. Repeat purchases create new records;
 they never replace previous certificates.
 
 Setup:
@@ -98,8 +99,10 @@ Setup:
    needs permission to read products/orders and write order metafields.
 3. Give `CERTIFICATE_STORAGE_DIR` persistent storage. Do not use an ephemeral
    deployment filesystem in production.
-4. In the Shopify custom app, subscribe `orders/fulfilled` to
-   `https://YOUR_API_HOST/webhooks/shopify/orders-fulfilled` using JSON delivery.
+4. In the Shopify custom app, subscribe `orders/paid` to
+   `https://YOUR_API_HOST/webhooks/shopify/orders-paid` using JSON delivery.
+   Keep `orders/fulfilled` at `/webhooks/shopify/orders-fulfilled` as a fallback
+   for orders paid before activation. Already emailed certificates are not resent.
 5. Add optional product metafields `custom.authentication_partner` and
    `custom.authentication_report_number`. They are printed when populated.
 6. Verify the Resend sending domain, then test with a Shopify test order. The

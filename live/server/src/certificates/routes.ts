@@ -26,28 +26,30 @@ export function registerCertificateRoutes(
   if (webhookSecret) {
     app.register(async scope => {
       scope.addContentTypeParser('application/json', { parseAs: 'buffer' }, (_request, body, done) => done(null, body));
-      scope.post('/webhooks/shopify/orders-fulfilled', async (request, reply) => {
-        const signature = request.headers['x-shopify-hmac-sha256'];
-        const webhookId = request.headers['x-shopify-webhook-id'];
-        const topic = request.headers['x-shopify-topic'];
-        const shopDomain = request.headers['x-shopify-shop-domain'];
-        if (typeof signature !== 'string' || typeof webhookId !== 'string') {
-          return reply.code(400).send({ error: 'missing_signature' });
-        }
-        const rawBody = request.body as Buffer;
-        if (!validHmac(rawBody, signature, webhookSecret)) {
-          return reply.code(401).send({ error: 'bad_signature' });
-        }
-        if (topic !== 'orders/fulfilled') return reply.code(400).send({ error: 'wrong_topic' });
-        let payload: unknown;
-        try { payload = JSON.parse(rawBody.toString('utf8')); }
-        catch { return reply.code(400).send({ error: 'invalid_json' }); }
-        const result = await pool.query(`
-          INSERT INTO shopify_webhooks (webhook_id, topic, shop_domain, payload)
-          VALUES ($1,$2,$3,$4) ON CONFLICT (webhook_id) DO NOTHING`,
-        [webhookId, topic, typeof shopDomain === 'string' ? shopDomain : null, JSON.stringify(payload)]);
-        return reply.code(202).send({ received: true, duplicate: result.rowCount === 0 });
-      });
+      for (const event of ['paid', 'fulfilled'] as const) {
+        scope.post(`/webhooks/shopify/orders-${event}`, async (request, reply) => {
+          const signature = request.headers['x-shopify-hmac-sha256'];
+          const webhookId = request.headers['x-shopify-webhook-id'];
+          const topic = request.headers['x-shopify-topic'];
+          const shopDomain = request.headers['x-shopify-shop-domain'];
+          if (typeof signature !== 'string' || typeof webhookId !== 'string') {
+            return reply.code(400).send({ error: 'missing_signature' });
+          }
+          const rawBody = request.body as Buffer;
+          if (!validHmac(rawBody, signature, webhookSecret)) {
+            return reply.code(401).send({ error: 'bad_signature' });
+          }
+          if (topic !== `orders/${event}`) return reply.code(400).send({ error: 'wrong_topic' });
+          let payload: unknown;
+          try { payload = JSON.parse(rawBody.toString('utf8')); }
+          catch { return reply.code(400).send({ error: 'invalid_json' }); }
+          const result = await pool.query(`
+            INSERT INTO shopify_webhooks (webhook_id, topic, shop_domain, payload)
+            VALUES ($1,$2,$3,$4) ON CONFLICT (webhook_id) DO NOTHING`,
+          [webhookId, topic, typeof shopDomain === 'string' ? shopDomain : null, JSON.stringify(payload)]);
+          return reply.code(202).send({ received: true, duplicate: result.rowCount === 0 });
+        });
+      }
     });
   }
 

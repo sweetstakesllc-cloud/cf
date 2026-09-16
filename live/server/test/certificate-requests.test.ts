@@ -46,10 +46,13 @@ describe('past-order certificate requests',()=>{
  await processNextCertificateRequest(pool,deps);expect(send).toHaveBeenCalledOnce();
  expect((await pool.query('SELECT status FROM certificate_requests')).rows[0].status).toBe('sent');
  });
- it('rechecks a request after fulfillment rather than leaving it in review forever',async()=>{
+ it('sends paid requests before fulfillment',async()=>{
  deps.findOrder.mockResolvedValue({...order,displayFulfillmentStatus:'UNFULFILLED'});await submit();await processNextCertificateRequest(pool,deps);
- expect(send).not.toHaveBeenCalled();expect(await processNextCertificateRequest(pool,deps)).toBe(false);
- deps.findOrder.mockResolvedValue(structuredClone(order));await pool.query('UPDATE certificate_requests SET next_attempt_at=now()');
+ expect(send).toHaveBeenCalledOnce();expect((await pool.query('SELECT status FROM certificate_requests')).rows[0].status).toBe('sent');
+ });
+ it('releases existing fulfillment-review requests while still unfulfilled',async()=>{
+ deps.findOrder.mockResolvedValue({...order,displayFulfillmentStatus:'UNFULFILLED'});await submit();
+ await pool.query("UPDATE certificate_requests SET status='needs_review',reason='fulfillment_review',next_attempt_at=now()");
  await processNextCertificateRequest(pool,deps);expect(send).toHaveBeenCalledOnce();
  });
  it('rechecks the email before releasing a waiting request',async()=>{
@@ -77,8 +80,8 @@ describe('past-order certificate requests',()=>{
  deps.findOrder.mockResolvedValue(null);await submit();await processNextCertificateRequest(pool,deps);
  expect((await pool.query('SELECT status,reason FROM certificate_requests')).rows[0]).toEqual({status:'needs_review',reason:'order_not_accessible'});expect(send).not.toHaveBeenCalled();
  });
- it('does not issue refunded, cancelled, unfulfilled, removed, deleted or invalid-quantity items',()=>{
- for(const modified of [{...order,cancelledAt:'2026-01-01'}, {...order,displayFinancialStatus:'REFUNDED'}, {...order,displayFulfillmentStatus:'UNFULFILLED'},
+ it('does not issue unpaid, refunded, cancelled, removed, deleted or invalid-quantity items',()=>{
+ for(const modified of [{...order,cancelledAt:'2026-01-01'}, ...['REFUNDED','PENDING','AUTHORIZED','PARTIALLY_PAID'].map(displayFinancialStatus=>({...order,displayFinancialStatus})),
  ...[{currentQuantity:0},{product:null},{quantity:2},{quantity:0,currentQuantity:0},{quantity:1.5,currentQuantity:1.5}].map(change=>({...order,lineItems:{...order.lineItems,nodes:[{...order.lineItems.nodes[0]!,...change}]}}))])
  expect(requestEligibility(modified,'#3324','buyer@example.com')).not.toBeNull();
  });

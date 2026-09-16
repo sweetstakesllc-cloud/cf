@@ -37,8 +37,11 @@ updated installation. Shopify displayed the required customer data access during
 that update. Resend has verified the sending domain. Confirm the customer email
 field with a controlled fulfillment test before enabling normal processing.
 
-Only after the backend is healthy, register `orders/fulfilled` JSON delivery to
-`https://SERVICE_HOST/webhooks/shopify/orders-fulfilled`.
+Only after the backend is healthy, register `orders/paid` JSON delivery to
+`https://SERVICE_HOST/webhooks/shopify/orders-paid`. Keep the existing
+`orders/fulfilled` subscription as a fallback for orders paid before activation.
+Both events require a paid, uncancelled payload; existing delivery timestamps
+prevent a second automatic email when the order ships.
 
 Before considering the service live, use an explicitly designated test order
 and controlled recipient. Check the webhook is accepted, its database job finishes,
@@ -113,6 +116,14 @@ New certificates use the first listing photograph and the final two photographs,
 Validation: six image-selection regression tests, TypeScript checking, a real Shopify product read, and a rendered sample with buckle and stamped label details.
 
 ## Past-order certificate requests — 8 September 2026
+
+**Updated 16 September:** paid orders are now eligible before fulfillment.
+Certificates arrive in a separate service email with subject
+`Certificate of Authenticity – Order #1234`, containing one download link for
+each purchased unit. Request delivery records the certificate delivery time so
+a later fulfillment event does not send another automatic email. Existing
+`fulfillment_review` requests are still claimed and revalidated by the worker.
+The original rollout notes below describe the earlier eligibility policy.
 
 Customers can use `/request` with their order number and checkout email. The form returns the same acknowledgement regardless of order existence. Matching, paid, fulfilled, uncancelled single-quantity items are generated or reused and emailed only to the order email. Refunded, removed, missing-product, revoked-certificate and other exceptional cases require review. No fulfillment status is changed. The three selected listing images include the first photo and final two photos.
 

@@ -14,6 +14,8 @@ export type ShopifyFulfilledOrder = {
   name?: string;
   email?: string | null;
   contact_email?: string | null;
+  financial_status?: string;
+  cancelled_at?: string | null;
   line_items: ShopifyOrderLine[];
 };
 

@@ -18,7 +18,11 @@ export async function processNextCertificateJob(pool: pg.Pool, service: Certific
   if (!job) return false;
   try {
     if (!job.payload || !Array.isArray(job.payload.line_items)) throw new Error('Invalid Shopify paid-order payload');
-    await service.processFulfilledOrder(job.payload);
+    // Fulfillment remains a fallback for older orders; shipment alone must not
+    // issue certificates for unpaid, partially paid, refunded or cancelled orders.
+    if (job.payload.financial_status === 'paid' && !job.payload.cancelled_at) {
+      await service.processFulfilledOrder(job.payload);
+    }
     await pool.query(`UPDATE shopify_webhooks SET status='completed', processed_at=now(),
       processing_started_at=NULL WHERE webhook_id=$1`, [job.webhook_id]);
   } catch (error) {

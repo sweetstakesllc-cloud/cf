@@ -7,7 +7,7 @@ import type { CertificateService } from './service.js';
 import type { CertificateMailer, ShopifyFulfilledOrder } from './types.js';
 import { requestCertificatePage } from './request-page.js';
 
-const RECEIVED = 'Request received. If the details match a paid, fulfilled order, we will email a separate certificate for each item to the address on the order. Check your spam folder too. Older orders or missing order details need a manual check. If nothing arrives within 24 hours, please contact us with your order number.';
+const RECEIVED = 'Request received. If the details match a paid order, we will email one message with a separate certificate for each item to the address on the order. Check your spam folder too. Older orders or missing order details need a manual check. If nothing arrives within 24 hours, please contact us with your order number.';
 const inputSchema = z.object({
   orderNumber: z.string().trim().regex(/^#?\d{1,12}$/),
   email: z.string().trim().email().max(254),
@@ -71,7 +71,6 @@ export function requestEligibility(order: RequestOrder, name: string, email: str
   if (!order.email?.trim()) return 'order_email_missing';
   if (order.email.trim().toLowerCase() !== email.trim().toLowerCase()) return 'order_email_mismatch';
   if (order.cancelledAt || order.displayFinancialStatus !== 'PAID') return 'payment_or_cancellation_review';
-  if (order.displayFulfillmentStatus !== 'FULFILLED') return 'fulfillment_review';
   if (order.lineItems.pageInfo.hasNextPage || !order.lineItems.nodes.length || order.lineItems.nodes.some(line =>
     !line.product || !Number.isSafeInteger(line.quantity) || line.quantity < 1 || line.currentQuantity !== line.quantity)) return 'line_item_review';
   return null;
@@ -99,6 +98,8 @@ export async function deliverCertificateRequest(pool:pg.Pool, job:RequestRow, or
   const expectedCount=payload.line_items.reduce((count,line)=>count+(line.quantity??1),0);
   if(certificates.length!==expectedCount||certificates.some(c=>c.status!=='active'||!c.pdfPath))throw new Error('certificate_set_requires_review');
   await deps.mailer.sendCertificateEmail({email:order.email!,orderName:order.name,certificates,publicBaseUrl:deps.baseUrl,idempotencyKey:`certificate-request-${job.id}`});
+  // A later fulfillment webhook must not send the same certificates again.
+  await pool.query(`UPDATE authenticity_certificates SET emailed_at=COALESCE(emailed_at,now()) WHERE shopify_order_id=$1`,[orderId]);
   await pool.query(`UPDATE certificate_requests SET status='sent',reason=NULL,completed_at=now(),processing_started_at=NULL WHERE id=$1`,[job.id]);
 }
 export async function processNextCertificateRequest(pool:pg.Pool,deps:Dependencies):Promise<boolean>{
